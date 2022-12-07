@@ -95,6 +95,7 @@ library DataTypes {
         address nftAsset;
         uint256 nftTokenId;
         address onBehalfOf;
+        bool isNative;
     }
     struct ExecuteBatchBorrowParams {
         address initiator;
@@ -103,12 +104,14 @@ library DataTypes {
         address[] nftAssets;
         uint256[] nftTokenIds;
         address onBehalfOf;
+        bool isNative;
     }
     struct ExecuteRepayParams {
         address initiator;
         uint256 loanId;
         uint256 amount;
         address shopCreator;
+        bool isNative;
     }
 
     struct ExecuteBatchRepayParams {
@@ -116,12 +119,14 @@ library DataTypes {
         uint256[] loanIds;
         uint256[] amounts;
         address shopCreator;
+        bool isNative;
     }
     struct ExecuteAuctionParams {
         address initiator;
         uint256 loanId;
         uint256 bidPrice;
         address onBehalfOf;
+        bool isNative;
     }
 
     struct ExecuteRedeemParams {
@@ -130,6 +135,7 @@ library DataTypes {
         uint256 amount;
         uint256 bidFine;
         address shopCreator;
+        bool isNative;
     }
 
     struct ExecuteLiquidateParams {

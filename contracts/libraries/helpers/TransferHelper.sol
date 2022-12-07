@@ -22,16 +22,16 @@ library TransferHelper {
     }
 
     //
-    function safeTransferETH(
-        address weth,
-        address to,
-        uint256 value
-    ) internal {
+    function safeTransferETH(address weth, address to, uint256 value) internal {
         (bool success, ) = address(to).call{value: value, gas: 30000}("");
         if (!success) {
             IWETH(weth).deposit{value: value}();
             safeTransferERC20(weth, to, value);
         }
+    }
+
+    function convertWETHToETH(address weth, uint256 value) internal {
+        IWETH(weth).deposit{value: value}();
     }
 
     // Will attempt to transfer ETH, but will transfer WETH instead if it fails.
@@ -43,6 +43,18 @@ library TransferHelper {
         if (value > 0) {
             IWETH(weth).withdraw(value);
             safeTransferETH(weth, to, value);
+        }
+    }
+
+    // convert eth to weth and transfer to toAddress
+    function transferWETHFromETH(
+        address weth,
+        address toAddress,
+        uint256 value
+    ) internal {
+        if (value > 0) {
+            IWETH(weth).deposit{value: value}();
+            safeTransferERC20(weth, toAddress, value);
         }
     }
 }

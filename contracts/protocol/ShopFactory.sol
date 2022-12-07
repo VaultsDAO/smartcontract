@@ -125,6 +125,29 @@ contract ShopFactory is
         uint256 nftTokenId,
         address onBehalfOf
     ) external override nonReentrant whenNotPaused {
+        _borrow(shopId, asset, amount, nftAsset, nftTokenId, onBehalfOf, false);
+    }
+
+    function borrowETH(
+        uint256 shopId,
+        address asset,
+        uint256 amount,
+        address nftAsset,
+        uint256 nftTokenId,
+        address onBehalfOf
+    ) external override nonReentrant whenNotPaused {
+        _borrow(shopId, asset, amount, nftAsset, nftTokenId, onBehalfOf, true);
+    }
+
+    function _borrow(
+        uint256 shopId,
+        address asset,
+        uint256 amount,
+        address nftAsset,
+        uint256 nftTokenId,
+        address onBehalfOf,
+        bool isNative
+    ) internal {
         DataTypes.ShopConfiguration storage shopConfig = shopsConfig[shopId][
             asset
         ][nftAsset];
@@ -141,7 +164,8 @@ contract ShopFactory is
                 amount: amount,
                 nftAsset: nftAsset,
                 nftTokenId: nftTokenId,
-                onBehalfOf: onBehalfOf
+                onBehalfOf: onBehalfOf,
+                isNative: isNative
             })
         );
     }
@@ -154,6 +178,45 @@ contract ShopFactory is
         uint256[] calldata nftTokenIds,
         address onBehalfOf
     ) external override nonReentrant whenNotPaused {
+        _batchBorrow(
+            shopId,
+            assets,
+            amounts,
+            nftAssets,
+            nftTokenIds,
+            onBehalfOf,
+            false
+        );
+    }
+
+    function batchBorrowETH(
+        uint256 shopId,
+        address[] calldata assets,
+        uint256[] calldata amounts,
+        address[] calldata nftAssets,
+        uint256[] calldata nftTokenIds,
+        address onBehalfOf
+    ) external override nonReentrant whenNotPaused {
+        _batchBorrow(
+            shopId,
+            assets,
+            amounts,
+            nftAssets,
+            nftTokenIds,
+            onBehalfOf,
+            true
+        );
+    }
+
+    function _batchBorrow(
+        uint256 shopId,
+        address[] calldata assets,
+        uint256[] calldata amounts,
+        address[] calldata nftAssets,
+        uint256[] calldata nftTokenIds,
+        address onBehalfOf,
+        bool isNative
+    ) internal {
         DataTypes.ExecuteBatchBorrowParams memory params;
         params.initiator = _msgSender();
         params.assets = assets;
@@ -161,6 +224,7 @@ contract ShopFactory is
         params.nftAssets = nftAssets;
         params.nftTokenIds = nftTokenIds;
         params.onBehalfOf = onBehalfOf;
+        params.isNative = isNative;
 
         BorrowLogic.executeBatchBorrow(
             shops[shopId],
@@ -177,17 +241,37 @@ contract ShopFactory is
      * - E.g. User repays 100 USDC, burning loan and receives collateral asset
      * @param amount The amount to repay
      **/
-    function repay(uint256 loanId, uint256 amount)
+    function repay(
+        uint256 loanId,
+        uint256 amount
+    )
         external
         override
         nonReentrant
         whenNotPaused
-        returns (
-            uint256,
-            uint256,
-            bool
-        )
+        returns (uint256, uint256, bool)
     {
+        return _repay(loanId, amount, false);
+    }
+
+    function repayETH(
+        uint256 loanId,
+        uint256 amount
+    )
+        external
+        override
+        nonReentrant
+        whenNotPaused
+        returns (uint256, uint256, bool)
+    {
+        return _repay(loanId, amount, true);
+    }
+
+    function _repay(
+        uint256 loanId,
+        uint256 amount,
+        bool isNative
+    ) internal returns (uint256, uint256, bool) {
         DataTypes.LoanData memory loanData = IShopLoan(
             IConfigProvider(provider).loanManager()
         ).getLoan(loanId);
@@ -200,7 +284,8 @@ contract ShopFactory is
                     initiator: _msgSender(),
                     loanId: loanId,
                     amount: amount,
-                    shopCreator: shop.creator
+                    shopCreator: shop.creator,
+                    isNative: isNative
                 })
             );
     }
@@ -214,22 +299,42 @@ contract ShopFactory is
         override
         nonReentrant
         whenNotPaused
-        returns (
-            uint256[] memory,
-            uint256[] memory,
-            bool[] memory
-        )
+        returns (uint256[] memory, uint256[] memory, bool[] memory)
     {
+        return _batchRepay(shopId, loanIds, amounts, false);
+    }
+
+    function batchRepayETH(
+        uint256 shopId,
+        uint256[] calldata loanIds,
+        uint256[] calldata amounts
+    )
+        external
+        override
+        nonReentrant
+        whenNotPaused
+        returns (uint256[] memory, uint256[] memory, bool[] memory)
+    {
+        return _batchRepay(shopId, loanIds, amounts, true);
+    }
+
+    function _batchRepay(
+        uint256 shopId,
+        uint256[] calldata loanIds,
+        uint256[] calldata amounts,
+        bool isNative
+    ) internal returns (uint256[] memory, uint256[] memory, bool[] memory) {
+        DataTypes.ExecuteBatchRepayParams memory params;
+        params.initiator = _msgSender();
+        params.loanIds = loanIds;
+        params.amounts = amounts;
+        params.shopCreator = shops[shopId].creator;
+        params.isNative = isNative;
         return
             BorrowLogic.executeBatchRepay(
                 IConfigProvider(provider),
                 reservesInfo,
-                DataTypes.ExecuteBatchRepayParams({
-                    initiator: _msgSender(),
-                    loanIds: loanIds,
-                    amounts: amounts,
-                    shopCreator: shops[shopId].creator
-                })
+                params
             );
     }
 
@@ -242,6 +347,23 @@ contract ShopFactory is
         uint256 bidPrice,
         address onBehalfOf
     ) external override nonReentrant whenNotPaused {
+        _auction(loanId, bidPrice, onBehalfOf, false);
+    }
+
+    function auctionETH(
+        uint256 loanId,
+        uint256 bidPrice,
+        address onBehalfOf
+    ) external override nonReentrant whenNotPaused {
+        _auction(loanId, bidPrice, onBehalfOf, true);
+    }
+
+    function _auction(
+        uint256 loanId,
+        uint256 bidPrice,
+        address onBehalfOf,
+        bool isNative
+    ) internal {
         LiquidateLogic.executeAuction(
             provider,
             reservesInfo,
@@ -250,7 +372,8 @@ contract ShopFactory is
                 initiator: _msgSender(),
                 loanId: loanId,
                 bidPrice: bidPrice,
-                onBehalfOf: onBehalfOf
+                onBehalfOf: onBehalfOf,
+                isNative: isNative
             })
         );
     }
@@ -277,6 +400,42 @@ contract ShopFactory is
             uint256 fee
         )
     {
+        return _redeem(loanId, amount, bidFine, false);
+    }
+
+    function redeemETH(
+        uint256 loanId,
+        uint256 amount,
+        uint256 bidFine
+    )
+        external
+        override
+        nonReentrant
+        whenNotPaused
+        returns (
+            uint256 remainAmount,
+            uint256 repayPrincipal,
+            uint256 interest,
+            uint256 fee
+        )
+    {
+        return _redeem(loanId, amount, bidFine, true);
+    }
+
+    function _redeem(
+        uint256 loanId,
+        uint256 amount,
+        uint256 bidFine,
+        bool isNative
+    )
+        internal
+        returns (
+            uint256 remainAmount,
+            uint256 repayPrincipal,
+            uint256 interest,
+            uint256 fee
+        )
+    {
         DataTypes.LoanData memory loanData = IShopLoan(
             IConfigProvider(provider).loanManager()
         ).getLoan(loanId);
@@ -290,7 +449,8 @@ contract ShopFactory is
                     loanId: loanId,
                     amount: amount,
                     bidFine: bidFine,
-                    shopCreator: shops[loanData.shopId].creator
+                    shopCreator: shops[loanData.shopId].creator,
+                    isNative: isNative
                 })
             );
     }
@@ -300,12 +460,9 @@ contract ShopFactory is
      * - The caller (liquidator) buy collateral asset of the user getting liquidated, and receives
      *   the collateral asset
      **/
-    function liquidate(uint256 loanId)
-        external
-        override
-        nonReentrant
-        whenNotPaused
-    {
+    function liquidate(
+        uint256 loanId
+    ) external override nonReentrant whenNotPaused {
         DataTypes.LoanData memory loanData = IShopLoan(provider.loanManager())
             .getLoan(loanId);
         DataTypes.ShopData memory shop = shops[loanData.shopId];
@@ -331,7 +488,9 @@ contract ShopFactory is
      * @return totalDebt the total debt of the NFT
      * @return healthFactor the current health factor of the NFT
      **/
-    function getNftDebtData(uint256 loanId)
+    function getNftDebtData(
+        uint256 loanId
+    )
         external
         view
         override
@@ -397,7 +556,9 @@ contract ShopFactory is
      * @return bidBorrowAmount the borrow amount in Reserve of the loan
      * @return bidFine the penalty fine of the loan
      **/
-    function getNftAuctionData(uint256 loanId)
+    function getNftAuctionData(
+        uint256 loanId
+    )
         external
         view
         override
@@ -436,7 +597,9 @@ contract ShopFactory is
         }
     }
 
-    function getNftAuctionEndTime(uint256 loanId)
+    function getNftAuctionEndTime(
+        uint256 loanId
+    )
         external
         view
         override
@@ -474,7 +637,9 @@ contract ShopFactory is
         uint256 remainAmount;
     }
 
-    function getNftLiquidatePrice(uint256 loanId)
+    function getNftLiquidatePrice(
+        uint256 loanId
+    )
         external
         view
         override
@@ -565,11 +730,9 @@ contract ShopFactory is
         return IConfigProvider(provider);
     }
 
-    function addReserve(address asset)
-        external
-        override
-        onlyFactoryConfigurator
-    {
+    function addReserve(
+        address asset
+    ) external override onlyFactoryConfigurator {
         require(AddressUpgradeable.isContract(asset), Errors.LP_NOT_CONTRACT);
         _addReserveToList(asset);
     }
@@ -625,9 +788,9 @@ contract ShopFactory is
         nfts.push(nftAddress);
     }
 
-    function setShopConfigurations(DataTypes.ShopConfigParams[] memory params)
-        external
-    {
+    function setShopConfigurations(
+        DataTypes.ShopConfigParams[] memory params
+    ) external {
         uint256 shopId = shopOf(_msgSender());
         if (shopId == 0) {
             shopId = _create(_msgSender());

@@ -8,6 +8,7 @@ import {IShopLoan} from "../../interfaces/IShopLoan.sol";
 import {PercentageMath} from "../math/PercentageMath.sol";
 
 import {Errors} from "../helpers/Errors.sol";
+import {TransferHelper} from "../helpers/TransferHelper.sol";
 import {DataTypes} from "../types/DataTypes.sol";
 
 import {IERC20Upgradeable} from "../../openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
@@ -160,7 +161,8 @@ library BorrowLogic {
                     amount: params.amounts[i],
                     nftAsset: params.nftAssets[i],
                     nftTokenId: params.nftTokenIds[i],
-                    onBehalfOf: params.onBehalfOf
+                    onBehalfOf: params.onBehalfOf,
+                    isNative: params.isNative
                 })
             );
         }
@@ -240,12 +242,31 @@ library BorrowLogic {
         } else {
             revert("not supported");
         }
+        if (
+            params.asset == IConfigProvider(configProvider).weth() &&
+            params.isNative
+        ) {
+            //transfer weth from shop to contract
+            IERC20Upgradeable(params.asset).transferFrom(
+                shop.creator,
+                address(this),
+                params.amount
+            );
+            //convert weth to eth and transfer to borrower
+            TransferHelper.transferWETH2ETH(
+                IConfigProvider(configProvider).weth(),
+                vars.initiator,
+                params.amount
+            );
+        } else {
+            //transfer asset from shop to borrower
+            IERC20Upgradeable(params.asset).transferFrom(
+                shop.creator,
+                vars.initiator,
+                params.amount
+            );
+        }
 
-        IERC20Upgradeable(params.asset).transferFrom(
-            shop.creator,
-            vars.initiator,
-            params.amount
-        );
         emit Borrow(
             vars.initiator,
             params.asset,
@@ -268,14 +289,7 @@ library BorrowLogic {
         IConfigProvider configProvider,
         mapping(address => DataTypes.ReservesInfo) storage reservesData,
         DataTypes.ExecuteRepayParams memory params
-    )
-        external
-        returns (
-            uint256,
-            uint256,
-            bool
-        )
-    {
+    ) external returns (uint256, uint256, bool) {
         return _repay(configProvider, reservesData, params);
     }
 
@@ -289,14 +303,7 @@ library BorrowLogic {
         IConfigProvider configProvider,
         mapping(address => DataTypes.ReservesInfo) storage reservesData,
         DataTypes.ExecuteBatchRepayParams memory params
-    )
-        external
-        returns (
-            uint256[] memory,
-            uint256[] memory,
-            bool[] memory
-        )
-    {
+    ) external returns (uint256[] memory, uint256[] memory, bool[] memory) {
         require(
             params.loanIds.length == params.amounts.length,
             "inconsistent amounts length"
@@ -314,7 +321,8 @@ library BorrowLogic {
                     initiator: params.initiator,
                     loanId: params.loanIds[i],
                     amount: params.amounts[i],
-                    shopCreator: params.shopCreator
+                    shopCreator: params.shopCreator,
+                    isNative: params.isNative
                 })
             );
         }
@@ -328,11 +336,7 @@ library BorrowLogic {
         DataTypes.ExecuteRepayParams memory params
     )
         internal
-        returns (
-            uint256 repayAmount,
-            uint256 feeAmount,
-            bool isFullRepay
-        )
+        returns (uint256 repayAmount, uint256 feeAmount, bool isFullRepay)
     {
         RepayLocalVars memory vars;
 
@@ -392,20 +396,44 @@ library BorrowLogic {
                 vars.repayAmount
             );
         }
-        // transfer erc20 to shopCreator
-        IERC20Upgradeable(loanData.reserveAsset).safeTransferFrom(
-            vars.initiator,
-            params.shopCreator,
-            vars.repayAmount - vars.feeAmount
-        );
-        if (vars.feeAmount > 0) {
-            // transfer platform fee
-            if (configProvider.platformFeeReceiver() != address(this)) {
-                IERC20Upgradeable(loanData.reserveAsset).safeTransferFrom(
-                    vars.initiator,
-                    configProvider.platformFeeReceiver(),
+        if (
+            loanData.reserveAsset == IConfigProvider(configProvider).weth() &&
+            params.isNative
+        ) {
+            require(
+                msg.value == vars.repayAmount,
+                Errors.LP_INVALID_ETH_AMOUNT
+            );
+            // Transfer principal-plus-interest-minus-fees (ETH) to shop
+            TransferHelper.safeTransferETH(
+                IConfigProvider(configProvider).weth(),
+                params.shopCreator,
+                vars.repayAmount - vars.feeAmount
+            );
+            if (vars.feeAmount > 0) {
+                // Transfer fees (ETH) to admins
+                TransferHelper.safeTransferETH(
+                    IConfigProvider(configProvider).weth(),
+                    IConfigProvider(configProvider).platformFeeReceiver(),
                     vars.feeAmount
                 );
+            }
+        } else {
+            // transfer erc20 to shopCreator
+            IERC20Upgradeable(loanData.reserveAsset).safeTransferFrom(
+                vars.initiator,
+                params.shopCreator,
+                vars.repayAmount - vars.feeAmount
+            );
+            if (vars.feeAmount > 0) {
+                // transfer platform fee
+                if (configProvider.platformFeeReceiver() != address(this)) {
+                    IERC20Upgradeable(loanData.reserveAsset).safeTransferFrom(
+                        vars.initiator,
+                        configProvider.platformFeeReceiver(),
+                        vars.feeAmount
+                    );
+                }
             }
         }
 

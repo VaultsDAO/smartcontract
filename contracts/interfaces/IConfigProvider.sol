@@ -51,4 +51,6 @@ interface IConfigProvider {
     function interestDuration() external view returns (uint256);
 
     function minBidDeltaPercentage() external view returns (uint256);
+
+    function weth() external view returns (address);
 }

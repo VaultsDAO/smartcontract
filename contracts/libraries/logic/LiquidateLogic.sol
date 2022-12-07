@@ -214,11 +214,24 @@ library LiquidateLogic {
         );
 
         // lock highest bidder bid price amount to lend pool
-        IERC20Upgradeable(loanData.reserveAsset).safeTransferFrom(
-            vars.initiator,
-            address(this),
-            params.bidPrice
-        );
+        if (
+            loanData.reserveAsset == IConfigProvider(configProvider).weth() &&
+            params.isNative
+        ) {
+            //check msg.value enough
+            require(msg.value == params.bidPrice, Errors.LP_INVALID_ETH_AMOUNT);
+            //convert eth -> weth
+            TransferHelper.convertWETHToETH(
+                IConfigProvider(configProvider).weth(),
+                msg.value
+            );
+        } else {
+            IERC20Upgradeable(loanData.reserveAsset).safeTransferFrom(
+                vars.initiator,
+                address(this),
+                params.bidPrice
+            );
+        }
 
         // transfer (return back) last bid price amount to previous bidder from lend pool
         if (loanData.bidderAddress != address(0)) {
@@ -366,20 +379,48 @@ library LiquidateLogic {
         (remainAmount, repayPrincipal, interest, fee) = IShopLoan(vars.poolLoan)
             .redeemLoan(vars.initiator, vars.loanId, vars.repayAmount);
 
-        // transfer repayAmount - fee from borrower to shop
-        // transfer erc20 to shopCreator
-        IERC20Upgradeable(loanData.reserveAsset).safeTransferFrom(
-            vars.initiator,
-            params.shopCreator,
-            vars.repayAmount - fee
-        );
-        if (fee > 0) {
-            // transfer platform fee
+        if (
+            IReserveOracleGetter(configProvider.reserveOracle()).weth() ==
+            loanData.reserveAsset &&
+            params.isNative
+        ) {
+            //
+            require(
+                msg.value == vars.repayAmount,
+                Errors.LP_INVALID_ETH_AMOUNT
+            );
+            //convert eth -> weth
+            TransferHelper.convertWETHToETH(
+                IConfigProvider(configProvider).weth(),
+                msg.value
+            );
+            // transfer repayAmount - fee from factory to shopCreator
+            IERC20Upgradeable(loanData.reserveAsset).safeTransfer(
+                params.shopCreator,
+                vars.repayAmount - fee
+            );
+            if (fee > 0) {
+                // transfer platform fee from factory
+                IERC20Upgradeable(loanData.reserveAsset).safeTransfer(
+                    configProvider.platformFeeReceiver(),
+                    fee
+                );
+            }
+        } else {
+            // transfer repayAmount - fee from borrower to shopCreator
             IERC20Upgradeable(loanData.reserveAsset).safeTransferFrom(
                 vars.initiator,
-                configProvider.platformFeeReceiver(),
-                fee
+                params.shopCreator,
+                vars.repayAmount - fee
             );
+            if (fee > 0) {
+                // transfer platform fee
+                IERC20Upgradeable(loanData.reserveAsset).safeTransferFrom(
+                    vars.initiator,
+                    configProvider.platformFeeReceiver(),
+                    fee
+                );
+            }
         }
 
         if (loanData.bidderAddress != address(0)) {

@@ -5,6 +5,8 @@ import {OwnableUpgradeable} from "../openzeppelin/contracts-upgradeable/access/O
 import {Errors} from "../libraries/helpers/Errors.sol";
 
 contract ConfigProvider is OwnableUpgradeable {
+    //weth address
+    address public weth;
     /// @notice nft oracle
     address public nftOracle;
     /// @notice reserve oracle
@@ -61,9 +63,10 @@ contract ConfigProvider is OwnableUpgradeable {
 
     //end event
 
-    function initialize() external initializer {
+    function initialize(address _weth) external initializer {
         __Ownable_init();
         //
+        weth = _weth;
         loanMaxDuration = 365 days;
         platformFeePercentage = 100; // 1%
         platformFeeReceiver = msg.sender;
@@ -131,10 +134,7 @@ contract ConfigProvider is OwnableUpgradeable {
         emit RedeemDurationSet(_value);
     }
 
-    function setMinBidDeltaPercentage(uint256 _value)
-        external
-        onlyOwner
-    {
+    function setMinBidDeltaPercentage(uint256 _value) external onlyOwner {
         minBidDeltaPercentage = _value;
         emit MinBidDeltaPercentageSet(_value);
     }
@@ -162,10 +162,9 @@ contract ConfigProvider is OwnableUpgradeable {
         bnftRegistry = _bnftRegistry;
     }
 
-    function setUserClaimRegistry(address _userClaimRegistry)
-        external
-        onlyOwner
-    {
+    function setUserClaimRegistry(
+        address _userClaimRegistry
+    ) external onlyOwner {
         require(_userClaimRegistry != address(0), "cannot go to 0 address");
         userClaimRegistry = _userClaimRegistry;
         emit UserClaimRegistrySet(_userClaimRegistry);
