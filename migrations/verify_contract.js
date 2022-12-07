@@ -12,7 +12,7 @@ module.exports = async function (deployData, config, contractName, contractAddre
             if (config.network == 'goerli' || config.network == 'mainnet') {
                 await sleep(24000)
             } else {
-                await sleep(2000)
+                await sleep(6000)
             }
             config._ = ['verify', contractName + '@' + contractAddress]
             config['custom-proxy'] = undefined
