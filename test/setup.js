@@ -22,6 +22,9 @@ const GenericLogic = artifacts.require("GenericLogic");
 const LiquidateLogic = artifacts.require("LiquidateLogic");
 const ValidationLogic = artifacts.require("ValidationLogic");
 
+const CryptoPunksMarket = artifacts.require("CryptoPunksMarket");
+const WrappedPunk = artifacts.require("WrappedPunk");
+
 module.exports = async function (accounts) {
     const [pawnProxyAdminOwner, priceFeedAdmin, platformFeeReceiver, lender, borrower, bidder1, bidder2] = accounts;
     let weth = await MockWETH.new();
@@ -185,6 +188,11 @@ module.exports = async function (accounts) {
 
     reserveOracle = await ReserveOracle.at(proxy.address);
 
+    //     const CryptoPunksMarket = artifacts.require("CryptoPunksMarket");
+    // const WrappedPunk = artifacts.require("WrappedPunk");
+    let cPunk = await CryptoPunksMarket.new()
+    let wPunk = await WrappedPunk.new(cPunk.address)
+
     // config address ---------------------------------------------------------------
     await pawnProxyAdmin.createMultipleProxyImplementation(bnftMultipleUpgradeableProxy.address, bnft.address)
     await pawnProxyAdmin.createMultipleProxyImplementation(receiverMultipleUpgradeableProxy.address, airdropFlashLoanReceiver.address)
@@ -203,15 +211,23 @@ module.exports = async function (accounts) {
     let rs = await bnftRegistry.bNftProxys(testNft.address);
     bnft = await BNFT.at(rs)
 
-    await shopFactory.addNftCollection(testNft.address, 'Test Nft', 10000)
+    await shopFactory.addNftCollection(testNft.address, 'Test Nft', 0)
+    await shopFactory.addNftCollection(wPunk.address, 'WrapPunk', 0)
+
     await mockNFTOracle.addAsset(testNft.address, { from: pawnProxyAdminOwner });
+    await mockNFTOracle.addAsset(wPunk.address, { from: pawnProxyAdminOwner });
+
     await nftOracle.addAsset(testNft.address, mockNFTOracle.address, testNft.address, '10000', { from: pawnProxyAdminOwner });
+    await nftOracle.addAsset(wPunk.address, mockNFTOracle.address, testNft.address, '10000', { from: pawnProxyAdminOwner });
 
     await shopFactory.addReserve(weth.address)
+    
     await shopFactory.addReserve(usdc.address)
     await reserveOracle.addAggregator(usdc.address, mockUSDCChainlinkOracle.address, { from: pawnProxyAdminOwner });
 
     await mockNFTOracle.setAssetData(testNft.address, web3.utils.toWei('0.1', 'ether'), { from: priceFeedAdmin });
+    await mockNFTOracle.setAssetData(wPunk.address, web3.utils.toWei('0.1', 'ether'), { from: priceFeedAdmin });
+
     await mockUSDCChainlinkOracle.mockAddAnswer(1, web3.utils.toWei('0.001', 'ether'), 1666099852, 1666099852, 1);
 
     // WETHGateway
@@ -250,6 +266,8 @@ module.exports = async function (accounts) {
         mockUSDCChainlinkOracle: mockUSDCChainlinkOracle,
         reserveOracle: reserveOracle,
         wethGateway: wethGateway,
+        cPunk: cPunk,
+        wPunk: wPunk,
         accounts: {
             pawnProxyAdminOwner: pawnProxyAdminOwner,
             priceFeedAdmin: priceFeedAdmin,
