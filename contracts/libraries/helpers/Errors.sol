@@ -76,6 +76,7 @@ library Errors {
     string public constant LP_REPAY_AMOUNT_NOT_ENOUGH = "421";
     string public constant LP_NFT_ALREADY_INITIALIZED = "422"; // 'Nft has already been initialized'
     string public constant LP_INVALID_ETH_AMOUNT = "423";
+    string public constant LP_INVALID_REPAY_AMOUNT = "424";
 
     //lend pool loan errors
     string public constant LPL_INVALID_LOAN_STATE = "480";

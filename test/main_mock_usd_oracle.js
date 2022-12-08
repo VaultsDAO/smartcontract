@@ -36,7 +36,7 @@ contract("Factory", function (accounts) {
     let nftOracle = deployment.nftOracle
     let mockUSDCChainlinkOracle = deployment.mockUSDCChainlinkOracle
     let reserveOracle = deployment.reserveOracle
-    let wethGateway = deployment.wethGateway
+
 
     let mockChainlinkBaseUSD = await MockChainlinkBaseUSD.new(18, mockUSDCChainlinkOracle.address)
 

@@ -5,7 +5,7 @@ const IWETH = artifacts.require("IWETH");
 const ReserveOracle = artifacts.require("ReserveOracle");
 const BNFTRegistry = artifacts.require("BNFTRegistry");
 const ShopFactory = artifacts.require("ShopFactory");
-const WETHGateway = artifacts.require("WETHGateway");
+
 const PawnNFTOracle = artifacts.require("PawnNFTOracle");
 const MockNFTOracle = artifacts.require("MockNFTOracle");
 const MockNFT = artifacts.require("MockNFT");
@@ -27,7 +27,6 @@ module.exports = async function (deployer, network) {
     let shopFactory = await ShopFactory.at(deployData['ShopFactoryProxy']);
     let mockNFTOracle = await MockNFTOracle.at(deployData['MockNFTOracleProxy']);
     let nftOracle = await PawnNFTOracle.at(deployData['PawnNFTOracleProxy']);
-    let wethGateway = await WETHGateway.at(deployData['WETHGatewayProxy']);
     // setup data
     {
       // for nfts
@@ -78,13 +77,6 @@ module.exports = async function (deployer, network) {
             console.log('nftOracle.addAsset', nftIns.address, '...Done')
           } catch (ex) {
             console.log('nftOracle.addAsset', nftIns.address, '...Failed', ex.toString())
-          }
-          try {
-            await wethGateway.authorizeLendPoolNFT.estimateGas([nftIns.address])
-            await wethGateway.authorizeLendPoolNFT([nftIns.address])
-            console.log('wethGateway.authorizeLendPoolNFT', [nftIns.address], '...Done')
-          } catch (ex) {
-            console.log('wethGateway.authorizeLendPoolNFT', [nftIns.address], '...Failed')
           }
           collection.Finished = true
           await fs.writeFileSync(fileName, JSON.stringify(deployData))

@@ -179,7 +179,6 @@ interface IShop {
 
     function borrowETH(
         uint256 shopId,
-        address reserveAsset,
         uint256 amount,
         address nftAsset,
         uint256 nftTokenId,
@@ -197,7 +196,6 @@ interface IShop {
 
     function batchBorrowETH(
         uint256 shopId,
-        address[] calldata assets,
         uint256[] calldata amounts,
         address[] calldata nftAssets,
         uint256[] calldata nftTokenIds,
@@ -218,7 +216,7 @@ interface IShop {
     function repayETH(
         uint256 loanId,
         uint256 amount
-    ) external returns (uint256, uint256, bool);
+    ) external payable returns (uint256, uint256, bool);
 
     function batchRepay(
         uint256 shopId,
@@ -230,7 +228,10 @@ interface IShop {
         uint256 shopId,
         uint256[] calldata loanIds,
         uint256[] calldata amounts
-    ) external returns (uint256[] memory, uint256[] memory, bool[] memory);
+    )
+        external
+        payable
+        returns (uint256[] memory, uint256[] memory, bool[] memory);
 
     /**
      * @dev Function to auction a non-healthy position collateral-wise
@@ -248,7 +249,7 @@ interface IShop {
         uint256 loanId,
         uint256 bidPrice,
         address onBehalfOf
-    ) external;
+    ) external payable;
 
     /**
      * @notice Redeem a NFT loan which state is in Auction
@@ -275,6 +276,7 @@ interface IShop {
         uint256 bidFine
     )
         external
+        payable
         returns (
             uint256 remainAmount,
             uint256 repayPrincipal,

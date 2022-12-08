@@ -72,11 +72,9 @@ contract("Factory", function (accounts) {
     let borrowAmount1 = new BN(web3.utils.toWei('0.01', 'ether'))
     let borrowAmount2 = new BN(web3.utils.toWei('0.02', 'ether'))
 
-    preETHBalances = await utils.logPreETHBalances(preETHBalances, testAddress)
-    preWETHBalances = await utils.logPreBalances(preWETHBalances, weth, testAddress)
-
-    rs = await shopFactory.batchBorrowETH(
+    rs = await shopFactory.batchBorrow(
       '1',
+      [weth.address, weth.address],
       [borrowAmount1, borrowAmount2],
       [testNft.address, testNft.address],
       ['1', '2'],

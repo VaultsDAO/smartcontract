@@ -5,7 +5,7 @@ const IWETH = artifacts.require("IWETH");
 const ReserveOracle = artifacts.require("ReserveOracle");
 const BNFTRegistry = artifacts.require("BNFTRegistry");
 const ShopFactory = artifacts.require("ShopFactory");
-const WETHGateway = artifacts.require("WETHGateway");
+
 const PawnNFTOracle = artifacts.require("PawnNFTOracle");
 const MockNFTOracle = artifacts.require("MockNFTOracle");
 const MockNFT = artifacts.require("MockNFT");

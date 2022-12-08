@@ -57,13 +57,19 @@ contract("Factory", function (accounts) {
 
     //faucet
     await weth.deposit({ value: web3.utils.toWei('0.2', 'ether'), from: lender })
+    await weth.deposit({ value: web3.utils.toWei('0.2', 'ether'), from: borrower })
+    await weth.deposit({ value: web3.utils.toWei('0.2', 'ether'), from: bidder1 })
+    await weth.deposit({ value: web3.utils.toWei('0.2', 'ether'), from: bidder2 })
 
     await weth.approve(shopFactory.address, web3.utils.toWei('1000', 'ether'), { from: lender })
+    await weth.approve(shopFactory.address, web3.utils.toWei('1000', 'ether'), { from: borrower })
+    await weth.approve(shopFactory.address, web3.utils.toWei('1000', 'ether'), { from: bidder1 })
+    await weth.approve(shopFactory.address, web3.utils.toWei('1000', 'ether'), { from: bidder2 })
 
     await testNft.mint(borrower, '1', { from: borrower });
     await testNft.mint(borrower, '2', { from: borrower });
 
-    //========================borrow ETH
+    //========================borrow 
     await testNft.setApprovalForAll(shopFactory.address, true, { from: borrower });
 
     let borrowAmount1 = new BN(web3.utils.toWei('0.01', 'ether'))
@@ -72,20 +78,21 @@ contract("Factory", function (accounts) {
     preETHBalances = await utils.logPreETHBalances(preETHBalances, testAddress)
     preWETHBalances = await utils.logPreBalances(preWETHBalances, weth, testAddress)
 
-    rs = await shopFactory.batchBorrowETH(
+    rs = await shopFactory.batchBorrow(
       '1',
+      [weth.address, weth.address],
       [borrowAmount1, borrowAmount2],
       [testNft.address, testNft.address],
       ['1', '2'],
       borrower,
       { from: borrower }
     );
-    let gasCost = await utils.gasCost(rs);
     let logs = utils.getResultFromLogs(Ishop, rs.receipt.rawLogs, 'Borrow')
     let loanId1 = logs[0].loanId
+    let loanId2 = logs[1].loanId
 
-    //verify borrower balance (borrowAmount1 + borrowAmount2 - gasUsed)
-    assert.isTrue(await utils.verifyETHBalance(borrower, preETHBalances[borrower], borrowAmount1.add(borrowAmount2), gasCost))
+    //verify borrower balance (borrowAmount1 + borrowAmount2 )
+    assert.isTrue(await utils.verifyBalance(weth, borrower, preWETHBalances[borrower], borrowAmount1.add(borrowAmount2), 0))
     //verify lender balance ( -(borrowAmount1 + borrowAmount2))
     assert.isTrue(await utils.verifyBalance(weth, lender, preWETHBalances[lender], 0, borrowAmount1.add(borrowAmount2)))
 

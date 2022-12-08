@@ -35,7 +35,5 @@ module.exports = async function (deployer, network) {
     console.log('truffle run verify ShopLoan@' + deployData['ShopLoanProxy'] + ' --custom-proxy TransparentUpgradeableProxy --network ' + network)
     console.log('truffle run verify ShopFactory@' + deployData['ShopFactory'] + ' --network ' + network)
     console.log('truffle run verify ShopFactory@' + deployData['ShopFactoryProxy'] + ' --custom-proxy TransparentUpgradeableProxy --network ' + network)
-    console.log('truffle run verify WETHGateway@' + deployData['WETHGateway'] + ' --network ' + network)
-    console.log('truffle run verify WETHGateway@' + deployData['WETHGatewayProxy'] + ' --custom-proxy TransparentUpgradeableProxy --network ' + network)
   }
 };

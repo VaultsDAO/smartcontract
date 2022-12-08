@@ -1,5 +1,5 @@
 const Ishop = artifacts.require("Ishop");
-const truffleAssert = require('truffle-assertions');
+
 var BN = web3.utils.BN;
 
 var utils = require('./utils.js')
@@ -55,56 +55,39 @@ contract("Factory", function (accounts) {
     )
 
     //faucet
-    //await weth.deposit({ value: web3.utils.toWei('0.2', 'ether'), from: lender })
+    await weth.deposit({ value: web3.utils.toWei('0.2', 'ether'), from: lender })
+    await weth.deposit({ value: web3.utils.toWei('0.2', 'ether'), from: borrower })
 
-    // await weth.approve(shopFactory.address, web3.utils.toWei('1000', 'ether'), { from: lender })
+    await weth.approve(shopFactory.address, web3.utils.toWei('1000', 'ether'), { from: lender })
+    await weth.approve(shopFactory.address, web3.utils.toWei('1000', 'ether'), { from: borrower })
 
     await testNft.mint(borrower, '1', { from: borrower });
     await testNft.mint(borrower, '2', { from: borrower });
 
-    //========================borrow ETH
-
+    //========================borrow 
+    await testNft.setApprovalForAll(shopFactory.address, true, { from: borrower });
 
     let borrowAmount1 = new BN(web3.utils.toWei('0.01', 'ether'))
     let borrowAmount2 = new BN(web3.utils.toWei('0.02', 'ether'))
 
-
-    await weth.approve(shopFactory.address, web3.utils.toWei('1000', 'ether'), { from: lender });
-    //revert  caller is not token owner nor approved
-    await truffleAssert.reverts(
-      await shopFactory.batchBorrowETH(
-        '1',
-        [borrowAmount1, borrowAmount2],
-        [testNft.address, testNft.address],
-        ['1', '2'],
-        borrower,
-        { from: borrower }
-      ),
-    );
-
-
-    await testNft.setApprovalForAll(shopFactory.address, true, { from: borrower });
-
-
     preETHBalances = await utils.logPreETHBalances(preETHBalances, testAddress)
     preWETHBalances = await utils.logPreBalances(preWETHBalances, weth, testAddress)
 
-    rs = await shopFactory.batchBorrowETH(
+    rs = await shopFactory.batchBorrow(
       '1',
+      [weth.address, weth.address],
       [borrowAmount1, borrowAmount2],
       [testNft.address, testNft.address],
       ['1', '2'],
       borrower,
       { from: borrower }
     );
-
-    let gasCost = await utils.gasCost(rs);
     let logs = utils.getResultFromLogs(Ishop, rs.receipt.rawLogs, 'Borrow')
     let loanId1 = logs[0].loanId
     let loanId2 = logs[1].loanId
 
-    //verify borrower balance (borrowAmount1 + borrowAmount2 - gasUsed)
-    assert.isTrue(await utils.verifyETHBalance(borrower, preETHBalances[borrower], borrowAmount1.add(borrowAmount2), gasCost))
+    //verify borrower balance (borrowAmount1 + borrowAmount2 )
+    assert.isTrue(await utils.verifyBalance(weth, borrower, preWETHBalances[borrower], borrowAmount1.add(borrowAmount2), 0))
     //verify lender balance ( -(borrowAmount1 + borrowAmount2))
     assert.isTrue(await utils.verifyBalance(weth, lender, preWETHBalances[lender], 0, borrowAmount1.add(borrowAmount2)))
 
@@ -113,96 +96,45 @@ contract("Factory", function (accounts) {
     assert.isTrue(await utils.verifyOwnerNft(testNft, 2, bnft.address))
 
     //========================repay ETH
-    //loan1
-    //partial repay
     preETHBalances = await utils.logPreETHBalances(preETHBalances, testAddress)
     preWETHBalances = await utils.logPreBalances(preWETHBalances, weth, testAddress)
+
     rs = await shopFactory.getNftDebtData(
       loanId1,
       { from: borrower }
     );
 
-    let repayAmount = new BN(rs.totalDebt / 2)
+    let totalDebt1 = rs.totalDebt
 
-    rs = await shopFactory.repayETH(
-      loanId1,
-      repayAmount,
-      { value: repayAmount, from: borrower }
-    );
-    gasCost = await utils.gasCost(rs);
-    logs = utils.getResultFromLogs(Ishop, rs.receipt.rawLogs, 'Repay')
-    let fee = logs[0].feeAmount
-
-    //verify borrower balance (-(repayAmount + gasCost))
-    assert.isTrue(await utils.verifyETHBalance(borrower, preETHBalances[borrower], 0, gasCost.add(repayAmount)))
-
-    //verify lender balance (repayAmount-fee)
-    assert.isTrue(await utils.verifyBalance(weth, lender, preWETHBalances[lender], repayAmount, fee))
-
-    //verify owner nft(bnft)
-    assert.isTrue(await utils.verifyOwnerNft(testNft, 1, bnft.address))
-
-    //repay full
-    preETHBalances = await utils.logPreETHBalances(preETHBalances, testAddress)
-    preWETHBalances = await utils.logPreBalances(preWETHBalances, weth, testAddress)
     rs = await shopFactory.getNftDebtData(
-      loanId1,
+      loanId2,
       { from: borrower }
     );
 
-    repayAmount = new BN(rs.totalDebt)
+    let totalDebt2 = rs.totalDebt
 
-    rs = await shopFactory.repayETH(
-      loanId1,
-      repayAmount,
-      { value: repayAmount, from: borrower }
+    rs = await shopFactory.batchRepay(
+      '1',
+      [loanId1, loanId2],
+      [totalDebt1, totalDebt2],
+      { from: borrower }
     );
-    gasCost = await utils.gasCost(rs);
     logs = utils.getResultFromLogs(Ishop, rs.receipt.rawLogs, 'Repay')
-    fee = logs[0].feeAmount
+    let fee1 = logs[0].feeAmount
+    let fee2 = logs[1].feeAmount
 
     //verify loan status (Repaid)
     assert.isTrue(await utils.verifyLoanState(shopLoan, loanId1, utils.LoanState.Repaid))
+    assert.isTrue(await utils.verifyLoanState(shopLoan, loanId2, utils.LoanState.Repaid))
 
-    //verify borrower balance (-(repayAmount + gasCost))
-    assert.isTrue(await utils.verifyETHBalance(borrower, preETHBalances[borrower], 0, gasCost.add(repayAmount)))
+    //verify borrower balance (-totalDebt)
+    assert.isTrue(await utils.verifyBalance(weth, borrower, preWETHBalances[borrower], 0, totalDebt1.add(totalDebt2)))
 
-    //verify lender balance (repayAmount-fee)
-    assert.isTrue(await utils.verifyBalance(weth, lender, preWETHBalances[lender], repayAmount, fee))
+    //verify lender balance (totalDebt-fee)
+    assert.isTrue(await utils.verifyBalance(weth, lender, preWETHBalances[lender], totalDebt1.add(totalDebt2), fee1.add(fee2)))
 
     //verify owner nft(borrower)
     assert.isTrue(await utils.verifyOwnerNft(testNft, 1, borrower))
-
-
-    //loan2
-    preETHBalances = await utils.logPreETHBalances(preETHBalances, testAddress)
-    preWETHBalances = await utils.logPreBalances(preWETHBalances, weth, testAddress)
-    rs = await shopFactory.getNftDebtData(
-      loanId2,
-      { from: borrower }
-    );
-
-    totalDebt = rs.totalDebt
-
-    rs = await shopFactory.repayETH(
-      loanId2,
-      totalDebt,
-      { value: totalDebt, from: borrower }
-    );
-    gasCost = await utils.gasCost(rs);
-    logs = utils.getResultFromLogs(Ishop, rs.receipt.rawLogs, 'Repay')
-    fee = logs[0].feeAmount
-
-    //verify loan status (Repaid)
-    assert.isTrue(await utils.verifyLoanState(shopLoan, loanId2, utils.LoanState.Repaid))
-
-    //verify borrower balance (-(totalDebt + gasCost))
-    assert.isTrue(await utils.verifyETHBalance(borrower, preETHBalances[borrower], 0, gasCost.add(totalDebt)))
-
-    //verify lender balance (totalDebt-fee)
-    assert.isTrue(await utils.verifyBalance(weth, lender, preWETHBalances[lender], totalDebt, fee))
-
-    //verify owner nft(borrower)
     assert.isTrue(await utils.verifyOwnerNft(testNft, 2, borrower))
 
     return assert.isTrue(true);

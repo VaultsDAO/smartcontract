@@ -14,7 +14,7 @@ const AirdropFlashLoanReceiver = artifacts.require("AirdropFlashLoanReceiver");
 const UserFlashclaimRegistry = artifacts.require("UserFlashclaimRegistry");
 const ShopLoan = artifacts.require("ShopLoan");
 
-const WETHGateway = artifacts.require("WETHGateway");
+
 
 const BorrowLogic = artifacts.require("BorrowLogic");
 const GenericLogic = artifacts.require("GenericLogic");

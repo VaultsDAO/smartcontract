@@ -15,8 +15,8 @@ interface IReserveOracleGetter {
     function getAssetPrice(address asset) external view returns (uint256);
 
     // get twap price depending on _period
-    function getTwapPrice(address _priceFeedKey, uint256 _interval)
-        external
-        view
-        returns (uint256);
+    function getTwapPrice(
+        address _priceFeedKey,
+        uint256 _interval
+    ) external view returns (uint256);
 }

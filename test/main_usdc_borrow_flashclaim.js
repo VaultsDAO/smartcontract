@@ -35,7 +35,7 @@ contract("Factory", function (accounts) {
     let nftOracle = deployment.nftOracle
     let mockUSDCChainlinkOracle = deployment.mockUSDCChainlinkOracle
     let reserveOracle = deployment.reserveOracle
-    let wethGateway = deployment.wethGateway
+
 
     // for tesing ---------------------------------------------------------------
     let preBalances = {}

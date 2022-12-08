@@ -15,7 +15,6 @@ const BNFT = artifacts.require("BNFT");
 const AirdropFlashLoanReceiver = artifacts.require("AirdropFlashLoanReceiver");
 const UserFlashclaimRegistry = artifacts.require("UserFlashclaimRegistry");
 const ShopLoan = artifacts.require("ShopLoan");
-const WETHGateway = artifacts.require("WETHGateway");
 
 const BorrowLogic = artifacts.require("BorrowLogic");
 const GenericLogic = artifacts.require("GenericLogic");
@@ -221,7 +220,7 @@ module.exports = async function (accounts) {
     await nftOracle.addAsset(wPunk.address, mockNFTOracle.address, testNft.address, '10000', { from: pawnProxyAdminOwner });
 
     await shopFactory.addReserve(weth.address)
-    
+
     await shopFactory.addReserve(usdc.address)
     await reserveOracle.addAggregator(usdc.address, mockUSDCChainlinkOracle.address, { from: pawnProxyAdminOwner });
 
@@ -230,24 +229,6 @@ module.exports = async function (accounts) {
 
     await mockUSDCChainlinkOracle.mockAddAnswer(1, web3.utils.toWei('0.001', 'ether'), 1666099852, 1666099852, 1);
 
-    // WETHGateway
-    let wethGateway = await WETHGateway.new();
-
-    initializeData = wethGateway.contract.methods.initialize(
-        provider.address,
-        weth.address,
-    ).encodeABI();
-
-    proxy = await TransparentUpgradeableProxy.new(
-        wethGateway.address,
-        pawnProxyAdmin.address,
-        initializeData,
-        { from: pawnProxyAdminOwner },
-    );
-
-    wethGateway = await WETHGateway.at(proxy.address);
-
-    await wethGateway.authorizeLendPoolNFT([testNft.address], { from: pawnProxyAdminOwner })
 
     return {
         weth: weth,
@@ -265,7 +246,6 @@ module.exports = async function (accounts) {
         nftOracle: nftOracle,
         mockUSDCChainlinkOracle: mockUSDCChainlinkOracle,
         reserveOracle: reserveOracle,
-        wethGateway: wethGateway,
         cPunk: cPunk,
         wPunk: wPunk,
         accounts: {

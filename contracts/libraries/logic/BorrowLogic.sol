@@ -21,6 +21,7 @@ import "../../openzeppelin/contracts-upgradeable/token/ERC721/extensions/IERC721
 import {GenericLogic} from "./GenericLogic.sol";
 import {ValidationLogic} from "./ValidationLogic.sol";
 import {ShopConfiguration} from "../configuration/ShopConfiguration.sol";
+import {IReserveOracleGetter} from "../../interfaces/IReserveOracleGetter.sol";
 
 /**
  * @title BorrowLogic library
@@ -229,7 +230,6 @@ library BorrowLogic {
                 address(this), // shopFactory
                 params.nftTokenId
             );
-
             vars.loanId = IShopLoan(vars.loanAddress).createLoan(
                 shop.id,
                 params.onBehalfOf,
@@ -242,8 +242,9 @@ library BorrowLogic {
         } else {
             revert("not supported");
         }
+
         if (
-            params.asset == IConfigProvider(configProvider).weth() &&
+            GenericLogic.isWETHAddress(configProvider, params.asset) &&
             params.isNative
         ) {
             //transfer weth from shop to contract
@@ -254,7 +255,7 @@ library BorrowLogic {
             );
             //convert weth to eth and transfer to borrower
             TransferHelper.transferWETH2ETH(
-                IConfigProvider(configProvider).weth(),
+                GenericLogic.getWETHAddress(configProvider),
                 vars.initiator,
                 params.amount
             );
@@ -354,7 +355,6 @@ library BorrowLogic {
         ];
 
         vars.borrowAmount = loanData.borrowAmount;
-
         ValidationLogic.validateRepay(
             reserveData,
             loanData,
@@ -382,7 +382,6 @@ library BorrowLogic {
             vars.isUpdate = true;
             vars.repayAmount = params.amount;
         }
-
         if (vars.isUpdate) {
             IShopLoan(vars.loanManager).partialRepayLoan(
                 vars.initiator,
@@ -397,23 +396,17 @@ library BorrowLogic {
             );
         }
         if (
-            loanData.reserveAsset == IConfigProvider(configProvider).weth() &&
+            GenericLogic.isWETHAddress(configProvider, loanData.reserveAsset) &&
             params.isNative
         ) {
-            require(
-                msg.value == vars.repayAmount,
-                Errors.LP_INVALID_ETH_AMOUNT
-            );
-            // Transfer principal-plus-interest-minus-fees (ETH) to shop
-            TransferHelper.safeTransferETH(
-                IConfigProvider(configProvider).weth(),
+            // transfer repayAmount - fee from factory to shopCreator
+            IERC20Upgradeable(loanData.reserveAsset).safeTransfer(
                 params.shopCreator,
                 vars.repayAmount - vars.feeAmount
             );
             if (vars.feeAmount > 0) {
-                // Transfer fees (ETH) to admins
-                TransferHelper.safeTransferETH(
-                    IConfigProvider(configProvider).weth(),
+                // transfer platform fee from factory
+                IERC20Upgradeable(loanData.reserveAsset).safeTransfer(
                     IConfigProvider(configProvider).platformFeeReceiver(),
                     vars.feeAmount
                 );

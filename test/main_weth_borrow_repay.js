@@ -1,5 +1,5 @@
 const Ishop = artifacts.require("Ishop");
-const truffleAssert = require('truffle-assertions');
+
 var BN = web3.utils.BN;
 
 var utils = require('./utils.js')
@@ -55,56 +55,39 @@ contract("Factory", function (accounts) {
     )
 
     //faucet
-    //await weth.deposit({ value: web3.utils.toWei('0.2', 'ether'), from: lender })
+    await weth.deposit({ value: web3.utils.toWei('0.2', 'ether'), from: lender })
+    await weth.deposit({ value: web3.utils.toWei('0.2', 'ether'), from: borrower })
 
-    // await weth.approve(shopFactory.address, web3.utils.toWei('1000', 'ether'), { from: lender })
+    await weth.approve(shopFactory.address, web3.utils.toWei('1000', 'ether'), { from: lender })
+    await weth.approve(shopFactory.address, web3.utils.toWei('1000', 'ether'), { from: borrower })
 
     await testNft.mint(borrower, '1', { from: borrower });
     await testNft.mint(borrower, '2', { from: borrower });
 
-    //========================borrow ETH
-
+    //========================borrow 
+    await testNft.setApprovalForAll(shopFactory.address, true, { from: borrower });
 
     let borrowAmount1 = new BN(web3.utils.toWei('0.01', 'ether'))
     let borrowAmount2 = new BN(web3.utils.toWei('0.02', 'ether'))
 
-
-    await weth.approve(shopFactory.address, web3.utils.toWei('1000', 'ether'), { from: lender });
-    //revert  caller is not token owner nor approved
-    await truffleAssert.reverts(
-      await shopFactory.batchBorrowETH(
-        '1',
-        [borrowAmount1, borrowAmount2],
-        [testNft.address, testNft.address],
-        ['1', '2'],
-        borrower,
-        { from: borrower }
-      ),
-    );
-
-
-    await testNft.setApprovalForAll(shopFactory.address, true, { from: borrower });
-
-
     preETHBalances = await utils.logPreETHBalances(preETHBalances, testAddress)
     preWETHBalances = await utils.logPreBalances(preWETHBalances, weth, testAddress)
 
-    rs = await shopFactory.batchBorrowETH(
+    rs = await shopFactory.batchBorrow(
       '1',
+      [weth.address, weth.address],
       [borrowAmount1, borrowAmount2],
       [testNft.address, testNft.address],
       ['1', '2'],
       borrower,
       { from: borrower }
     );
-
-    let gasCost = await utils.gasCost(rs);
     let logs = utils.getResultFromLogs(Ishop, rs.receipt.rawLogs, 'Borrow')
     let loanId1 = logs[0].loanId
     let loanId2 = logs[1].loanId
 
-    //verify borrower balance (borrowAmount1 + borrowAmount2 - gasUsed)
-    assert.isTrue(await utils.verifyETHBalance(borrower, preETHBalances[borrower], borrowAmount1.add(borrowAmount2), gasCost))
+    //verify borrower balance (borrowAmount1 + borrowAmount2 )
+    assert.isTrue(await utils.verifyBalance(weth, borrower, preWETHBalances[borrower], borrowAmount1.add(borrowAmount2), 0))
     //verify lender balance ( -(borrowAmount1 + borrowAmount2))
     assert.isTrue(await utils.verifyBalance(weth, lender, preWETHBalances[lender], 0, borrowAmount1.add(borrowAmount2)))
 
@@ -124,17 +107,16 @@ contract("Factory", function (accounts) {
 
     let repayAmount = new BN(rs.totalDebt / 2)
 
-    rs = await shopFactory.repayETH(
+    rs = await shopFactory.repay(
       loanId1,
       repayAmount,
-      { value: repayAmount, from: borrower }
+      { from: borrower }
     );
-    gasCost = await utils.gasCost(rs);
     logs = utils.getResultFromLogs(Ishop, rs.receipt.rawLogs, 'Repay')
     let fee = logs[0].feeAmount
 
-    //verify borrower balance (-(repayAmount + gasCost))
-    assert.isTrue(await utils.verifyETHBalance(borrower, preETHBalances[borrower], 0, gasCost.add(repayAmount)))
+    //verify borrower balance (-repayAmount)
+    assert.isTrue(await utils.verifyBalance(weth, borrower, preWETHBalances[borrower], 0, repayAmount))
 
     //verify lender balance (repayAmount-fee)
     assert.isTrue(await utils.verifyBalance(weth, lender, preWETHBalances[lender], repayAmount, fee))
@@ -152,20 +134,19 @@ contract("Factory", function (accounts) {
 
     repayAmount = new BN(rs.totalDebt)
 
-    rs = await shopFactory.repayETH(
+    rs = await shopFactory.repay(
       loanId1,
       repayAmount,
-      { value: repayAmount, from: borrower }
+      { from: borrower }
     );
-    gasCost = await utils.gasCost(rs);
     logs = utils.getResultFromLogs(Ishop, rs.receipt.rawLogs, 'Repay')
     fee = logs[0].feeAmount
 
     //verify loan status (Repaid)
     assert.isTrue(await utils.verifyLoanState(shopLoan, loanId1, utils.LoanState.Repaid))
 
-    //verify borrower balance (-(repayAmount + gasCost))
-    assert.isTrue(await utils.verifyETHBalance(borrower, preETHBalances[borrower], 0, gasCost.add(repayAmount)))
+    //verify borrower balance (-repayAmount)
+    assert.isTrue(await utils.verifyBalance(weth, borrower, preWETHBalances[borrower], 0, repayAmount))
 
     //verify lender balance (repayAmount-fee)
     assert.isTrue(await utils.verifyBalance(weth, lender, preWETHBalances[lender], repayAmount, fee))
@@ -184,20 +165,19 @@ contract("Factory", function (accounts) {
 
     totalDebt = rs.totalDebt
 
-    rs = await shopFactory.repayETH(
+    rs = await shopFactory.repay(
       loanId2,
       totalDebt,
-      { value: totalDebt, from: borrower }
+      { from: borrower }
     );
-    gasCost = await utils.gasCost(rs);
     logs = utils.getResultFromLogs(Ishop, rs.receipt.rawLogs, 'Repay')
     fee = logs[0].feeAmount
 
     //verify loan status (Repaid)
     assert.isTrue(await utils.verifyLoanState(shopLoan, loanId2, utils.LoanState.Repaid))
 
-    //verify borrower balance (-(totalDebt + gasCost))
-    assert.isTrue(await utils.verifyETHBalance(borrower, preETHBalances[borrower], 0, gasCost.add(totalDebt)))
+    //verify borrower balance (-totalDebt )
+    assert.isTrue(await utils.verifyBalance(weth, borrower, preWETHBalances[borrower], 0, totalDebt))
 
     //verify lender balance (totalDebt-fee)
     assert.isTrue(await utils.verifyBalance(weth, lender, preWETHBalances[lender], totalDebt, fee))

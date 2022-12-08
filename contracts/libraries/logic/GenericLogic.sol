@@ -58,15 +58,7 @@ library GenericLogic {
         uint256 loanId,
         address reserveOracle,
         address nftOracle
-    )
-        internal
-        view
-        returns (
-            uint256,
-            uint256,
-            uint256
-        )
-    {
+    ) internal view returns (uint256, uint256, uint256) {
         CalculateLoanDataVars memory vars;
 
         vars.nftLtv = config.getLtv();
@@ -124,7 +116,7 @@ library GenericLogic {
         // all asset price has converted to ETH based, unit is in WEI (18 decimals)
 
         vars.reserveDecimals = reserveData.decimals;
-        vars.reserveUnit = 10**vars.reserveDecimals;
+        vars.reserveUnit = 10 ** vars.reserveDecimals;
 
         vars.reserveUnitPrice = IReserveOracleGetter(reserveOracle)
             .getAssetPrice(reserveAddress);
@@ -156,7 +148,7 @@ library GenericLogic {
 
         if (reserveAddress != address(0)) {
             vars.reserveDecimals = reserveData.decimals;
-            vars.reserveUnit = 10**vars.reserveDecimals;
+            vars.reserveUnit = 10 ** vars.reserveDecimals;
 
             vars.reserveUnitPrice = IReserveOracleGetter(reserveOracle)
                 .getAssetPrice(reserveAddress);
@@ -195,7 +187,9 @@ library GenericLogic {
         uint256 interestDuration;
     }
 
-    function calculateInterestInfo(CalculateInterestInfoVars memory vars)
+    function calculateInterestInfo(
+        CalculateInterestInfoVars memory vars
+    )
         internal
         view
         returns (
@@ -261,16 +255,7 @@ library GenericLogic {
         address reserveAsset,
         DataTypes.ReservesInfo storage reserveData,
         address nftAsset
-    )
-        internal
-        view
-        returns (
-            uint256,
-            uint256,
-            uint256,
-            uint256
-        )
-    {
+    ) internal view returns (uint256, uint256, uint256, uint256) {
         CalcLiquidatePriceLocalVars memory vars;
 
         /*
@@ -326,7 +311,7 @@ library GenericLogic {
             .getAssetPrice(reserveAsset);
 
         vars.nftPriceInReserve =
-            ((10**vars.reserveDecimals) * vars.nftPriceInETH) /
+            ((10 ** vars.reserveDecimals) * vars.nftPriceInETH) /
             vars.reservePriceInETH;
 
         vars.thresholdPrice = vars.nftPriceInReserve.percentMul(
@@ -376,7 +361,7 @@ library GenericLogic {
         vars.reservePriceInETH = IReserveOracleGetter(reserveOracle)
             .getAssetPrice(reserveAsset);
         vars.baseBidFineInReserve =
-            (1 ether * 10**vars.reserveDecimals) /
+            (1 ether * 10 ** vars.reserveDecimals) /
             vars.reservePriceInETH;
 
         vars.minBidFinePct = provider.minBidFine();
@@ -437,13 +422,25 @@ library GenericLogic {
         return availableBorrows;
     }
 
-    function getBNftAddress(IConfigProvider provider, address nftAsset)
-        internal
-        view
-        returns (address bNftAddress)
-    {
+    function getBNftAddress(
+        IConfigProvider provider,
+        address nftAsset
+    ) internal view returns (address bNftAddress) {
         IBNFTRegistry bnftRegistry = IBNFTRegistry(provider.bnftRegistry());
         bNftAddress = bnftRegistry.getBNFTAddresses(nftAsset);
         return bNftAddress;
+    }
+
+    function isWETHAddress(
+        IConfigProvider provider,
+        address asset
+    ) public view returns (bool) {
+        return asset == IReserveOracleGetter(provider.reserveOracle()).weth();
+    }
+
+    function getWETHAddress(
+        IConfigProvider provider
+    ) public view returns (address) {
+        return IReserveOracleGetter(provider.reserveOracle()).weth();
     }
 }

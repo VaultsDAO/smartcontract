@@ -30,7 +30,7 @@ library TransferHelper {
         }
     }
 
-    function convertWETHToETH(address weth, uint256 value) internal {
+    function convertETHToWETH(address weth, uint256 value) internal {
         IWETH(weth).deposit{value: value}();
     }
 

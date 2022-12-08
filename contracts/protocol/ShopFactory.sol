@@ -20,6 +20,8 @@ import {BorrowLogic} from "../libraries/logic/BorrowLogic.sol";
 import {LiquidateLogic} from "../libraries/logic/LiquidateLogic.sol";
 import {GenericLogic} from "../libraries/logic/GenericLogic.sol";
 import {Constants} from "../libraries/configuration/Constants.sol";
+import {TransferHelper} from "../libraries/helpers/TransferHelper.sol";
+import {IReserveOracleGetter} from "../interfaces/IReserveOracleGetter.sol";
 
 contract ShopFactory is
     IShop,
@@ -130,13 +132,20 @@ contract ShopFactory is
 
     function borrowETH(
         uint256 shopId,
-        address asset,
         uint256 amount,
         address nftAsset,
         uint256 nftTokenId,
         address onBehalfOf
     ) external override nonReentrant whenNotPaused {
-        _borrow(shopId, asset, amount, nftAsset, nftTokenId, onBehalfOf, true);
+        _borrow(
+            shopId,
+            GenericLogic.getWETHAddress(IConfigProvider(provider)),
+            amount,
+            nftAsset,
+            nftTokenId,
+            onBehalfOf,
+            true
+        );
     }
 
     function _borrow(
@@ -178,45 +187,6 @@ contract ShopFactory is
         uint256[] calldata nftTokenIds,
         address onBehalfOf
     ) external override nonReentrant whenNotPaused {
-        _batchBorrow(
-            shopId,
-            assets,
-            amounts,
-            nftAssets,
-            nftTokenIds,
-            onBehalfOf,
-            false
-        );
-    }
-
-    function batchBorrowETH(
-        uint256 shopId,
-        address[] calldata assets,
-        uint256[] calldata amounts,
-        address[] calldata nftAssets,
-        uint256[] calldata nftTokenIds,
-        address onBehalfOf
-    ) external override nonReentrant whenNotPaused {
-        _batchBorrow(
-            shopId,
-            assets,
-            amounts,
-            nftAssets,
-            nftTokenIds,
-            onBehalfOf,
-            true
-        );
-    }
-
-    function _batchBorrow(
-        uint256 shopId,
-        address[] calldata assets,
-        uint256[] calldata amounts,
-        address[] calldata nftAssets,
-        uint256[] calldata nftTokenIds,
-        address onBehalfOf,
-        bool isNative
-    ) internal {
         DataTypes.ExecuteBatchBorrowParams memory params;
         params.initiator = _msgSender();
         params.assets = assets;
@@ -224,7 +194,7 @@ contract ShopFactory is
         params.nftAssets = nftAssets;
         params.nftTokenIds = nftTokenIds;
         params.onBehalfOf = onBehalfOf;
-        params.isNative = isNative;
+        params.isNative = false;
 
         BorrowLogic.executeBatchBorrow(
             shops[shopId],
@@ -234,6 +204,26 @@ contract ShopFactory is
             nftsInfo,
             params
         );
+    }
+
+    function batchBorrowETH(
+        uint256 shopId,
+        uint256[] calldata amounts,
+        address[] calldata nftAssets,
+        uint256[] calldata nftTokenIds,
+        address onBehalfOf
+    ) external override nonReentrant whenNotPaused {
+        for (uint256 i = 0; i < nftAssets.length; i++) {
+            _borrow(
+                shopId,
+                GenericLogic.getWETHAddress(IConfigProvider(provider)),
+                amounts[i],
+                nftAssets[i],
+                nftTokenIds[i],
+                onBehalfOf,
+                true
+            );
+        }
     }
 
     /**
@@ -259,11 +249,18 @@ contract ShopFactory is
         uint256 amount
     )
         external
+        payable
         override
         nonReentrant
         whenNotPaused
         returns (uint256, uint256, bool)
     {
+        require(amount == msg.value, Errors.LP_INVALID_ETH_AMOUNT);
+        //convert eth -> weth
+        TransferHelper.convertETHToWETH(
+            GenericLogic.getWETHAddress(IConfigProvider(provider)),
+            msg.value
+        );
         return _repay(loanId, amount, true);
     }
 
@@ -310,11 +307,22 @@ contract ShopFactory is
         uint256[] calldata amounts
     )
         external
+        payable
         override
         nonReentrant
         whenNotPaused
         returns (uint256[] memory, uint256[] memory, bool[] memory)
     {
+        uint256 val = 0;
+        for (uint256 i = 0; i < loanIds.length; i++) {
+            val += amounts[i];
+        }
+        require(val == msg.value, Errors.LP_INVALID_ETH_AMOUNT);
+        //convert eth -> weth
+        TransferHelper.convertETHToWETH(
+            GenericLogic.getWETHAddress(IConfigProvider(provider)),
+            msg.value
+        );
         return _batchRepay(shopId, loanIds, amounts, true);
     }
 
@@ -354,7 +362,13 @@ contract ShopFactory is
         uint256 loanId,
         uint256 bidPrice,
         address onBehalfOf
-    ) external override nonReentrant whenNotPaused {
+    ) external payable override nonReentrant whenNotPaused {
+        require(bidPrice == msg.value, Errors.LP_INVALID_ETH_AMOUNT);
+        //convert eth -> weth
+        TransferHelper.convertETHToWETH(
+            GenericLogic.getWETHAddress(IConfigProvider(provider)),
+            msg.value
+        );
         _auction(loanId, bidPrice, onBehalfOf, true);
     }
 
@@ -409,6 +423,7 @@ contract ShopFactory is
         uint256 bidFine
     )
         external
+        payable
         override
         nonReentrant
         whenNotPaused
@@ -419,6 +434,13 @@ contract ShopFactory is
             uint256 fee
         )
     {
+        require(amount + bidFine == msg.value, Errors.LP_INVALID_ETH_AMOUNT);
+
+        //convert eth -> weth
+        TransferHelper.convertETHToWETH(
+            GenericLogic.getWETHAddress(IConfigProvider(provider)),
+            msg.value
+        );
         return _redeem(loanId, amount, bidFine, true);
     }
 

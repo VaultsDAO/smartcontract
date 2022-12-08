@@ -161,7 +161,6 @@ library LiquidateLogic {
             reserveData,
             loanData.nftAsset
         );
-
         // first time bid need to burn debt tokens and transfer reserve to bTokens
         if (loanData.state == DataTypes.LoanState.Active) {
             // loan's accumulated debt must exceed threshold (heath factor below 1.0)
@@ -215,16 +214,11 @@ library LiquidateLogic {
 
         // lock highest bidder bid price amount to lend pool
         if (
-            loanData.reserveAsset == IConfigProvider(configProvider).weth() &&
+            GenericLogic.isWETHAddress(configProvider, loanData.reserveAsset) &&
             params.isNative
         ) {
-            //check msg.value enough
-            require(msg.value == params.bidPrice, Errors.LP_INVALID_ETH_AMOUNT);
-            //convert eth -> weth
-            TransferHelper.convertWETHToETH(
-                IConfigProvider(configProvider).weth(),
-                msg.value
-            );
+            //auction by eth, already convert to weth in factory
+            //do nothing
         } else {
             IERC20Upgradeable(loanData.reserveAsset).safeTransferFrom(
                 vars.initiator,
@@ -236,8 +230,10 @@ library LiquidateLogic {
         // transfer (return back) last bid price amount to previous bidder from lend pool
         if (loanData.bidderAddress != address(0)) {
             if (
-                IReserveOracleGetter(configProvider.reserveOracle()).weth() ==
-                loanData.reserveAsset
+                GenericLogic.isWETHAddress(
+                    configProvider,
+                    loanData.reserveAsset
+                )
             ) {
                 // transfer (return back eth)  last bid price amount from lend pool to bidder
                 TransferHelper.transferWETH2ETH(
@@ -252,7 +248,6 @@ library LiquidateLogic {
                 );
             }
         }
-
         emit Auction(
             vars.initiator,
             loanData.reserveAsset,
@@ -380,25 +375,15 @@ library LiquidateLogic {
             .redeemLoan(vars.initiator, vars.loanId, vars.repayAmount);
 
         if (
-            IReserveOracleGetter(configProvider.reserveOracle()).weth() ==
-            loanData.reserveAsset &&
+            GenericLogic.isWETHAddress(configProvider, loanData.reserveAsset) &&
             params.isNative
         ) {
-            //
-            require(
-                msg.value == vars.repayAmount,
-                Errors.LP_INVALID_ETH_AMOUNT
-            );
-            //convert eth -> weth
-            TransferHelper.convertWETHToETH(
-                IConfigProvider(configProvider).weth(),
-                msg.value
-            );
             // transfer repayAmount - fee from factory to shopCreator
             IERC20Upgradeable(loanData.reserveAsset).safeTransfer(
                 params.shopCreator,
                 vars.repayAmount - fee
             );
+
             if (fee > 0) {
                 // transfer platform fee from factory
                 IERC20Upgradeable(loanData.reserveAsset).safeTransfer(
@@ -425,8 +410,10 @@ library LiquidateLogic {
 
         if (loanData.bidderAddress != address(0)) {
             if (
-                IReserveOracleGetter(configProvider.reserveOracle()).weth() ==
-                loanData.reserveAsset
+                GenericLogic.isWETHAddress(
+                    configProvider,
+                    loanData.reserveAsset
+                )
             ) {
                 // transfer (return back) last bid price amount from lend pool to bidder
                 TransferHelper.transferWETH2ETH(
@@ -435,18 +422,27 @@ library LiquidateLogic {
                     loanData.bidPrice
                 );
 
-                // transfer bid penalty fine amount(weth) from borrower this contract
-                IERC20Upgradeable(loanData.reserveAsset).safeTransferFrom(
-                    vars.initiator,
-                    address(this),
-                    vars.bidFine
-                );
-                // transfer bid penalty fine amount(eth) from contract to borrower
-                TransferHelper.transferWETH2ETH(
-                    loanData.reserveAsset,
-                    loanData.firstBidderAddress,
-                    vars.bidFine
-                );
+                if (params.isNative) {
+                    // transfer bid penalty fine amount(eth) from contract to borrower
+                    TransferHelper.transferWETH2ETH(
+                        loanData.reserveAsset,
+                        loanData.firstBidderAddress,
+                        vars.bidFine
+                    );
+                } else {
+                    // transfer bid penalty fine amount(weth) from borrower this contract
+                    IERC20Upgradeable(loanData.reserveAsset).safeTransferFrom(
+                        vars.initiator,
+                        address(this),
+                        vars.bidFine
+                    );
+                    // transfer bid penalty fine amount(eth) from contract to borrower
+                    TransferHelper.transferWETH2ETH(
+                        loanData.reserveAsset,
+                        loanData.firstBidderAddress,
+                        vars.bidFine
+                    );
+                }
             } else {
                 // transfer (return back) last bid price amount from lend pool to bidder
                 IERC20Upgradeable(loanData.reserveAsset).safeTransfer(
@@ -573,8 +569,10 @@ library LiquidateLogic {
         // transfer remain amount to borrower
         if (vars.remainAmount > 0) {
             if (
-                IReserveOracleGetter(configProvider.reserveOracle()).weth() ==
-                loanData.reserveAsset
+                GenericLogic.isWETHAddress(
+                    configProvider,
+                    loanData.reserveAsset
+                )
             ) {
                 // transfer (return back) last bid price amount from lend pool to bidder
                 TransferHelper.transferWETH2ETH(

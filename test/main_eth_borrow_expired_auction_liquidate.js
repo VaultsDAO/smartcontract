@@ -1,5 +1,4 @@
 const Ishop = artifacts.require("Ishop");
-const truffleAssert = require('truffle-assertions');
 var BN = web3.utils.BN;
 
 var utils = require('./utils.js')
@@ -32,7 +31,7 @@ contract("Factory", function (accounts) {
     let nftOracle = deployment.nftOracle
     let mockUSDCChainlinkOracle = deployment.mockUSDCChainlinkOracle
     let reserveOracle = deployment.reserveOracle
-    let wethGateway = deployment.wethGateway
+
     //setup loan duration = 1 seconds
     await provider.setMaxLoanDuration(1);
     // for tesing ---------------------------------------------------------------
@@ -65,7 +64,7 @@ contract("Factory", function (accounts) {
     await testNft.mint(borrower, '2', { from: borrower });
 
     //========================borrow ETH
-    await testNft.setApprovalForAll(wethGateway.address, true, { from: borrower });
+    await testNft.setApprovalForAll(shopFactory.address, true, { from: borrower });
 
     let borrowAmount1 = new BN(web3.utils.toWei('0.01', 'ether'))
     let borrowAmount2 = new BN(web3.utils.toWei('0.02', 'ether'))
@@ -73,7 +72,7 @@ contract("Factory", function (accounts) {
     preETHBalances = await utils.logPreETHBalances(preETHBalances, testAddress)
     preWETHBalances = await utils.logPreBalances(preWETHBalances, weth, testAddress)
 
-    rs = await wethGateway.batchBorrowETH(
+    rs = await shopFactory.batchBorrowETH(
       '1',
       [borrowAmount1, borrowAmount2],
       [testNft.address, testNft.address],
@@ -105,8 +104,9 @@ contract("Factory", function (accounts) {
     );
 
     let bidPrice = rs.liquidatePrice
-    rs = await wethGateway.auctionETH(
+    rs = await shopFactory.auctionETH(
       loanId1,
+      bidPrice,
       bidder1,
       { value: bidPrice, from: bidder1 }
     );
@@ -128,8 +128,9 @@ contract("Factory", function (accounts) {
     );
     let lastBid = rs.bidPrice;
     bidPrice = rs.bidBorrowAmount.mul(new BN(110)).div(new BN(10000)).add(lastBid) //1.1%
-    rs = await wethGateway.auctionETH(
+    rs = await shopFactory.auctionETH(
       loanId1,
+      bidPrice,
       bidder2,
       { value: bidPrice, from: bidder2 }
     );
@@ -144,20 +145,11 @@ contract("Factory", function (accounts) {
     assert.isTrue(await utils.verifyBalance(weth, shopFactory.address, preWETHBalances[shopFactory.address], bidPrice, lastBid))
 
     //============================= liquidate
-        rs = await shopFactory.getNftDebtData(
+    rs = await shopFactory.getNftDebtData(
       loanId1,
       { from: borrower }
     );
     let totalDebt = rs.totalDebt
-
-    // auction time not start
-     await truffleAssert.reverts(
-         wethGateway.liquidateETH(
-      loanId1,
-      { value: web3.utils.toWei('0', 'ether'), from: bidder2 }
-    )
-    ,
-        )
 
     await utils.waitAndEvmMine(1000);
 
@@ -171,10 +163,10 @@ contract("Factory", function (accounts) {
       loanId1,
       { from: borrower }
     );
-     totalDebt = rs.totalDebt
+    totalDebt = rs.totalDebt
 
 
-    rs = await wethGateway.liquidateETH(
+    rs = await shopFactory.liquidate(
       loanId1,
       { value: web3.utils.toWei('0', 'ether'), from: bidder2 }
     );
