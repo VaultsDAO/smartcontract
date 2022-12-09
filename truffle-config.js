@@ -76,7 +76,7 @@ module.exports = {
         return new HDWalletProvider([process.env.PRIVATE_KEY, process.env.PRICE_ADMIN_KEY], "https://goerli.infura.io/v3/" + process.env.INFURA_KEY);
         // return new HDWalletProvider([process.env.PRIVATE_KEY, process.env.PRICE_ADMIN_KEY], "https://eth-goerli.g.alchemy.com/v2/" + process.env.ALCHEMY_KEY);
       },
-      network_id: "*",       // Any network (default: none)
+      network_id: "5",       // Any network (default: none)
       gas: 8000000,
       // gasPrice: 3 * (10 ** 9),
       migration: true,
@@ -86,7 +86,7 @@ module.exports = {
       provider: function () {
         return new HDWalletProvider([process.env.PRIVATE_KEY, process.env.PRICE_ADMIN_KEY], "https://mainnet.infura.io/v3/" + process.env.INFURA_KEY);
       },
-      network_id: "*",       // Any network (default: none)
+      network_id: "1",       // Any network (default: none)
       gas: 8000000,
       // gasPrice: 3 * (10 ** 9),
       migration: true,
