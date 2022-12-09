@@ -360,14 +360,13 @@ contract ShopFactory is
 
     function auctionETH(
         uint256 loanId,
-        uint256 bidPrice,
         address onBehalfOf
     ) external payable override nonReentrant whenNotPaused {
-        require(bidPrice == msg.value, Errors.LP_INVALID_ETH_AMOUNT);
+        uint256 bidPrice = msg.value;
         //convert eth -> weth
         TransferHelper.convertETHToWETH(
             GenericLogic.getWETHAddress(IConfigProvider(provider)),
-            msg.value
+            bidPrice
         );
         _auction(loanId, bidPrice, onBehalfOf, true);
     }

@@ -61,6 +61,12 @@ module.exports = {
         return currentOwner.toString() == owner.toString()
     },
 
+    verifyOwnerPunk: async function (cPunk, tokenId, owner) {
+        //verify owner nft
+        let currentOwner = await cPunk.punkIndexToAddress(tokenId)
+        return currentOwner.toString() == owner.toString()
+    },
+
     verifyBalance: async function (token, user, beforeBalance, added, taken) {
         let currentBalance = await token.balanceOf(user)
         return new BN(beforeBalance).add(new BN(added)).sub(new BN(taken)).sub(new BN(currentBalance)) == 0;

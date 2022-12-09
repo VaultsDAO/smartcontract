@@ -381,7 +381,7 @@ library LiquidateLogic {
             // transfer repayAmount - fee from factory to shopCreator
             IERC20Upgradeable(loanData.reserveAsset).safeTransfer(
                 params.shopCreator,
-                vars.repayAmount - fee
+                (repayPrincipal + interest)
             );
 
             if (fee > 0) {
@@ -396,7 +396,7 @@ library LiquidateLogic {
             IERC20Upgradeable(loanData.reserveAsset).safeTransferFrom(
                 vars.initiator,
                 params.shopCreator,
-                vars.repayAmount - fee
+                (repayPrincipal + interest)
             );
             if (fee > 0) {
                 // transfer platform fee

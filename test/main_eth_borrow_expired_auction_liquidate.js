@@ -106,7 +106,6 @@ contract("Factory", function (accounts) {
     let bidPrice = rs.liquidatePrice
     rs = await shopFactory.auctionETH(
       loanId1,
-      bidPrice,
       bidder1,
       { value: bidPrice, from: bidder1 }
     );
@@ -130,7 +129,6 @@ contract("Factory", function (accounts) {
     bidPrice = rs.bidBorrowAmount.mul(new BN(110)).div(new BN(10000)).add(lastBid) //1.1%
     rs = await shopFactory.auctionETH(
       loanId1,
-      bidPrice,
       bidder2,
       { value: bidPrice, from: bidder2 }
     );

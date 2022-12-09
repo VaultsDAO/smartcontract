@@ -21,6 +21,8 @@ const GenericLogic = artifacts.require("GenericLogic");
 const LiquidateLogic = artifacts.require("LiquidateLogic");
 const ValidationLogic = artifacts.require("ValidationLogic");
 
+const PunkGateway = artifacts.require("PunkGateway");
+
 const CryptoPunksMarket = artifacts.require("CryptoPunksMarket");
 const WrappedPunk = artifacts.require("WrappedPunk");
 
@@ -207,8 +209,13 @@ module.exports = async function (accounts) {
     // setting oracle price and reserve price ---------------------------------------------------------------
 
     await bnftRegistry.createBNFT(testNft.address)
+    await bnftRegistry.createBNFT(wPunk.address)
+
     let rs = await bnftRegistry.bNftProxys(testNft.address);
     bnft = await BNFT.at(rs)
+
+    rs = await bnftRegistry.bNftProxys(wPunk.address);
+    wPunkBnft = await BNFT.at(rs)
 
     await shopFactory.addNftCollection(testNft.address, 'Test Nft', 0)
     await shopFactory.addNftCollection(wPunk.address, 'WrapPunk', 0)
@@ -229,6 +236,24 @@ module.exports = async function (accounts) {
 
     await mockUSDCChainlinkOracle.mockAddAnswer(1, web3.utils.toWei('0.001', 'ether'), 1666099852, 1666099852, 1);
 
+    let punkGateway = await PunkGateway.new();
+    initializeData = punkGateway.contract.methods.initialize(
+        provider.address,
+        cPunk.address,
+        wPunk.address
+    ).encodeABI();
+    proxy = await TransparentUpgradeableProxy.new(
+        punkGateway.address,
+        pawnProxyAdmin.address,
+        initializeData,
+        { from: pawnProxyAdminOwner },
+    );
+    punkGateway = await PunkGateway.at(proxy.address);
+
+    // await punkGateway.authorizeLendPoolNFT([wPunk.address], { from: pawnProxyAdminOwner })
+    await punkGateway.authorizeLendPoolERC20([usdc.address], { from: pawnProxyAdminOwner })
+
+    await cPunk.allInitialOwnersAssigned()
 
     return {
         weth: weth,
@@ -239,6 +264,7 @@ module.exports = async function (accounts) {
         shopFactory: shopFactory,
         shopLoan: shopLoan,
         bnft: bnft,
+        wPunkBnft: wPunkBnft,
         bnftRegistry: bnftRegistry,
         airdropFlashLoanReceiver: airdropFlashLoanReceiver,
         userFlashclaimRegistry: userFlashclaimRegistry,
@@ -246,6 +272,7 @@ module.exports = async function (accounts) {
         nftOracle: nftOracle,
         mockUSDCChainlinkOracle: mockUSDCChainlinkOracle,
         reserveOracle: reserveOracle,
+        punkGateway: punkGateway,
         cPunk: cPunk,
         wPunk: wPunk,
         accounts: {

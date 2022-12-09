@@ -247,7 +247,6 @@ interface IShop {
 
     function auctionETH(
         uint256 loanId,
-        uint256 bidPrice,
         address onBehalfOf
     ) external payable;
 
