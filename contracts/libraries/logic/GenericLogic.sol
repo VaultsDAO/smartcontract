@@ -434,13 +434,13 @@ library GenericLogic {
     function isWETHAddress(
         IConfigProvider provider,
         address asset
-    ) public view returns (bool) {
+    ) internal view returns (bool) {
         return asset == IReserveOracleGetter(provider.reserveOracle()).weth();
     }
 
     function getWETHAddress(
         IConfigProvider provider
-    ) public view returns (address) {
+    ) internal view returns (address) {
         return IReserveOracleGetter(provider.reserveOracle()).weth();
     }
 }
