@@ -391,6 +391,14 @@ library LiquidateLogic {
                     fee
                 );
             }
+            if (params.amount > (repayPrincipal + interest + fee)) {
+                revert('test');
+                TransferHelper.transferWETH2ETH(
+                    loanData.reserveAsset,
+                    vars.initiator,
+                    params.amount - (repayPrincipal + interest + fee)
+                );
+            }
         } else {
             // transfer repayAmount - fee from borrower to shopCreator
             IERC20Upgradeable(loanData.reserveAsset).safeTransferFrom(

@@ -224,9 +224,7 @@ library GenericLogic {
                 repayPrincipal = repayPrincipal.mul(10000).div(
                     10000 + vars.platformFeeRate
                 );
-                platformFee = repayPrincipal.mul(vars.platformFeeRate).div(
-                    10000
-                );
+                platformFee = vars.repayAmount - interest - repayPrincipal;
             }
         }
         totalDebt = vars.borrowAmount.add(interest).add(platformFee);

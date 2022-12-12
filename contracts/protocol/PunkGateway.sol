@@ -361,12 +361,12 @@ contract PunkGateway is
 
         uint256 paybackAmount = (repayPrincipal + interest + fee) + bidFine;
 
-        // if ((amount + bidFine) > paybackAmount) {
-        //     IERC20Upgradeable(loan.reserveAsset).safeTransfer(
-        //         msg.sender,
-        //         ((amount + bidFine) - paybackAmount)
-        //     );
-        // }
+        if ((amount + bidFine) > paybackAmount) {
+            IERC20Upgradeable(loan.reserveAsset).safeTransfer(
+                msg.sender,
+                ((amount + bidFine) - paybackAmount)
+            );
+        }
 
         return paybackAmount;
     }
