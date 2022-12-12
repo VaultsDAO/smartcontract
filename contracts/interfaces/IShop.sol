@@ -245,10 +245,7 @@ interface IShop {
         address onBehalfOf
     ) external;
 
-    function auctionETH(
-        uint256 loanId,
-        address onBehalfOf
-    ) external payable;
+    function auctionETH(uint256 loanId, address onBehalfOf) external payable;
 
     /**
      * @notice Redeem a NFT loan which state is in Auction
@@ -289,6 +286,12 @@ interface IShop {
      *   the collateral asset
      **/
     function liquidate(uint256 loanId) external;
+
+    function rebuy(
+        uint256 loanId,
+        uint256 rebuyAmount,
+        uint256 payAmount
+    ) external;
 
     function getReservesList() external view returns (address[] memory);
 
@@ -355,6 +358,10 @@ interface IShop {
     function getNftLiquidatePrice(
         uint256 loanId
     ) external view returns (uint256 liquidatePrice, uint256 paybackAmount);
+
+    function getRebuyPrice(
+        uint256 loanId
+    ) external view returns (uint256 rebuyPrice, uint256 payAmount);
 
     function getNftsList() external view returns (address[] memory);
 

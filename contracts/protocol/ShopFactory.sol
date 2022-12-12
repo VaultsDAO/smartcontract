@@ -861,4 +861,54 @@ contract ShopFactory is
             }
         }
     }
+
+    function getRebuyPrice(
+        uint256 loanId
+    ) external view override returns (uint256 rebuyPrice, uint256 payAmount) {
+        GetLiquidationPriceLocalVars memory vars;
+
+        vars.poolLoan = provider.loanManager();
+        vars.loanId = loanId;
+        if (vars.loanId == 0) {
+            return (0, 0);
+        }
+
+        (rebuyPrice, payAmount) = GenericLogic.calculateRebuyPrice(
+            provider,
+            vars.loanId
+        );
+    }
+
+    function rebuy(
+        uint256 loanId,
+        uint256 rebuyAmount,
+        uint256 payAmount
+    ) external override nonReentrant whenNotPaused {
+        return _rebuy(loanId, rebuyAmount, payAmount, false);
+    }
+
+    function _rebuy(
+        uint256 loanId,
+        uint256 rebuyAmount,
+        uint256 payAmount,
+        bool isNative
+    ) internal {
+        DataTypes.LoanData memory loanData = IShopLoan(
+            IConfigProvider(provider).loanManager()
+        ).getLoan(loanId);
+        return
+            LiquidateLogic.executeRebuy(
+                provider,
+                reservesInfo,
+                nftsInfo,
+                DataTypes.ExecuteRebuyParams({
+                    loanId: loanId,
+                    rebuyAmount: rebuyAmount,
+                    payAmount: payAmount,
+                    shopCreator: shops[loanData.shopId].creator,
+                    auctionEndTimestamp: 0, //don't use
+                    isNative: isNative
+                })
+            );
+    }
 }

@@ -94,15 +94,13 @@ interface IShopLoan {
 
     /**
      * @dev Emitted when shop owner rebuy liquidated loan from liquidator
-     * @param user The address initiating the action
      */
     event LoanRebuyLiquidated(
-        address indexed user,
         uint256 indexed loanId,
         address nftAsset,
         uint256 nftTokenId,
         address reserveAsset,
-        uint256 rebuyAmount
+        uint256 rebuyPrice
     );
 
     function initNft(address nftAsset) external;
@@ -237,9 +235,8 @@ interface IShopLoan {
         uint256 loanId
     ) external view returns (address, uint256);
 
-    // function rebuyLiquidateLoan(
-    //     address lender,
-    //     uint256 loanId,
-    //     uint256 rebuyAmount
-    // ) external;
+    function rebuyLiquidateLoan(
+        uint256 loanId,
+        uint256 rebuyPrice
+    ) external;
 }

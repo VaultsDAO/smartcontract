@@ -257,19 +257,8 @@ library GenericLogic {
     ) internal view returns (uint256, uint256, uint256, uint256, uint256) {
         CalcLiquidatePriceLocalVars memory vars;
 
-        /*
-         * 0                   CR                  LH                  100
-         * |___________________|___________________|___________________|
-         *  <       Borrowing with Interest        <
-         * CR: Callteral Ratio;
-         * LH: Liquidate Threshold;
-         * Liquidate Trigger: Borrowing with Interest > thresholdPrice;
-         * Liquidate Price: (100% - BonusRatio) * NFT Price;
-         */
-
         vars.reserveDecimals = reserveData.decimals;
 
-        // TODO base theo pawnshop
         DataTypes.LoanData memory loan = IShopLoan(provider.loanManager())
             .getLoan(loanId);
         (
@@ -450,29 +439,44 @@ library GenericLogic {
 
     struct CalcRebuyPriceVars {
         uint256 bidPrice;
+        uint256 totalDebt;
         uint256 rebuyAmount;
         uint256 payAmount;
+        uint256 platformFee;
     }
 
-    // function calculateRebuyLiquidatePrice(
-    //     IConfigProvider provider,
-    //     uint256 loanId
-    // ) internal view returns (uint256, uint256) {
-    //     CalcRebuyPriceVars memory vars;
+    function calculateRebuyPrice(
+        IConfigProvider provider,
+        uint256 loanId
+    ) internal view returns (uint256, uint256) {
+        CalcRebuyPriceVars memory vars;
 
-    //     DataTypes.LoanData memory loan = IShopLoan(provider.loanManager())
-    //         .getLoan(loanId);
+        DataTypes.LoanData memory loan = IShopLoan(provider.loanManager())
+            .getLoan(loanId);
+        require(
+            loan.state == DataTypes.LoanState.Auction &&
+                loan.bidBorrowAmount > 0,
+            Errors.LPL_INVALID_LOAN_STATE
+        );
+        (vars.totalDebt, , , vars.platformFee) = calculateInterestInfo(
+            CalculateInterestInfoVars({
+                lastRepaidAt: loan.lastRepaidAt,
+                borrowAmount: loan.borrowAmount,
+                interestRate: loan.interestRate,
+                repayAmount: 0,
+                platformFeeRate: provider.platformFeePercentage(),
+                interestDuration: provider.interestDuration()
+            })
+        );
 
-    //     vars.rebuyAmount = loan.bidPrice.mul .percentMul(
-    //         PercentageMath.PERCENTAGE_FACTOR - vars.liquidationBonus
-    //     );
+        //rebuy amount  = winamount * (1 + 5%)
+        vars.rebuyAmount = loan.bidPrice.percentMul(
+            PercentageMath.PERCENTAGE_FACTOR + provider.rebuyFeePercentage()
+        );
+        vars.payAmount = vars.rebuyAmount.sub(vars.totalDebt).add(
+            vars.platformFee
+        );
 
-    //     return (
-    //         vars.totalDebt,
-    //         vars.thresholdPrice,
-    //         vars.liquidatePrice,
-    //         vars.platformFee,
-    //         vars.auctionFee
-    //     );
-    // }
+        return (vars.rebuyAmount, vars.payAmount);
+    }
 }
