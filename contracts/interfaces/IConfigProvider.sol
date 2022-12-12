@@ -29,10 +29,18 @@ interface IConfigProvider {
     //tien phat toi thieu theo % khoan vay khi redeem nft bi auction ex: vay 10 ETH, setup 5% => phat 10*5/100=0.5 ETH
     function redeemFine() external view returns (uint256);
 
-    //thoi gian co the redeem nft sau khi bi auction tinh = hour
+    //time for borrower can redeem nft although kicked auction (hour)
     function redeemDuration() external view returns (uint256);
 
     function auctionDuration() external view returns (uint256);
+
+    // auction fee base on final bid price
+    function auctionFeePercentage() external view returns (uint256);
+
+    //time for lender can re-buy nft after auction end (hour)
+    function rebuyDuration() external view returns (uint256);
+
+    function rebuyFeePercentage() external view returns (uint256);
 
     function liquidationThreshold() external view returns (uint256);
 
@@ -48,6 +56,7 @@ interface IConfigProvider {
     //platform fee tinh theo pricipal
     function platformFeePercentage() external view returns (uint256);
 
+    //block time to calculate interest
     function interestDuration() external view returns (uint256);
 
     function minBidDeltaPercentage() external view returns (uint256);

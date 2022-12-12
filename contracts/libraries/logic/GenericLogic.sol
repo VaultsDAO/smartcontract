@@ -245,6 +245,7 @@ library GenericLogic {
         uint256 repayPrincipal;
         uint256 interest;
         uint256 platformFee;
+        uint256 auctionFee;
     }
 
     function calculateLoanLiquidatePrice(
@@ -253,7 +254,7 @@ library GenericLogic {
         address reserveAsset,
         DataTypes.ReservesInfo storage reserveData,
         address nftAsset
-    ) internal view returns (uint256, uint256, uint256, uint256) {
+    ) internal view returns (uint256, uint256, uint256, uint256, uint256) {
         CalcLiquidatePriceLocalVars memory vars;
 
         /*
@@ -293,6 +294,10 @@ library GenericLogic {
             loan.bidBorrowAmount > 0
         ) {
             vars.totalDebt = loan.bidBorrowAmount;
+            vars.auctionFee = loan
+                .bidBorrowAmount
+                .mul(provider.auctionFeePercentage())
+                .div(uint256(10000));
         }
 
         vars.liquidationThreshold = provider.liquidationThreshold();
@@ -324,7 +329,8 @@ library GenericLogic {
             vars.totalDebt,
             vars.thresholdPrice,
             vars.liquidatePrice,
-            vars.platformFee
+            vars.platformFee,
+            vars.auctionFee
         );
     }
 
@@ -441,4 +447,32 @@ library GenericLogic {
     ) internal view returns (address) {
         return IReserveOracleGetter(provider.reserveOracle()).weth();
     }
+
+    struct CalcRebuyPriceVars {
+        uint256 bidPrice;
+        uint256 rebuyAmount;
+        uint256 payAmount;
+    }
+
+    // function calculateRebuyLiquidatePrice(
+    //     IConfigProvider provider,
+    //     uint256 loanId
+    // ) internal view returns (uint256, uint256) {
+    //     CalcRebuyPriceVars memory vars;
+
+    //     DataTypes.LoanData memory loan = IShopLoan(provider.loanManager())
+    //         .getLoan(loanId);
+
+    //     vars.rebuyAmount = loan.bidPrice.mul .percentMul(
+    //         PercentageMath.PERCENTAGE_FACTOR - vars.liquidationBonus
+    //     );
+
+    //     return (
+    //         vars.totalDebt,
+    //         vars.thresholdPrice,
+    //         vars.liquidatePrice,
+    //         vars.platformFee,
+    //         vars.auctionFee
+    //     );
+    // }
 }

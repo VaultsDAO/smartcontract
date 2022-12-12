@@ -685,6 +685,7 @@ contract ShopFactory is
             vars.paybackAmount,
             vars.thresholdPrice,
             vars.liquidatePrice,
+            ,
 
         ) = GenericLogic.calculateLoanLiquidatePrice(
             provider,

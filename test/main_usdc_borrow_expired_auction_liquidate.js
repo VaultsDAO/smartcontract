@@ -75,6 +75,7 @@ contract("Factory", function (accounts) {
 
     //setup loan duration = 1 seconds
     await provider.setMaxLoanDuration(1);
+    let auctionFee = await provider.auctionFeePercentage()
     //========================borrow USDC
 
     let borrowAmount1 = 10000000//10
@@ -112,6 +113,10 @@ contract("Factory", function (accounts) {
       { from: borrower }
     );
     let bidPrice = rs.liquidatePrice
+    if (new BN(bidPrice).sub(new BN(rs.totalDebt)) < 0) {
+      bidPrice = rs.totalDebt
+    }
+    bidPrice = new BN(bidPrice).add(new BN(bidPrice).mul(new BN(auctionFee.toString())).div(new BN(10000)))
     await shopFactory.auction(
       loanId1,
       bidPrice,

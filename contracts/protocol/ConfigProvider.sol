@@ -34,9 +34,12 @@ contract ConfigProvider is OwnableUpgradeable {
     uint256 public redeemThreshold;
     uint256 public maxLoanDuration;
     uint256 public interestDuration;
+    uint256 public auctionFeePercentage;
+    uint256 public rebuyDuration;
+    uint256 public rebuyFeePercentage;
 
     /// @notice for gap, minus 1 if use
-    uint256[25] public __number;
+    uint256[22] public __number;
     address[25] public __gapAddress;
 
     //event
@@ -58,6 +61,9 @@ contract ConfigProvider is OwnableUpgradeable {
     event ShopFactorySet(address _shopFactory);
     event LoanManagerSet(address _loanManager);
     event MinBidDeltaPercentageSet(uint256 _minBidDeltaPercentage);
+    event AuctionFeePercentageSet(uint256 _auctionFeePercentage);
+    event RebuyDurationSet(uint256 _rebuyDuration);
+    event RebuyFeePercentageSet(uint256 _rebuyFeePercentage);
 
     //end event
 
@@ -73,10 +79,28 @@ contract ConfigProvider is OwnableUpgradeable {
         redeemFine = 500; //5%
         redeemDuration = 4 hours; //24hour
         liquidationThreshold = 8000; //80%
-        liquidationBonus = 2000; //0%
+        liquidationBonus = 2000; //20%
         redeemThreshold = 5000; //50%
         maxLoanDuration = 365 days;
         interestDuration = 1 hours;
+        auctionFeePercentage = 250; //2.5%
+        rebuyDuration = 2 hours;
+        rebuyFeePercentage = 500; //5%
+    }
+
+    function setRebuyFeePercentage(uint256 _value) external onlyOwner {
+        rebuyFeePercentage = _value;
+        emit RebuyFeePercentageSet(_value);
+    }
+
+    function setAuctionFeePercentage(uint256 _value) external onlyOwner {
+        auctionFeePercentage = _value;
+        emit AuctionFeePercentageSet(_value);
+    }
+
+    function setRebuyDuration(uint256 _value) external onlyOwner {
+        rebuyDuration = _value;
+        emit RebuyDurationSet(_value);
     }
 
     function setAuctionDuration(uint256 _value) external onlyOwner {
