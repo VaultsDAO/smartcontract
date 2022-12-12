@@ -218,7 +218,7 @@ library GenericLogic {
                 Errors.LP_REPAY_AMOUNT_NOT_ENOUGH
             );
             repayPrincipal = vars.repayAmount - interest;
-            if (repayPrincipal > vars.borrowAmount.add(platformFee)) {
+            if (repayPrincipal >= vars.borrowAmount.add(platformFee)) {
                 repayPrincipal = vars.borrowAmount;
             } else {
                 repayPrincipal = repayPrincipal.mul(10000).div(
