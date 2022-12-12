@@ -501,59 +501,57 @@ contract ShopLoan is
         return IConfigProvider(_provider).shopFactory();
     }
 
-    // function rebuyLiquidateLoan(
-    //     address lender,
-    //     uint256 loanId,
-    //     uint256 rebuyAmount
-    // ) external override onlyShopFactory {
-    //     // Must use storage to change state
-    //     DataTypes.LoanData storage loan = _loans[loanId];
+    function rebuyLiquidateLoan(
+        uint256 loanId,
+        uint256 rebuyPrice
+    ) external override onlyShopFactory {
+        // Must use storage to change state
+        DataTypes.LoanData storage loan = _loans[loanId];
 
-    //     // Ensure valid loan state
-    //     require(
-    //         loan.state == DataTypes.LoanState.Auction,
-    //         Errors.LPL_INVALID_LOAN_STATE
-    //     );
+        // Ensure valid loan state
+        require(
+            loan.state == DataTypes.LoanState.Auction,
+            Errors.LPL_INVALID_LOAN_STATE
+        );
 
-    //     // state changes and cleanup
-    //     // NOTE: these must be performed before assets are released to prevent reentrance
-    //     _loans[loanId].state = DataTypes.LoanState.Defaulted;
+        // state changes and cleanup
+        // NOTE: these must be performed before assets are released to prevent reentrance
+        _loans[loanId].state = DataTypes.LoanState.Defaulted;
 
-    //     _nftToLoanIds[loan.nftAsset][loan.nftTokenId] = 0;
+        _nftToLoanIds[loan.nftAsset][loan.nftTokenId] = 0;
 
-    //     require(
-    //         _userNftCollateral[loan.borrower][loan.nftAsset] >= 1,
-    //         Errors.LP_INVALIED_USER_NFT_AMOUNT
-    //     );
-    //     _userNftCollateral[loan.borrower][loan.nftAsset] -= 1;
+        require(
+            _userNftCollateral[loan.borrower][loan.nftAsset] >= 1,
+            Errors.LP_INVALIED_USER_NFT_AMOUNT
+        );
+        _userNftCollateral[loan.borrower][loan.nftAsset] -= 1;
 
-    //     require(
-    //         _nftTotalCollateral[loan.nftAsset] >= 1,
-    //         Errors.LP_INVALIED_NFT_AMOUNT
-    //     );
-    //     _nftTotalCollateral[loan.nftAsset] -= 1;
+        require(
+            _nftTotalCollateral[loan.nftAsset] >= 1,
+            Errors.LP_INVALIED_NFT_AMOUNT
+        );
+        _nftTotalCollateral[loan.nftAsset] -= 1;
 
-    //     // burn bNFT and transfer underlying NFT asset to user
-    //     address bNftAddress = GenericLogic.getBNftAddress(
-    //         _provider,
-    //         loan.nftAsset
-    //     );
+        // burn bNFT and transfer underlying NFT asset to user
+        address bNftAddress = GenericLogic.getBNftAddress(
+            _provider,
+            loan.nftAsset
+        );
 
-    //     IBNFT(bNftAddress).burn(loan.nftTokenId);
+        IBNFT(bNftAddress).burn(loan.nftTokenId);
 
-    //     IERC721Upgradeable(loan.nftAsset).safeTransferFrom(
-    //         address(this),
-    //         _msgSender(),
-    //         loan.nftTokenId
-    //     );
+        IERC721Upgradeable(loan.nftAsset).safeTransferFrom(
+            address(this),
+            _msgSender(),
+            loan.nftTokenId
+        );
 
-    //     emit LoanRebuyLiquidated(
-    //         lender,
-    //         loanId,
-    //         loan.nftAsset,
-    //         loan.nftTokenId,
-    //         loan.reserveAsset,
-    //         rebuyAmount
-    //     );
-    // }
+        emit LoanRebuyLiquidated(
+            loanId,
+            loan.nftAsset,
+            loan.nftTokenId,
+            loan.reserveAsset,
+            rebuyPrice
+        );
+    }
 }

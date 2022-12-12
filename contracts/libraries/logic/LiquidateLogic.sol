@@ -95,6 +95,16 @@ library LiquidateLogic {
         uint256 loanId
     );
 
+    event Rebuy(
+        address user,
+        address indexed reserve,
+        uint256 rebuyAmount,
+        address indexed nftAsset,
+        uint256 nftTokenId,
+        address indexed borrower,
+        uint256 loanId
+    );
+
     struct AuctionLocalVars {
         address loanAddress;
         address reserveOracle;
@@ -603,7 +613,6 @@ library LiquidateLogic {
                     loanData.reserveAsset
                 )
             ) {
-                // transfer (return back) last bid price amount from lend pool to bidder
                 TransferHelper.transferWETH2ETH(
                     loanData.reserveAsset,
                     loanData.borrower,
@@ -637,142 +646,157 @@ library LiquidateLogic {
         );
     }
 
-    // struct RebuyLocalVars {
-    //     address initiator;
-    //     uint256 loanId;
-    //     uint256 borrowAmount;
-    //     uint256 feeAmount;
-    //     uint256 remainAmount;
-    //     uint256 auctionEndTimestamp;
-    //     uint256 auctionFeeAmount;
-    // }
+    struct RebuyLocalVars {
+        address initiator;
+        uint256 loanId;
+        uint256 borrowAmount;
+        uint256 feeAmount;
+        uint256 remainAmount;
+        uint256 auctionEndTimestamp;
+        uint256 auctionFeeAmount;
+        uint256 rebuyAmount;
+        uint256 payAmount;
+    }
 
-    // function executeRebuy(
-    //     IConfigProvider configProvider,
-    //     mapping(address => DataTypes.ReservesInfo) storage reservesData,
-    //     mapping(address => DataTypes.NftsInfo) storage nftsData,
-    //     DataTypes.ExecuteRebuyParams memory params
-    // ) external {
-    //     RebuyLocalVars memory vars;
-    //     params.loanId = params.loanId;
-    //     require(params.loanId != 0, Errors.LP_NFT_IS_NOT_USED_AS_COLLATERAL);
+    function executeRebuy(
+        IConfigProvider configProvider,
+        mapping(address => DataTypes.ReservesInfo) storage reservesData,
+        mapping(address => DataTypes.NftsInfo) storage nftsData,
+        DataTypes.ExecuteRebuyParams memory params
+    ) external {
+        RebuyLocalVars memory vars;
+        params.loanId = params.loanId;
+        require(params.loanId != 0, Errors.LP_NFT_IS_NOT_USED_AS_COLLATERAL);
 
-    //     DataTypes.LoanData memory loanData = IShopLoan(
-    //         configProvider.loanManager()
-    //     ).getLoan(params.loanId);
+        DataTypes.LoanData memory loanData = IShopLoan(
+            configProvider.loanManager()
+        ).getLoan(params.loanId);
 
-    //     require(msg.sender == params.shopCreator, Errors.LPL_REBUY_ONLY_LENDER);
+        //only lender can execute rebuy function
+        require(msg.sender == params.shopCreator, Errors.LPL_REBUY_ONLY_LENDER);
 
-    //     DataTypes.ReservesInfo storage reserveData = reservesData[
-    //         loanData.reserveAsset
-    //     ];
-    //     DataTypes.NftsInfo storage nftData = nftsData[loanData.nftAsset];
+        DataTypes.ReservesInfo storage reserveData = reservesData[
+            loanData.reserveAsset
+        ];
+        DataTypes.NftsInfo storage nftData = nftsData[loanData.nftAsset];
 
-    //     ValidationLogic.validateLiquidate(reserveData, nftData, loanData);
+        ValidationLogic.validateLiquidate(reserveData, nftData, loanData);
 
-    //     params.auctionEndTimestamp =
-    //         loanData.bidStartTimestamp +
-    //         configProvider.auctionDuration();
-    //     require(
-    //         block.timestamp > params.auctionEndTimestamp,
-    //         Errors.LPL_BID_AUCTION_DURATION_NOT_END
-    //     );
+        params.auctionEndTimestamp =
+            loanData.bidStartTimestamp +
+            configProvider.auctionDuration();
+        require(
+            block.timestamp > params.auctionEndTimestamp,
+            Errors.LPL_BID_AUCTION_DURATION_NOT_END
+        );
 
-    //     params.auctionEndTimestamp += configProvider.rebuyDuration();
-    //     require(
-    //         block.timestamp < params.auctionEndTimestamp,
-    //         Errors.LPL_REBUY_DURATION_END
-    //     );
+        params.auctionEndTimestamp += configProvider.rebuyDuration();
+        require(
+            block.timestamp < params.auctionEndTimestamp,
+            Errors.LPL_REBUY_DURATION_END
+        );
 
-    //     (
-    //         vars.borrowAmount,
-    //         ,
-    //         ,
-    //         vars.feeAmount,
-    //         vars.auctionFeeAmount
-    //     ) = GenericLogic.calculateLoanLiquidatePrice(
-    //         configProvider,
-    //         vars.loanId,
-    //         loanData.reserveAsset,
-    //         reserveData,
-    //         loanData.nftAsset
-    //     );
+        (
+            vars.borrowAmount,
+            ,
+            ,
+            vars.feeAmount,
+            vars.auctionFeeAmount
+        ) = GenericLogic.calculateLoanLiquidatePrice(
+            configProvider,
+            vars.loanId,
+            loanData.reserveAsset,
+            reserveData,
+            loanData.nftAsset
+        );
 
-    //     if (loanData.bidPrice > vars.borrowAmount) {
-    //         vars.remainAmount =
-    //             loanData.bidPrice -
-    //             vars.borrowAmount -
-    //             vars.auctionFeeAmount;
-    //     }
-    //     //   require(
-    //     //     params.rebuyAmount >= loanData.bidPrice.mul(provider.rebuyFeePercentage())
-    //     //         .div(uint256(10000));,
-    //     //     Errors.LPL_REBUY_DURATION_END
-    //     // );
+        if (loanData.bidPrice > vars.borrowAmount) {
+            vars.remainAmount =
+                loanData.bidPrice -
+                vars.borrowAmount -
+                vars.auctionFeeAmount;
+        }
 
-    //     IShopLoan(configProvider.loanManager()).rebuyLiquidateLoan(
-    //         loanData.bidderAddress,
-    //         vars.loanId,
-    //         params.rebuyAmount
-    //     );
+        (vars.rebuyAmount, vars.payAmount) = GenericLogic.calculateRebuyPrice(
+            configProvider,
+            vars.loanId
+        );
 
-    //     // transfer borrow_amount - fee from shopFactory to shop creator
-    //     if (vars.borrowAmount > 0) {
-    //         IERC20Upgradeable(loanData.reserveAsset).safeTransfer(
-    //             params.shopCreator,
-    //             vars.borrowAmount - vars.feeAmount
-    //         );
-    //     }
+        require(
+            vars.rebuyAmount == params.rebuyAmount,
+            Errors.LPL_INVALID_REBUY_AMOUNT
+        );
 
-    //     // transfer platformfee & auctionfee
-    //     if (vars.feeAmount + vars.auctionFeeAmount > 0) {
-    //         if (configProvider.platformFeeReceiver() != address(this)) {
-    //             IERC20Upgradeable(loanData.reserveAsset).safeTransfer(
-    //                 configProvider.platformFeeReceiver(),
-    //                 vars.feeAmount + vars.auctionFeeAmount
-    //             );
-    //         }
-    //     }
+        require(
+            vars.payAmount + vars.borrowAmount - vars.feeAmount ==
+                params.rebuyAmount,
+            Errors.LPL_INVALID_REBUY_AMOUNT
+        );
 
-    //     // transfer remain amount to borrower
-    //     if (vars.remainAmount > 0) {
-    //         if (
-    //             GenericLogic.isWETHAddress(
-    //                 configProvider,
-    //                 loanData.reserveAsset
-    //             )
-    //         ) {
-    //             // transfer (return back) last bid price amount from lend pool to bidder
-    //             TransferHelper.transferWETH2ETH(
-    //                 loanData.reserveAsset,
-    //                 loanData.borrower,
-    //                 vars.remainAmount
-    //             );
-    //         } else {
-    //             IERC20Upgradeable(loanData.reserveAsset).safeTransfer(
-    //                 loanData.borrower,
-    //                 vars.remainAmount
-    //             );
-    //         }
-    //     }
+        IShopLoan(configProvider.loanManager()).rebuyLiquidateLoan(
+            vars.loanId,
+            vars.rebuyAmount
+        );
 
-    //     // transfer erc721 to bidder
-    //     IERC721Upgradeable(loanData.nftAsset).safeTransferFrom(
-    //         address(this),
-    //         loanData.bidderAddress,
-    //         loanData.nftTokenId
-    //     );
+        // get payAmount from lender to this contract
+        IERC20Upgradeable(loanData.reserveAsset).safeTransferFrom(
+            params.shopCreator,
+            address(this),
+            vars.payAmount
+        );
 
-    //     emit Liquidate(
-    //         vars.initiator,
-    //         loanData.reserveAsset,
-    //         vars.borrowAmount,
-    //         vars.remainAmount,
-    //         vars.feeAmount,
-    //         loanData.nftAsset,
-    //         loanData.nftTokenId,
-    //         loanData.borrower,
-    //         vars.loanId
-    //     );
-    // }
+        // transfer rebuyAmount to winner
+        IERC20Upgradeable(loanData.reserveAsset).safeTransfer(
+            loanData.bidderAddress,
+            vars.rebuyAmount
+        );
+
+        // transfer platformfee & auctionfee
+        if (vars.feeAmount + vars.auctionFeeAmount > 0) {
+            if (configProvider.platformFeeReceiver() != address(this)) {
+                IERC20Upgradeable(loanData.reserveAsset).safeTransfer(
+                    configProvider.platformFeeReceiver(),
+                    vars.feeAmount + vars.auctionFeeAmount
+                );
+            }
+        }
+
+        // transfer remain amount to borrower
+        if (vars.remainAmount > 0) {
+            if (
+                GenericLogic.isWETHAddress(
+                    configProvider,
+                    loanData.reserveAsset
+                )
+            ) {
+                TransferHelper.transferWETH2ETH(
+                    loanData.reserveAsset,
+                    loanData.borrower,
+                    vars.remainAmount
+                );
+            } else {
+                IERC20Upgradeable(loanData.reserveAsset).safeTransfer(
+                    loanData.borrower,
+                    vars.remainAmount
+                );
+            }
+        }
+
+        // transfer erc721 to shopCreator
+        IERC721Upgradeable(loanData.nftAsset).safeTransferFrom(
+            address(this),
+            params.shopCreator,
+            loanData.nftTokenId
+        );
+
+        emit Rebuy(
+            params.shopCreator,
+            loanData.reserveAsset,
+            vars.rebuyAmount,
+            loanData.nftAsset,
+            loanData.nftTokenId,
+            loanData.borrower,
+            vars.loanId
+        );
+    }
 }
