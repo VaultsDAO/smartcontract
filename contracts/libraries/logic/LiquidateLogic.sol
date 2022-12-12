@@ -14,7 +14,7 @@ import {PercentageMath} from "../math/PercentageMath.sol";
 import {Errors} from "../helpers/Errors.sol";
 import {TransferHelper} from "../helpers/TransferHelper.sol";
 import {DataTypes} from "../types/DataTypes.sol";
-
+import {SafeMath} from "../math/SafeMath.sol";
 import {IERC20Upgradeable} from "../../openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
 import {SafeERC20Upgradeable} from "../../openzeppelin/contracts-upgradeable/token/ERC20/utils/SafeERC20Upgradeable.sol";
 import {IERC721Upgradeable} from "../../openzeppelin/contracts-upgradeable/token/ERC721/IERC721Upgradeable.sol";
@@ -25,6 +25,7 @@ import {IERC721Upgradeable} from "../../openzeppelin/contracts-upgradeable/token
  */
 library LiquidateLogic {
     using PercentageMath for uint256;
+    using SafeMath for uint256;
     using SafeERC20Upgradeable for IERC20Upgradeable;
     using ShopConfiguration for DataTypes.ShopConfiguration;
 
@@ -153,6 +154,7 @@ library LiquidateLogic {
             vars.totalDebt,
             vars.thresholdPrice,
             vars.liquidatePrice,
+            ,
 
         ) = GenericLogic.calculateLoanLiquidatePrice(
             configProvider,
@@ -174,9 +176,14 @@ library LiquidateLogic {
                 params.bidPrice >= vars.liquidatePrice,
                 Errors.LPL_BID_PRICE_LESS_THAN_LIQUIDATION_PRICE
             );
-            // bid price must greater than borrow debt
+            // (bid price - auctionfee) must greater than borrow debt
             require(
-                params.bidPrice >= vars.totalDebt,
+                params.bidPrice.sub(
+                    params
+                        .bidPrice
+                        .mul(configProvider.auctionFeePercentage())
+                        .div(uint256(10000))
+                ) >= vars.totalDebt,
                 Errors.LPL_BID_PRICE_LESS_THAN_BORROW
             );
         } else {
@@ -330,7 +337,7 @@ library LiquidateLogic {
             Errors.LPL_BID_REDEEM_DURATION_HAS_END
         );
 
-        (vars.borrowAmount, , , ) = GenericLogic.calculateLoanLiquidatePrice(
+        (vars.borrowAmount, , , , ) = GenericLogic.calculateLoanLiquidatePrice(
             configProvider,
             vars.loanId,
             loanData.reserveAsset,
@@ -497,6 +504,7 @@ library LiquidateLogic {
         uint256 feeAmount;
         uint256 remainAmount;
         uint256 auctionEndTimestamp;
+        uint256 auctionFeeAmount;
     }
 
     /**
@@ -537,17 +545,31 @@ library LiquidateLogic {
             Errors.LPL_BID_AUCTION_DURATION_NOT_END
         );
 
-        (vars.borrowAmount, , , vars.feeAmount) = GenericLogic
-            .calculateLoanLiquidatePrice(
-                configProvider,
-                vars.loanId,
-                loanData.reserveAsset,
-                reserveData,
-                loanData.nftAsset
-            );
+        vars.auctionEndTimestamp += configProvider.rebuyDuration();
+        require(
+            block.timestamp > vars.auctionEndTimestamp,
+            Errors.LPL_REBUY_DURATION_NOT_END
+        );
+
+        (
+            vars.borrowAmount,
+            ,
+            ,
+            vars.feeAmount,
+            vars.auctionFeeAmount
+        ) = GenericLogic.calculateLoanLiquidatePrice(
+            configProvider,
+            vars.loanId,
+            loanData.reserveAsset,
+            reserveData,
+            loanData.nftAsset
+        );
 
         if (loanData.bidPrice > vars.borrowAmount) {
-            vars.remainAmount = loanData.bidPrice - vars.borrowAmount;
+            vars.remainAmount =
+                loanData.bidPrice -
+                vars.borrowAmount -
+                vars.auctionFeeAmount;
         }
 
         IShopLoan(configProvider.loanManager()).liquidateLoan(
@@ -564,12 +586,12 @@ library LiquidateLogic {
             );
         }
 
-        // transfer fee platform receiver
-        if (vars.feeAmount > 0) {
+        // transfer platformfee & auctionfee
+        if (vars.feeAmount + vars.auctionFeeAmount > 0) {
             if (configProvider.platformFeeReceiver() != address(this)) {
                 IERC20Upgradeable(loanData.reserveAsset).safeTransfer(
                     configProvider.platformFeeReceiver(),
-                    vars.feeAmount
+                    vars.feeAmount + vars.auctionFeeAmount
                 );
             }
         }
@@ -615,4 +637,143 @@ library LiquidateLogic {
             vars.loanId
         );
     }
+
+    // struct RebuyLocalVars {
+    //     address initiator;
+    //     uint256 loanId;
+    //     uint256 borrowAmount;
+    //     uint256 feeAmount;
+    //     uint256 remainAmount;
+    //     uint256 auctionEndTimestamp;
+    //     uint256 auctionFeeAmount;
+    // }
+
+    // function executeRebuy(
+    //     IConfigProvider configProvider,
+    //     mapping(address => DataTypes.ReservesInfo) storage reservesData,
+    //     mapping(address => DataTypes.NftsInfo) storage nftsData,
+    //     DataTypes.ExecuteRebuyParams memory params
+    // ) external {
+    //     RebuyLocalVars memory vars;
+    //     params.loanId = params.loanId;
+    //     require(params.loanId != 0, Errors.LP_NFT_IS_NOT_USED_AS_COLLATERAL);
+
+    //     DataTypes.LoanData memory loanData = IShopLoan(
+    //         configProvider.loanManager()
+    //     ).getLoan(params.loanId);
+
+    //     require(msg.sender == params.shopCreator, Errors.LPL_REBUY_ONLY_LENDER);
+
+    //     DataTypes.ReservesInfo storage reserveData = reservesData[
+    //         loanData.reserveAsset
+    //     ];
+    //     DataTypes.NftsInfo storage nftData = nftsData[loanData.nftAsset];
+
+    //     ValidationLogic.validateLiquidate(reserveData, nftData, loanData);
+
+    //     params.auctionEndTimestamp =
+    //         loanData.bidStartTimestamp +
+    //         configProvider.auctionDuration();
+    //     require(
+    //         block.timestamp > params.auctionEndTimestamp,
+    //         Errors.LPL_BID_AUCTION_DURATION_NOT_END
+    //     );
+
+    //     params.auctionEndTimestamp += configProvider.rebuyDuration();
+    //     require(
+    //         block.timestamp < params.auctionEndTimestamp,
+    //         Errors.LPL_REBUY_DURATION_END
+    //     );
+
+    //     (
+    //         vars.borrowAmount,
+    //         ,
+    //         ,
+    //         vars.feeAmount,
+    //         vars.auctionFeeAmount
+    //     ) = GenericLogic.calculateLoanLiquidatePrice(
+    //         configProvider,
+    //         vars.loanId,
+    //         loanData.reserveAsset,
+    //         reserveData,
+    //         loanData.nftAsset
+    //     );
+
+    //     if (loanData.bidPrice > vars.borrowAmount) {
+    //         vars.remainAmount =
+    //             loanData.bidPrice -
+    //             vars.borrowAmount -
+    //             vars.auctionFeeAmount;
+    //     }
+    //     //   require(
+    //     //     params.rebuyAmount >= loanData.bidPrice.mul(provider.rebuyFeePercentage())
+    //     //         .div(uint256(10000));,
+    //     //     Errors.LPL_REBUY_DURATION_END
+    //     // );
+
+    //     IShopLoan(configProvider.loanManager()).rebuyLiquidateLoan(
+    //         loanData.bidderAddress,
+    //         vars.loanId,
+    //         params.rebuyAmount
+    //     );
+
+    //     // transfer borrow_amount - fee from shopFactory to shop creator
+    //     if (vars.borrowAmount > 0) {
+    //         IERC20Upgradeable(loanData.reserveAsset).safeTransfer(
+    //             params.shopCreator,
+    //             vars.borrowAmount - vars.feeAmount
+    //         );
+    //     }
+
+    //     // transfer platformfee & auctionfee
+    //     if (vars.feeAmount + vars.auctionFeeAmount > 0) {
+    //         if (configProvider.platformFeeReceiver() != address(this)) {
+    //             IERC20Upgradeable(loanData.reserveAsset).safeTransfer(
+    //                 configProvider.platformFeeReceiver(),
+    //                 vars.feeAmount + vars.auctionFeeAmount
+    //             );
+    //         }
+    //     }
+
+    //     // transfer remain amount to borrower
+    //     if (vars.remainAmount > 0) {
+    //         if (
+    //             GenericLogic.isWETHAddress(
+    //                 configProvider,
+    //                 loanData.reserveAsset
+    //             )
+    //         ) {
+    //             // transfer (return back) last bid price amount from lend pool to bidder
+    //             TransferHelper.transferWETH2ETH(
+    //                 loanData.reserveAsset,
+    //                 loanData.borrower,
+    //                 vars.remainAmount
+    //             );
+    //         } else {
+    //             IERC20Upgradeable(loanData.reserveAsset).safeTransfer(
+    //                 loanData.borrower,
+    //                 vars.remainAmount
+    //             );
+    //         }
+    //     }
+
+    //     // transfer erc721 to bidder
+    //     IERC721Upgradeable(loanData.nftAsset).safeTransferFrom(
+    //         address(this),
+    //         loanData.bidderAddress,
+    //         loanData.nftTokenId
+    //     );
+
+    //     emit Liquidate(
+    //         vars.initiator,
+    //         loanData.reserveAsset,
+    //         vars.borrowAmount,
+    //         vars.remainAmount,
+    //         vars.feeAmount,
+    //         loanData.nftAsset,
+    //         loanData.nftTokenId,
+    //         loanData.borrower,
+    //         vars.loanId
+    //     );
+    // }
 }

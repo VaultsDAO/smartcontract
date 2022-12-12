@@ -437,34 +437,29 @@ contract ShopLoan is
         return IERC721ReceiverUpgradeable.onERC721Received.selector;
     }
 
-    function borrowerOf(uint256 loanId)
-        external
-        view
-        override
-        returns (address)
-    {
+    function borrowerOf(
+        uint256 loanId
+    ) external view override returns (address) {
         return _loans[loanId].borrower;
     }
 
-    function getCollateralLoanId(address nftAsset, uint256 nftTokenId)
-        external
-        view
-        override
-        returns (uint256)
-    {
+    function getCollateralLoanId(
+        address nftAsset,
+        uint256 nftTokenId
+    ) external view override returns (uint256) {
         return _nftToLoanIds[nftAsset][nftTokenId];
     }
 
-    function getLoan(uint256 loanId)
-        external
-        view
-        override
-        returns (DataTypes.LoanData memory loanData)
-    {
+    function getLoan(
+        uint256 loanId
+    ) external view override returns (DataTypes.LoanData memory loanData) {
         return _loans[loanId];
     }
 
-    function totalDebtInReserve(uint256 loanId, uint256 repayAmount)
+    function totalDebtInReserve(
+        uint256 loanId,
+        uint256 repayAmount
+    )
         external
         view
         override
@@ -496,16 +491,69 @@ contract ShopLoan is
         );
     }
 
-    function getLoanHighestBid(uint256 loanId)
-        external
-        view
-        override
-        returns (address, uint256)
-    {
+    function getLoanHighestBid(
+        uint256 loanId
+    ) external view override returns (address, uint256) {
         return (_loans[loanId].bidderAddress, _loans[loanId].bidPrice);
     }
 
     function _getShopFactory() internal view returns (address) {
         return IConfigProvider(_provider).shopFactory();
     }
+
+    // function rebuyLiquidateLoan(
+    //     address lender,
+    //     uint256 loanId,
+    //     uint256 rebuyAmount
+    // ) external override onlyShopFactory {
+    //     // Must use storage to change state
+    //     DataTypes.LoanData storage loan = _loans[loanId];
+
+    //     // Ensure valid loan state
+    //     require(
+    //         loan.state == DataTypes.LoanState.Auction,
+    //         Errors.LPL_INVALID_LOAN_STATE
+    //     );
+
+    //     // state changes and cleanup
+    //     // NOTE: these must be performed before assets are released to prevent reentrance
+    //     _loans[loanId].state = DataTypes.LoanState.Defaulted;
+
+    //     _nftToLoanIds[loan.nftAsset][loan.nftTokenId] = 0;
+
+    //     require(
+    //         _userNftCollateral[loan.borrower][loan.nftAsset] >= 1,
+    //         Errors.LP_INVALIED_USER_NFT_AMOUNT
+    //     );
+    //     _userNftCollateral[loan.borrower][loan.nftAsset] -= 1;
+
+    //     require(
+    //         _nftTotalCollateral[loan.nftAsset] >= 1,
+    //         Errors.LP_INVALIED_NFT_AMOUNT
+    //     );
+    //     _nftTotalCollateral[loan.nftAsset] -= 1;
+
+    //     // burn bNFT and transfer underlying NFT asset to user
+    //     address bNftAddress = GenericLogic.getBNftAddress(
+    //         _provider,
+    //         loan.nftAsset
+    //     );
+
+    //     IBNFT(bNftAddress).burn(loan.nftTokenId);
+
+    //     IERC721Upgradeable(loan.nftAsset).safeTransferFrom(
+    //         address(this),
+    //         _msgSender(),
+    //         loan.nftTokenId
+    //     );
+
+    //     emit LoanRebuyLiquidated(
+    //         lender,
+    //         loanId,
+    //         loan.nftAsset,
+    //         loan.nftTokenId,
+    //         loan.reserveAsset,
+    //         rebuyAmount
+    //     );
+    // }
 }

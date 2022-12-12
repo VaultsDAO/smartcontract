@@ -138,6 +138,13 @@ library DataTypes {
         bool isNative;
     }
 
+    struct ExecuteRebuyParams {
+        uint256 loanId;
+        uint256 rebuyAmount;
+        address shopCreator;
+        uint256 auctionEndTimestamp;
+    }
+
     struct ExecuteLiquidateParams {
         address initiator;
         uint256 loanId;

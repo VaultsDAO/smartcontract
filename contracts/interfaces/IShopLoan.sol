@@ -92,6 +92,19 @@ interface IShopLoan {
         uint256 amount
     );
 
+    /**
+     * @dev Emitted when shop owner rebuy liquidated loan from liquidator
+     * @param user The address initiating the action
+     */
+    event LoanRebuyLiquidated(
+        address indexed user,
+        uint256 indexed loanId,
+        address nftAsset,
+        uint256 nftTokenId,
+        address reserveAsset,
+        uint256 rebuyAmount
+    );
+
     function initNft(address nftAsset) external;
 
     /**
@@ -197,17 +210,19 @@ interface IShopLoan {
 
     function borrowerOf(uint256 loanId) external view returns (address);
 
-    function getCollateralLoanId(address nftAsset, uint256 nftTokenId)
-        external
-        view
-        returns (uint256);
+    function getCollateralLoanId(
+        address nftAsset,
+        uint256 nftTokenId
+    ) external view returns (uint256);
 
-    function getLoan(uint256 loanId)
-        external
-        view
-        returns (DataTypes.LoanData memory loanData);
+    function getLoan(
+        uint256 loanId
+    ) external view returns (DataTypes.LoanData memory loanData);
 
-    function totalDebtInReserve(uint256 loanId, uint256 repayAmount)
+    function totalDebtInReserve(
+        uint256 loanId,
+        uint256 repayAmount
+    )
         external
         view
         returns (
@@ -218,8 +233,13 @@ interface IShopLoan {
             uint256 fee
         );
 
-    function getLoanHighestBid(uint256 loanId)
-        external
-        view
-        returns (address, uint256);
+    function getLoanHighestBid(
+        uint256 loanId
+    ) external view returns (address, uint256);
+
+    // function rebuyLiquidateLoan(
+    //     address lender,
+    //     uint256 loanId,
+    //     uint256 rebuyAmount
+    // ) external;
 }
