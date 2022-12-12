@@ -399,7 +399,6 @@ library LiquidateLogic {
                 );
             }
             if (params.amount > (repayPrincipal + interest + fee)) {
-                revert('test');
                 TransferHelper.transferWETH2ETH(
                     loanData.reserveAsset,
                     vars.initiator,
