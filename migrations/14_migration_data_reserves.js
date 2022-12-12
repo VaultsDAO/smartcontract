@@ -25,6 +25,7 @@ module.exports = async function (deployer, network) {
     // 
     let weth = await IWETH.at(deployData['WETH'])
     let shopFactory = await ShopFactory.at(deployData['ShopFactoryProxy']);
+    let punkGateway = await ShopFactory.at(deployData['PunkGatewayProxy']);
     let reserveOracle = await ReserveOracle.at(deployData['ReserveOracleProxy']);
     // setup data
     {
@@ -35,6 +36,13 @@ module.exports = async function (deployer, network) {
         console.log('shopFactory.addReserve', weth.address, '...Done')
       } catch (ex) {
         console.log('shopFactory.addReserve', weth.address, '...Failed')
+      }
+      try {
+        await punkGateway.authorizeLendPoolERC20.estimateGas(weth.address)
+        await punkGateway.authorizeLendPoolERC20(weth.address)
+        console.log('punkGateway.authorizeLendPoolERC20', weth.address, '...Done')
+      } catch (ex) {
+        console.log('punkGateway.authorizeLendPoolERC20', weth.address, '...Failed')
       }
       let reserves = deployData["Reserves"]
       for (let i = 0; i < reserves.length; i++) {
@@ -47,6 +55,13 @@ module.exports = async function (deployer, network) {
             console.log('shopFactory.addReserve', reserveIns.address, '...Done')
           } catch (ex) {
             console.log('shopFactory.addReserve', reserveIns.address, '...Failed')
+          }
+          try {
+            await punkGateway.authorizeLendPoolERC20.estimateGas(reserveIns.address)
+            await punkGateway.authorizeLendPoolERC20(reserveIns.address)
+            console.log('punkGateway.authorizeLendPoolERC20', reserveIns.address, '...Done')
+          } catch (ex) {
+            console.log('punkGateway.authorizeLendPoolERC20', reserveIns.address, '...Failed')
           }
           try {
             let rs = await reserveOracle.priceFeedMap(reserveIns.address)

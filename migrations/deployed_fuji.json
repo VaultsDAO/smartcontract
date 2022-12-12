@@ -57,7 +57,19 @@
         "0x9c213Dcf39e0C05b920Bece7bcc74F57A7d83D9D": true,
         "0xA3c02EBA74ba04a43d6b6cD59e6fFDFA6930f521": true,
         "0x994F06613a8efE62297C169eAB161D8A9B3C768D": true,
-        "0xF4403988400497bf31C5b9F101fE4603306B66F8": true
+        "0xF4403988400497bf31C5b9F101fE4603306B66F8": true,
+        "0x24218ce40A74Af1cD94359FfEEB99a6CA9678A73": true,
+        "0x6a8C129DB1Bb1a6CC94f1e3aAf1262ABC2d74581": true,
+        "0x6883510369d8A08268fCd8E88FA8d9e9180389C8": true,
+        "0x6CD93578683Ce63f088f56527D2088C0C139C214": true,
+        "0x9E1320953eB4bE3b92bd3498066421dc07282Fb0": true,
+        "0xC5aD7cCA270dA4EdDc3633c7beFB5De4FD1e7F56": true,
+        "0xC4B7B44a8976113ca2C975eBAB5bD4703b17d80e": true,
+        "0x8f461EacBF77faB046D6A186c13ee05d0c414b57": true,
+        "0x527758e895f41826CAf07670Cb0A0055B6Cf0Ec3": true,
+        "0x986460920cB19F82b6e7b8bd2cDdc3890b6b4390": true,
+        "0x0002F6ef8655eD88fe518862D420C02F78Ee275A": true,
+        "0xe70c9c7858464D4dBC3c6B24dA3cDA7B0F001679": true
     },
     "PriceFeedAdmin": "0x9686203be0cae320bb4Dee971BB8a530A15EF489",
     "Nfts": [
@@ -150,6 +162,16 @@
             "Total": 0,
             "BaseURI": "https://meebits.larvalabs.com/meebit/",
             "Finished": true
+        },
+        {
+            "Address": "0x9c213Dcf39e0C05b920Bece7bcc74F57A7d83D9D",
+            "TargetAddress": "",
+            "TargetPriceRate": 10000,
+            "Symbol": "WPUNKS",
+            "Name": "Wrapped Cryptopunks",
+            "Total": 0,
+            "BaseURI": "https://wrappedpunks.com:3000/api/punks/metadata/",
+            "Finished": true
         }
     ],
     "WETH": "0xd00ae08403B9bbb9124bB305C09058E32C39A48c",
@@ -182,16 +204,18 @@
     "PawnNFTOracleProxy": "0xD09D38341429fD9f1936835d4Faa5fb77897EEFb",
     "ReserveOracle": "0x71e726A168e0d633B486BA99c960013Fbfd11Bb8",
     "ReserveOracleProxy": "0xffE03F96d69520cD3E6336676c41E5Aefc574E80",
-    "ShopLoan": "0x8B6170Bfae6bfb22ff13E0eA337DeEd07E55606E",
+    "ValidationLogic": "0x8f461EacBF77faB046D6A186c13ee05d0c414b57",
+    "BorrowLogic": "0x986460920cB19F82b6e7b8bd2cDdc3890b6b4390",
+    "LiquidateLogic": "0x527758e895f41826CAf07670Cb0A0055B6Cf0Ec3",
+    "ShopLoan": "0x0002F6ef8655eD88fe518862D420C02F78Ee275A",
     "ShopLoanProxy": "0x5F649809eAa99373660194d80AEbb908aB300326",
-    "ShopFactory": "0xF4403988400497bf31C5b9F101fE4603306B66F8",
+    "ShopFactory": "0xe70c9c7858464D4dBC3c6B24dA3cDA7B0F001679",
     "ShopFactoryProxy": "0xfFaDFD91bF13583813fCb08F1B1FBFE3A28BB568",
     "WETHGateway": "0xa85C0f25ff08dE23132c657a19523C7A6c38f15d",
     "WETHGatewayProxy": "0xfC4dF15D7c2c96C267F43F7A5Aeeb9Ee3c051450",
-    "ValidationLogic": "0xc7B701001bf6F8654837cdf1E47D2Dc129ca7344",
-    "BorrowLogic": "0x994F06613a8efE62297C169eAB161D8A9B3C768D",
-    "LiquidateLogic": "0xA3c02EBA74ba04a43d6b6cD59e6fFDFA6930f521",
     "MockERC20Airdrop": "0x024862bc978255b0b22A3c77Ed61B868127dd2BE",
     "CryptoPunksMarket": "0x0F906Ae054216C8a7535118A6afa0dEEa04d3079",
-    "WrappedPunk": "0x9c213Dcf39e0C05b920Bece7bcc74F57A7d83D9D"
+    "WrappedPunk": "0x9c213Dcf39e0C05b920Bece7bcc74F57A7d83D9D",
+    "PunkGateway": "0xC5aD7cCA270dA4EdDc3633c7beFB5De4FD1e7F56",
+    "PunkGatewayProxy": "0xC4B7B44a8976113ca2C975eBAB5bD4703b17d80e"
 }
