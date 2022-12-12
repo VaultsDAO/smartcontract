@@ -481,7 +481,7 @@ contract PunkGateway is
 
         uint256 allRepayAmount = 0;
         for (uint256 i = 0; i < loanIds.length; i++) {
-            (repayAmounts[i], feeAmounts[i], repayAlls[i]) = _repay(
+            (repayAmounts[i], feeAmounts[i], repayAlls[i]) = _repayETH(
                 loanIds[i],
                 amounts[i]
             );
