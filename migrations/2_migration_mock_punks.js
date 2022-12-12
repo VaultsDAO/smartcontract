@@ -57,5 +57,7 @@ module.exports = async function (deployer, network) {
       deployData['WrappedPunk'],
       '',
     )
+    // 
+    await cryptoPunksMarket.allInitialOwnersAssigned()
   }
 };

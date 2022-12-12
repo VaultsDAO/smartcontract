@@ -44,5 +44,17 @@ module.exports = async function (deployer, network) {
       console.log('configProvider.setPlatformFeePercentage')
       await configProvider.setPlatformFeePercentage(100)
     }
+    if ((await configProvider.auctionFeePercentage()).toString() != '250') {
+      console.log('configProvider.setAuctionFeePercentage')
+      await configProvider.setAuctionFeePercentage(250)
+    }
+    if ((await configProvider.rebuyDuration()).toString() != '7200') {
+      console.log('configProvider.setRebuyDuration')
+      await configProvider.setRebuyDuration(7200)
+    }
+    if ((await configProvider.rebuyFeePercentage()).toString() != '500') {
+      console.log('configProvider.setRebuyFeePercentage')
+      await configProvider.setRebuyFeePercentage(500)
+    }
   }
 };
