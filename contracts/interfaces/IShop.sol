@@ -115,6 +115,20 @@ interface IShop {
         uint256 loanId
     );
 
+    event Rebuy(
+        address user,
+        address indexed reserve,
+        uint256 rebuyAmount,
+        uint256 payAmount,
+        uint256 remainAmount,
+        uint256 feeAmount,
+        uint256 auctionFeeAmount,
+        address indexed nftAsset,
+        uint256 nftTokenId,
+        address indexed borrower,
+        uint256 loanId
+    );
+
     event ConfigurationUpdated(
         uint256 shopId,
         address reserveAddress,
@@ -219,13 +233,11 @@ interface IShop {
     ) external payable returns (uint256, uint256, bool);
 
     function batchRepay(
-        uint256 shopId,
         uint256[] calldata loanIds,
         uint256[] calldata amounts
     ) external returns (uint256[] memory, uint256[] memory, bool[] memory);
 
     function batchRepayETH(
-        uint256 shopId,
         uint256[] calldata loanIds,
         uint256[] calldata amounts
     )

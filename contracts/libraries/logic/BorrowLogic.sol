@@ -294,43 +294,6 @@ library BorrowLogic {
         return _repay(configProvider, reservesData, params);
     }
 
-    /**
-     * @notice Implements the batch repay feature. Through `batchRepay()`, users repay assets to the protocol.
-     * @dev Emits the `repay()` event.
-     * @param reservesData The state of all the reserves
-     * @param params The additional parameters needed to execute the batchRepay function
-     */
-    function executeBatchRepay(
-        IConfigProvider configProvider,
-        mapping(address => DataTypes.ReservesInfo) storage reservesData,
-        DataTypes.ExecuteBatchRepayParams memory params
-    ) external returns (uint256[] memory, uint256[] memory, bool[] memory) {
-        require(
-            params.loanIds.length == params.amounts.length,
-            "inconsistent amounts length"
-        );
-
-        uint256[] memory repayAmounts = new uint256[](params.loanIds.length);
-        uint256[] memory feeAmounts = new uint256[](params.loanIds.length);
-        bool[] memory repayAlls = new bool[](params.loanIds.length);
-
-        for (uint256 i = 0; i < params.loanIds.length; i++) {
-            (repayAmounts[i], feeAmounts[i], repayAlls[i]) = _repay(
-                configProvider,
-                reservesData,
-                DataTypes.ExecuteRepayParams({
-                    initiator: params.initiator,
-                    loanId: params.loanIds[i],
-                    amount: params.amounts[i],
-                    shopCreator: params.shopCreator,
-                    isNative: params.isNative
-                })
-            );
-        }
-
-        return (repayAmounts, feeAmounts, repayAlls);
-    }
-
     function _repay(
         IConfigProvider configProvider,
         mapping(address => DataTypes.ReservesInfo) storage reservesData,

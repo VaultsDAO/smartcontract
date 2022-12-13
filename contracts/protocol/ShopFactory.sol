@@ -288,7 +288,6 @@ contract ShopFactory is
     }
 
     function batchRepay(
-        uint256 shopId,
         uint256[] calldata loanIds,
         uint256[] calldata amounts
     )
@@ -298,11 +297,10 @@ contract ShopFactory is
         whenNotPaused
         returns (uint256[] memory, uint256[] memory, bool[] memory)
     {
-        return _batchRepay(shopId, loanIds, amounts, false);
+        return _batchRepay(loanIds, amounts, false);
     }
 
     function batchRepayETH(
-        uint256 shopId,
         uint256[] calldata loanIds,
         uint256[] calldata amounts
     )
@@ -323,27 +321,27 @@ contract ShopFactory is
             GenericLogic.getWETHAddress(IConfigProvider(provider)),
             msg.value
         );
-        return _batchRepay(shopId, loanIds, amounts, true);
+        return _batchRepay(loanIds, amounts, true);
     }
 
     function _batchRepay(
-        uint256 shopId,
         uint256[] calldata loanIds,
         uint256[] calldata amounts,
         bool isNative
     ) internal returns (uint256[] memory, uint256[] memory, bool[] memory) {
-        DataTypes.ExecuteBatchRepayParams memory params;
-        params.initiator = _msgSender();
-        params.loanIds = loanIds;
-        params.amounts = amounts;
-        params.shopCreator = shops[shopId].creator;
-        params.isNative = isNative;
-        return
-            BorrowLogic.executeBatchRepay(
-                IConfigProvider(provider),
-                reservesInfo,
-                params
+        uint256[] memory repayAmounts = new uint256[](loanIds.length);
+        uint256[] memory feeAmounts = new uint256[](loanIds.length);
+        bool[] memory repayAlls = new bool[](loanIds.length);
+
+        for (uint256 i = 0; i < loanIds.length; i++) {
+            (repayAmounts[i], feeAmounts[i], repayAlls[i]) = _repay(
+                loanIds[i],
+                amounts[i],
+                isNative
             );
+        }
+
+        return (repayAmounts, feeAmounts, repayAlls);
     }
 
     /**

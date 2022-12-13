@@ -99,6 +99,10 @@ library LiquidateLogic {
         address user,
         address indexed reserve,
         uint256 rebuyAmount,
+        uint256 payAmount,
+        uint256 remainAmount,
+        uint256 feeAmount,
+        uint256 auctionFeeAmount,
         address indexed nftAsset,
         uint256 nftTokenId,
         address indexed borrower,
@@ -665,12 +669,12 @@ library LiquidateLogic {
         DataTypes.ExecuteRebuyParams memory params
     ) external {
         RebuyLocalVars memory vars;
-        params.loanId = params.loanId;
-        require(params.loanId != 0, Errors.LP_NFT_IS_NOT_USED_AS_COLLATERAL);
+        vars.loanId = params.loanId;
+        require(vars.loanId != 0, Errors.LP_NFT_IS_NOT_USED_AS_COLLATERAL);
 
         DataTypes.LoanData memory loanData = IShopLoan(
             configProvider.loanManager()
-        ).getLoan(params.loanId);
+        ).getLoan(vars.loanId);
 
         //only lender can execute rebuy function
         require(msg.sender == params.shopCreator, Errors.LPL_REBUY_ONLY_LENDER);
@@ -682,17 +686,17 @@ library LiquidateLogic {
 
         ValidationLogic.validateLiquidate(reserveData, nftData, loanData);
 
-        params.auctionEndTimestamp =
+        vars.auctionEndTimestamp =
             loanData.bidStartTimestamp +
             configProvider.auctionDuration();
         require(
-            block.timestamp > params.auctionEndTimestamp,
+            block.timestamp > vars.auctionEndTimestamp,
             Errors.LPL_BID_AUCTION_DURATION_NOT_END
         );
 
-        params.auctionEndTimestamp += configProvider.rebuyDuration();
+        vars.auctionEndTimestamp += configProvider.rebuyDuration();
         require(
-            block.timestamp < params.auctionEndTimestamp,
+            block.timestamp < vars.auctionEndTimestamp,
             Errors.LPL_REBUY_DURATION_END
         );
 
@@ -709,7 +713,6 @@ library LiquidateLogic {
             reserveData,
             loanData.nftAsset
         );
-
         if (loanData.bidPrice > vars.borrowAmount) {
             vars.remainAmount =
                 loanData.bidPrice -
@@ -737,7 +740,6 @@ library LiquidateLogic {
             vars.loanId,
             vars.rebuyAmount
         );
-
         if (GenericLogic.isWETHAddress(configProvider, loanData.reserveAsset)) {
             if (params.isNative) {
                 require(
@@ -807,6 +809,10 @@ library LiquidateLogic {
             params.shopCreator,
             loanData.reserveAsset,
             vars.rebuyAmount,
+            vars.payAmount,
+            vars.remainAmount,
+            vars.feeAmount,
+            vars.auctionFeeAmount,
             loanData.nftAsset,
             loanData.nftTokenId,
             loanData.borrower,

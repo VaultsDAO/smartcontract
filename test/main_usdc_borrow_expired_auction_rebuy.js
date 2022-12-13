@@ -161,16 +161,25 @@ contract("Factory", function (accounts) {
     await provider.setRedeemDuration(0);
     await provider.setAuctionDuration(0);
 
+
     rs = await shopFactory.getRebuyAmount(
       loanId1,
       { from: borrower }
     );
     let rebuyAmount = rs.rebuyAmount
     let payAmount = rs.payAmount
+
+    console.log(bidPrice.toString());
+    console.log(rebuyAmount.toString());
+    console.log(payAmount.toString());
+    console.log(auctionFee.toString());
     rs = await shopFactory.rebuy(
       loanId1, rebuyAmount, payAmount,
       { from: lender }
     );
+    let remainAmount = rs.logs[0].args.remainAmount
+    let feeAmount = rs.logs[0].args.feeAmount
+    let auctionFeeAmount = rs.logs[0].args.auctionFeeAmount
     //check loan status (Defaulted)
     assert.isTrue(await utils.verifyLoanState(shopLoan, loanId1, utils.LoanState.Defaulted))
 
@@ -187,7 +196,7 @@ contract("Factory", function (accounts) {
     assert.isTrue(await utils.verifyBalance(usdc, borrower, preBalances[borrower], remainAmount, 0))
 
     //verify platformfee balance (+feeAmount + auction fee)
-    assert.isTrue(await utils.verifyBalance(usdc, platformFeeReceiver, preBalances[platformFeeReceiver], feeAmount, 0))
+    assert.isTrue(await utils.verifyBalance(usdc, platformFeeReceiver, preBalances[platformFeeReceiver], feeAmount.add(auctionFeeAmount), 0))
 
     return assert.isTrue(true);
   });
