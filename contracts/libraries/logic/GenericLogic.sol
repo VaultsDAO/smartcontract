@@ -437,7 +437,7 @@ library GenericLogic {
         return IReserveOracleGetter(provider.reserveOracle()).weth();
     }
 
-    struct CalcRebuyPriceVars {
+    struct CalcRebuyAmountVars {
         uint256 bidPrice;
         uint256 totalDebt;
         uint256 rebuyAmount;
@@ -445,11 +445,11 @@ library GenericLogic {
         uint256 platformFee;
     }
 
-    function calculateRebuyPrice(
+    function calculateRebuyAmount(
         IConfigProvider provider,
         uint256 loanId
     ) internal view returns (uint256, uint256) {
-        CalcRebuyPriceVars memory vars;
+        CalcRebuyAmountVars memory vars;
 
         DataTypes.LoanData memory loan = IShopLoan(provider.loanManager())
             .getLoan(loanId);

@@ -206,6 +206,8 @@ module.exports = async function (accounts) {
     await provider.setLoanManager(shopLoan.address, { from: pawnProxyAdminOwner })
     await provider.setPlatformFeeReceiver(platformFeeReceiver, { from: pawnProxyAdminOwner })
     await provider.setMinBidFine(2);// 1 * 2 / 10000 = 0.0002 ETH
+    await provider.setRebuyDuration(0);// 0s
+
     // setting oracle price and reserve price ---------------------------------------------------------------
 
     await bnftRegistry.createBNFT(testNft.address)

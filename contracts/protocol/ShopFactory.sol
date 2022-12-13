@@ -862,9 +862,9 @@ contract ShopFactory is
         }
     }
 
-    function getRebuyPrice(
+    function getRebuyAmount(
         uint256 loanId
-    ) external view override returns (uint256 rebuyPrice, uint256 payAmount) {
+    ) external view override returns (uint256 rebuyAmount, uint256 payAmount) {
         GetLiquidationPriceLocalVars memory vars;
 
         vars.poolLoan = provider.loanManager();
@@ -873,7 +873,7 @@ contract ShopFactory is
             return (0, 0);
         }
 
-        (rebuyPrice, payAmount) = GenericLogic.calculateRebuyPrice(
+        (rebuyAmount, payAmount) = GenericLogic.calculateRebuyAmount(
             provider,
             vars.loanId
         );
@@ -885,6 +885,18 @@ contract ShopFactory is
         uint256 payAmount
     ) external override nonReentrant whenNotPaused {
         return _rebuy(loanId, rebuyAmount, payAmount, false);
+    }
+
+    function rebuyETH(
+        uint256 loanId,
+        uint256 rebuyAmount
+    ) external payable override nonReentrant whenNotPaused {
+        //convert eth -> weth
+        TransferHelper.convertETHToWETH(
+            GenericLogic.getWETHAddress(IConfigProvider(provider)),
+            msg.value
+        );
+        return _rebuy(loanId, rebuyAmount, msg.value, true);
     }
 
     function _rebuy(

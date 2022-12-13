@@ -717,7 +717,7 @@ library LiquidateLogic {
                 vars.auctionFeeAmount;
         }
 
-        (vars.rebuyAmount, vars.payAmount) = GenericLogic.calculateRebuyPrice(
+        (vars.rebuyAmount, vars.payAmount) = GenericLogic.calculateRebuyAmount(
             configProvider,
             vars.loanId
         );
@@ -738,18 +738,32 @@ library LiquidateLogic {
             vars.rebuyAmount
         );
 
-        // get payAmount from lender to this contract
-        IERC20Upgradeable(loanData.reserveAsset).safeTransferFrom(
-            params.shopCreator,
-            address(this),
-            vars.payAmount
-        );
-
-        // transfer rebuyAmount to winner
-        IERC20Upgradeable(loanData.reserveAsset).safeTransfer(
-            loanData.bidderAddress,
-            vars.rebuyAmount
-        );
+        if (GenericLogic.isWETHAddress(configProvider, loanData.reserveAsset)) {
+            if (params.isNative) {
+                require(
+                    msg.value >= vars.payAmount,
+                    Errors.LPL_INVALID_REBUY_AMOUNT
+                );
+            }
+            // transfer rebuyAmount to winner
+            TransferHelper.transferWETH2ETH(
+                loanData.reserveAsset,
+                loanData.bidderAddress,
+                vars.rebuyAmount
+            );
+        } else {
+            // get payAmount from lender to this contract
+            IERC20Upgradeable(loanData.reserveAsset).safeTransferFrom(
+                params.shopCreator,
+                address(this),
+                vars.payAmount
+            );
+            // transfer rebuyAmount to winner
+            IERC20Upgradeable(loanData.reserveAsset).safeTransfer(
+                loanData.bidderAddress,
+                vars.rebuyAmount
+            );
+        }
 
         // transfer platformfee & auctionfee
         if (vars.feeAmount + vars.auctionFeeAmount > 0) {

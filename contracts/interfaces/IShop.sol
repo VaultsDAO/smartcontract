@@ -293,6 +293,8 @@ interface IShop {
         uint256 payAmount
     ) external;
 
+    function rebuyETH(uint256 loanId, uint256 rebuyAmount) external payable;
+
     function getReservesList() external view returns (address[] memory);
 
     /**
@@ -359,7 +361,7 @@ interface IShop {
         uint256 loanId
     ) external view returns (uint256 liquidatePrice, uint256 paybackAmount);
 
-    function getRebuyPrice(
+    function getRebuyAmount(
         uint256 loanId
     ) external view returns (uint256 rebuyPrice, uint256 payAmount);
 
