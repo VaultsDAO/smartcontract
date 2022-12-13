@@ -309,74 +309,6 @@ interface IShop {
 
     function getReservesList() external view returns (address[] memory);
 
-    /**
-     * @dev Returns the debt data of the NFT
-     * @return nftAsset the address of the NFT
-     * @return nftTokenId nft token ID
-     * @return reserveAsset the address of the Reserve
-     * @return totalCollateral the total power of the NFT
-     * @return totalDebt the total debt of the NFT
-     * @return healthFactor the current health factor of the NFT
-     **/
-    function getNftDebtData(
-        uint256 loanId
-    )
-        external
-        view
-        returns (
-            address nftAsset,
-            uint256 nftTokenId,
-            address reserveAsset,
-            uint256 totalCollateral,
-            uint256 totalDebt,
-            uint256 healthFactor
-        );
-
-    /**
-     * @dev Returns the auction data of the NFT
-     * @param loanId the loan id of the NFT
-     * @return nftAsset The address of the NFT
-     * @return nftTokenId The token id of the NFT
-     * @return bidderAddress the highest bidder address of the loan
-     * @return bidPrice the highest bid price in Reserve of the loan
-     * @return bidBorrowAmount the borrow amount in Reserve of the loan
-     * @return bidFine the penalty fine of the loan
-     **/
-    function getNftAuctionData(
-        uint256 loanId
-    )
-        external
-        view
-        returns (
-            address nftAsset,
-            uint256 nftTokenId,
-            address bidderAddress,
-            uint256 bidPrice,
-            uint256 bidBorrowAmount,
-            uint256 bidFine
-        );
-
-    // function getNftAuctionEndTime(
-    //     uint256 loanId
-    // )
-    //     external
-    //     view
-    //     returns (
-    //         address nftAsset,
-    //         uint256 nftTokenId,
-    //         uint256 bidStartTimestamp,
-    //         uint256 bidEndTimestamp,
-    //         uint256 redeemEndTimestamp
-    //     );
-
-    function getNftLiquidatePrice(
-        uint256 loanId
-    ) external view returns (uint256 liquidatePrice, uint256 paybackAmount);
-
-    function getRebuyAmount(
-        uint256 loanId
-    ) external view returns (uint256 rebuyPrice, uint256 payAmount);
-
     function getNftsList() external view returns (address[] memory);
 
     function setPause(bool val) external;
@@ -392,4 +324,8 @@ interface IShop {
         string memory collection,
         uint256 maxSupply
     ) external;
+
+    function getReservesInfo(
+        address reserveAsset
+    ) external view returns (DataTypes.ReservesInfo memory);
 }

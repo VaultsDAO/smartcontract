@@ -105,7 +105,7 @@ contract("Factory", function (accounts) {
 
     preETHBalances = await utils.logPreETHBalances(preETHBalances, testAddress)
     preWETHBalances = await utils.logPreBalances(preWETHBalances, weth, testAddress)
-    rs = await shopFactory.getNftDebtData(
+    rs = await shopLoan.getNftDebtData(
       loanId1,
       { from: borrower }
     );
@@ -133,7 +133,7 @@ contract("Factory", function (accounts) {
     //repay full
     preETHBalances = await utils.logPreETHBalances(preETHBalances, testAddress)
     preWETHBalances = await utils.logPreBalances(preWETHBalances, weth, testAddress)
-    rs = await shopFactory.getNftDebtData(
+    rs = await shopLoan.getNftDebtData(
       loanId1,
       { from: borrower }
     );
@@ -165,7 +165,7 @@ contract("Factory", function (accounts) {
     //loan2
     preETHBalances = await utils.logPreETHBalances(preETHBalances, testAddress)
     preWETHBalances = await utils.logPreBalances(preWETHBalances, weth, testAddress)
-    rs = await shopFactory.getNftDebtData(
+    rs = await shopLoan.getNftDebtData(
       loanId2,
       { from: borrower }
     );

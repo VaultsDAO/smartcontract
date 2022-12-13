@@ -108,7 +108,7 @@ contract("Factory", function (accounts) {
     await utils.waitAndEvmMine(2000);
 
     //bidder1
-    rs = await shopFactory.getNftLiquidatePrice(
+    rs = await shopLoan.getNftLiquidatePrice(
       loanId1,
       { from: borrower }
     );
@@ -133,7 +133,7 @@ contract("Factory", function (accounts) {
     //bibder2
     preBalances = await utils.logPreBalances(preBalances, usdc, testAddress)
     //getNftAuctionData
-    rs = await shopFactory.getNftAuctionData(
+    rs = await shopLoan.getNftAuctionData(
       loanId1,
       { from: bidder2 }
     );
@@ -162,17 +162,13 @@ contract("Factory", function (accounts) {
     await provider.setAuctionDuration(0);
 
 
-    rs = await shopFactory.getRebuyAmount(
+    rs = await shopLoan.getRebuyAmount(
       loanId1,
-      { from: borrower }
+      { from: lender }
     );
     let rebuyAmount = rs.rebuyAmount
     let payAmount = rs.payAmount
 
-    console.log(bidPrice.toString());
-    console.log(rebuyAmount.toString());
-    console.log(payAmount.toString());
-    console.log(auctionFee.toString());
     rs = await shopFactory.rebuy(
       loanId1, rebuyAmount, payAmount,
       { from: lender }

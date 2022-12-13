@@ -110,6 +110,12 @@ contract ShopFactory is
         );
     }
 
+    function getReservesInfo(
+        address reserveAsset
+    ) external view returns (DataTypes.ReservesInfo memory) {
+        return reservesInfo[reserveAsset];
+    }
+
     /**
      * @dev Allows users to borrow a specific `amount` of the reserve underlying asset
      * - E.g. User borrows 100 USDC, receiving the 100 USDC in his wallet
@@ -498,125 +504,16 @@ contract ShopFactory is
             );
     }
 
-    /**
-     * @dev Returns the debt data of the NFT
-     * @return nftAsset the address of the NFT
-     * @return nftTokenId nft token ID
-     * @return reserveAsset the address of the Reserve
-     * @return totalCollateral the total power of the NFT
-     * @return totalDebt the total debt of the NFT
-     * @return healthFactor the current health factor of the NFT
-     **/
-    function getNftDebtData(
-        uint256 loanId
-    )
-        external
-        view
-        override
-        returns (
-            address nftAsset,
-            uint256 nftTokenId,
-            address reserveAsset,
-            uint256 totalCollateral,
-            uint256 totalDebt,
-            uint256 healthFactor
-        )
-    {
-        if (loanId == 0) {
-            return (address(0), 0, address(0), 0, 0, 0);
-        }
-        DataTypes.LoanData memory loanData = IShopLoan(
-            IConfigProvider(provider).loanManager()
-        ).getLoan(loanId);
-        uint256 liquidationThreshold = provider.liquidationThreshold();
-
-        DataTypes.LoanData memory loan = IShopLoan(provider.loanManager())
-            .getLoan(loanId);
-
-        reserveAsset = loan.reserveAsset;
-        DataTypes.ReservesInfo storage reserveData = reservesInfo[reserveAsset];
-
-        (, totalCollateral) = GenericLogic.calculateNftCollateralData(
-            loanData.reserveAsset,
-            reserveData,
-            loanData.nftAsset,
-            provider.reserveOracle(),
-            provider.nftOracle()
-        );
-
-        (, totalDebt) = GenericLogic.calculateNftDebtData(
-            reserveAsset,
-            reserveData,
-            provider.loanManager(),
-            loanData.loanId,
-            provider.reserveOracle()
-        );
-        if (loan.state == DataTypes.LoanState.Auction) {
-            totalDebt = loan.bidBorrowAmount;
-        }
-        if (loan.state == DataTypes.LoanState.Active) {
-            healthFactor = GenericLogic.calculateHealthFactorFromBalances(
-                totalCollateral,
-                totalDebt,
-                liquidationThreshold
-            );
-        }
-        nftAsset = loan.nftAsset;
-        nftTokenId = loan.nftTokenId;
-    }
-
-    /**
-     * @dev Returns the auction data of the NFT
-     * @param loanId the loan id of the NFT
-     * @return nftAsset The address of the NFT
-     * @return nftTokenId The token id of the NFT
-     * @return bidderAddress the highest bidder address of the loan
-     * @return bidPrice the highest bid price in Reserve of the loan
-     * @return bidBorrowAmount the borrow amount in Reserve of the loan
-     * @return bidFine the penalty fine of the loan
-     **/
-    function getNftAuctionData(
-        uint256 loanId
-    )
-        external
-        view
-        override
-        returns (
-            address nftAsset,
-            uint256 nftTokenId,
-            address bidderAddress,
-            uint256 bidPrice,
-            uint256 bidBorrowAmount,
-            uint256 bidFine
-        )
-    {
-        // DataTypes.NftsInfo storage nftData = nftsInfo[nftAsset];
-        if (loanId != 0) {
-            DataTypes.LoanData memory loan = IShopLoan(provider.loanManager())
-                .getLoan(loanId);
-            DataTypes.ReservesInfo storage reserveData = reservesInfo[
-                loan.reserveAsset
-            ];
-
-            bidderAddress = loan.bidderAddress;
-            bidPrice = loan.bidPrice;
-            bidBorrowAmount = loan.bidBorrowAmount;
-
-            (, bidFine) = GenericLogic.calculateLoanBidFine(
-                provider,
-                loan.reserveAsset,
-                reserveData,
-                nftAsset,
-                loan,
-                provider.loanManager(),
-                provider.reserveOracle()
-            );
-            nftAsset = loan.nftAsset;
-            nftTokenId = loan.nftTokenId;
-        }
-    }
-
-    // function getNftAuctionEndTime(
+    // /**
+    //  * @dev Returns the debt data of the NFT
+    //  * @return nftAsset the address of the NFT
+    //  * @return nftTokenId nft token ID
+    //  * @return reserveAsset the address of the Reserve
+    //  * @return totalCollateral the total power of the NFT
+    //  * @return totalDebt the total debt of the NFT
+    //  * @return healthFactor the current health factor of the NFT
+    //  **/
+    // function getNftDebtData(
     //     uint256 loanId
     // )
     //     external
@@ -625,80 +522,54 @@ contract ShopFactory is
     //     returns (
     //         address nftAsset,
     //         uint256 nftTokenId,
-    //         uint256 bidStartTimestamp,
-    //         uint256 bidEndTimestamp,
-    //         uint256 redeemEndTimestamp
+    //         address reserveAsset,
+    //         uint256 totalCollateral,
+    //         uint256 totalDebt,
+    //         uint256 healthFactor
     //     )
     // {
-    //     if (loanId != 0) {
-    //         DataTypes.LoanData memory loan = IShopLoan(provider.loanManager())
-    //             .getLoan(loanId);
-
-    //         nftAsset = loan.nftAsset;
-    //         nftTokenId = loan.nftTokenId;
-    //         bidStartTimestamp = loan.bidStartTimestamp;
-    //         if (bidStartTimestamp > 0) {
-    //             (bidEndTimestamp, redeemEndTimestamp) = GenericLogic
-    //                 .calculateLoanAuctionEndTimestamp(
-    //                     provider,
-    //                     bidStartTimestamp
-    //                 );
-    //         }
+    //     if (loanId == 0) {
+    //         return (address(0), 0, address(0), 0, 0, 0);
     //     }
+    //     DataTypes.LoanData memory loanData = IShopLoan(
+    //         IConfigProvider(provider).loanManager()
+    //     ).getLoan(loanId);
+    //     uint256 liquidationThreshold = provider.liquidationThreshold();
+
+    //     DataTypes.LoanData memory loan = IShopLoan(provider.loanManager())
+    //         .getLoan(loanId);
+
+    //     reserveAsset = loan.reserveAsset;
+    //     DataTypes.ReservesInfo storage reserveData = reservesInfo[reserveAsset];
+
+    //     (, totalCollateral) = GenericLogic.calculateNftCollateralData(
+    //         loanData.reserveAsset,
+    //         reserveData,
+    //         loanData.nftAsset,
+    //         provider.reserveOracle(),
+    //         provider.nftOracle()
+    //     );
+
+    //     (, totalDebt) = GenericLogic.calculateNftDebtData(
+    //         reserveAsset,
+    //         reserveData,
+    //         provider.loanManager(),
+    //         loanData.loanId,
+    //         provider.reserveOracle()
+    //     );
+    //     if (loan.state == DataTypes.LoanState.Auction) {
+    //         totalDebt = loan.bidBorrowAmount;
+    //     }
+    //     if (loan.state == DataTypes.LoanState.Active) {
+    //         healthFactor = GenericLogic.calculateHealthFactorFromBalances(
+    //             totalCollateral,
+    //             totalDebt,
+    //             liquidationThreshold
+    //         );
+    //     }
+    //     nftAsset = loan.nftAsset;
+    //     nftTokenId = loan.nftTokenId;
     // }
-
-    struct GetLiquidationPriceLocalVars {
-        address poolLoan;
-        uint256 loanId;
-        uint256 thresholdPrice;
-        uint256 liquidatePrice;
-        uint256 paybackAmount;
-        uint256 remainAmount;
-    }
-
-    function getNftLiquidatePrice(
-        uint256 loanId
-    )
-        external
-        view
-        override
-        returns (uint256 liquidatePrice, uint256 paybackAmount)
-    {
-        GetLiquidationPriceLocalVars memory vars;
-
-        vars.poolLoan = provider.loanManager();
-        vars.loanId = loanId;
-        if (vars.loanId == 0) {
-            return (0, 0);
-        }
-
-        DataTypes.LoanData memory loanData = IShopLoan(vars.poolLoan).getLoan(
-            vars.loanId
-        );
-
-        DataTypes.ReservesInfo storage reserveData = reservesInfo[
-            loanData.reserveAsset
-        ];
-        (
-            vars.paybackAmount,
-            vars.thresholdPrice,
-            vars.liquidatePrice,
-            ,
-
-        ) = GenericLogic.calculateLoanLiquidatePrice(
-            provider,
-            vars.loanId,
-            loanData.reserveAsset,
-            reserveData,
-            loanData.nftAsset
-        );
-
-        if (vars.liquidatePrice < vars.paybackAmount) {
-            vars.liquidatePrice = vars.paybackAmount;
-        }
-
-        return (vars.liquidatePrice, vars.paybackAmount);
-    }
 
     /**
      * @dev Returns the list of the initialized reserves
@@ -839,50 +710,12 @@ contract ShopFactory is
         }
     }
 
-    function _verifyCallResult(
-        bool success,
-        bytes memory returndata,
-        string memory errorMessage
-    ) internal pure returns (bytes memory) {
-        if (success) {
-            return returndata;
-        } else {
-            // Look for revert reason and bubble it up if present
-            if (returndata.length > 0) {
-                // The easiest way to bubble the revert reason is using memory via assembly
-                assembly {
-                    let returndata_size := mload(returndata)
-                    revert(add(32, returndata), returndata_size)
-                }
-            } else {
-                revert(errorMessage);
-            }
-        }
-    }
-
-    function getRebuyAmount(
-        uint256 loanId
-    ) external view override returns (uint256 rebuyAmount, uint256 payAmount) {
-        GetLiquidationPriceLocalVars memory vars;
-
-        vars.poolLoan = provider.loanManager();
-        vars.loanId = loanId;
-        if (vars.loanId == 0) {
-            return (0, 0);
-        }
-
-        (rebuyAmount, payAmount) = GenericLogic.calculateRebuyAmount(
-            provider,
-            vars.loanId
-        );
-    }
-
     function rebuy(
         uint256 loanId,
         uint256 rebuyAmount,
         uint256 payAmount
     ) external override nonReentrant whenNotPaused {
-        return _rebuy(loanId, rebuyAmount, payAmount, false);
+        _rebuy(loanId, rebuyAmount, payAmount, false);
     }
 
     function rebuyETH(
@@ -894,7 +727,15 @@ contract ShopFactory is
             GenericLogic.getWETHAddress(IConfigProvider(provider)),
             msg.value
         );
-        return _rebuy(loanId, rebuyAmount, msg.value, true);
+        uint256 dustAmount = _rebuy(loanId, rebuyAmount, msg.value, true);
+        if (dustAmount > IConfigProvider(provider).minDustAmount()) {
+            //transfer back eth to user
+            TransferHelper.transferWETH2ETH(
+                GenericLogic.getWETHAddress(IConfigProvider(provider)),
+                msg.sender,
+                dustAmount
+            );
+        }
     }
 
     function _rebuy(
@@ -902,7 +743,7 @@ contract ShopFactory is
         uint256 rebuyAmount,
         uint256 payAmount,
         bool isNative
-    ) internal {
+    ) internal returns (uint256) {
         DataTypes.LoanData memory loanData = IShopLoan(
             IConfigProvider(provider).loanManager()
         ).getLoan(loanId);
@@ -916,7 +757,6 @@ contract ShopFactory is
                     rebuyAmount: rebuyAmount,
                     payAmount: payAmount,
                     shopCreator: shops[loanData.shopId].creator,
-                    auctionEndTimestamp: 0, //don't use
                     isNative: isNative
                 })
             );

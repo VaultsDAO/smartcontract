@@ -107,7 +107,7 @@ contract("Factory", function (accounts) {
     preBalances = await utils.logPreBalances(preBalances, usdc, testAddress)
 
     //getNftDebtData
-    rs = await shopFactory.getNftDebtData(
+    rs = await shopLoan.getNftDebtData(
       loanId1,
       { from: borrower }
     );
@@ -134,7 +134,7 @@ contract("Factory", function (accounts) {
     preBalances = await utils.logPreBalances(preBalances, usdc, testAddress)
 
     //getNftDebtData
-    rs = await shopFactory.getNftDebtData(
+    rs = await shopLoan.getNftDebtData(
       loanId1,
       { from: borrower }
     );
@@ -161,7 +161,7 @@ contract("Factory", function (accounts) {
     //=======================repay loan2
     preBalances = await utils.logPreBalances(preBalances, usdc, testAddress)
     //getNftDebtData
-    rs = await shopFactory.getNftDebtData(
+    rs = await shopLoan.getNftDebtData(
       loanId2,
       { from: borrower }
     );

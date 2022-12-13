@@ -117,7 +117,7 @@ contract("Factory", function (accounts) {
     await utils.waitAndEvmMine(2000);
 
     //bidder1
-    rs = await shopFactory.getNftLiquidatePrice(
+    rs = await shopLoan.getNftLiquidatePrice(
       loanId1,
       { from: borrower }
     );
@@ -139,7 +139,7 @@ contract("Factory", function (accounts) {
     //bibder2
     preBalances = await utils.logPreBalances(preBalances, usdc, testAddress)
     //getNftAuctionData
-    rs = await shopFactory.getNftAuctionData(
+    rs = await shopLoan.getNftAuctionData(
       loanId1,
       { from: bidder2 }
     );
@@ -162,7 +162,7 @@ contract("Factory", function (accounts) {
 
     //============================= redeem 
     preBalances = await utils.logPreBalances(preBalances, usdc, testAddress)
-    rs = await shopFactory.getNftAuctionData(
+    rs = await shopLoan.getNftAuctionData(
       loanId1,
       { from: borrower }
     );
@@ -212,7 +212,7 @@ contract("Factory", function (accounts) {
     preBalances = await utils.logPreBalances(preBalances, usdc, testAddress)
 
     //getNftDebtData
-    rs = await shopFactory.getNftDebtData(
+    rs = await shopLoan.getNftDebtData(
       loanId1,
       { from: borrower }
     );
@@ -240,7 +240,7 @@ contract("Factory", function (accounts) {
     ////======================= AUCTION NFT2
     preBalances = await utils.logPreBalances(preBalances, usdc, testAddress)
     //bidder1
-    rs = await shopFactory.getNftLiquidatePrice(
+    rs = await shopLoan.getNftLiquidatePrice(
       loanId2,
       { from: borrower }
     );
@@ -262,7 +262,7 @@ contract("Factory", function (accounts) {
     //bibder2
     preBalances = await utils.logPreBalances(preBalances, usdc, testAddress)
     //getNftAuctionData
-    rs = await shopFactory.getNftAuctionData(
+    rs = await shopLoan.getNftAuctionData(
       loanId2,
       { from: bidder2 }
     );
@@ -285,14 +285,14 @@ contract("Factory", function (accounts) {
 
     //============================= redeem 
     preBalances = await utils.logPreBalances(preBalances, usdc, testAddress)
-    rs = await shopFactory.getNftAuctionData(
+    rs = await shopLoan.getNftAuctionData(
       loanId2,
       { from: borrower }
     );
 
     //redeem full => repay 
     bidFine = new BN(rs.bidFine)
-    rs = await shopFactory.getNftDebtData(
+    rs = await shopLoan.getNftDebtData(
       loanId2,
       { from: borrower }
     );

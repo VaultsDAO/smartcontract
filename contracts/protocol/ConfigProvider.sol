@@ -37,6 +37,7 @@ contract ConfigProvider is OwnableUpgradeable {
     uint256 public auctionFeePercentage;
     uint256 public rebuyDuration;
     uint256 public rebuyFeePercentage;
+    uint256 public minDustAmount;
 
     /// @notice for gap, minus 1 if use
     uint256[22] public __number;
@@ -64,6 +65,7 @@ contract ConfigProvider is OwnableUpgradeable {
     event AuctionFeePercentageSet(uint256 _auctionFeePercentage);
     event RebuyDurationSet(uint256 _rebuyDuration);
     event RebuyFeePercentageSet(uint256 _rebuyFeePercentage);
+    event MinDustAmountSet(uint256 _minDustAmount);
 
     //end event
 
@@ -86,6 +88,12 @@ contract ConfigProvider is OwnableUpgradeable {
         auctionFeePercentage = 250; //2.5%
         rebuyDuration = 2 hours;
         rebuyFeePercentage = 500; //5%
+        minDustAmount = 1 * 10 ** 14;
+    }
+
+    function setMinDustAmount(uint256 _value) external onlyOwner {
+        minDustAmount = _value;
+        emit MinDustAmountSet(_value);
     }
 
     function setRebuyFeePercentage(uint256 _value) external onlyOwner {

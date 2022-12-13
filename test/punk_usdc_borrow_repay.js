@@ -112,7 +112,7 @@ contract("Factory", function (accounts) {
     preBalances = await utils.logPreBalances(preBalances, usdc, testAddress)
 
     //getNftDebtData
-    rs = await shopFactory.getNftDebtData(
+    rs = await shopLoan.getNftDebtData(
       loanId1,
       { from: borrower }
     );
@@ -141,7 +141,7 @@ contract("Factory", function (accounts) {
     preBalances = await utils.logPreBalances(preBalances, usdc, testAddress)
 
     //getNftDebtData
-    rs = await shopFactory.getNftDebtData(
+    rs = await shopLoan.getNftDebtData(
       loanId1,
       { from: borrower }
     );
@@ -170,7 +170,7 @@ contract("Factory", function (accounts) {
     //=======================repay loan2
     preBalances = await utils.logPreBalances(preBalances, usdc, testAddress)
     //getNftDebtData
-    rs = await shopFactory.getNftDebtData(
+    rs = await shopLoan.getNftDebtData(
       loanId2,
       { from: borrower }
     );
@@ -181,7 +181,7 @@ contract("Factory", function (accounts) {
       totalDebt,
       { from: borrower }
     );
-    
+
     logs = utils.getResultFromLogs(Ishop, rs.receipt.rawLogs, 'Repay')
     fee = logs[0].feeAmount
     //check loan status (Repaid)

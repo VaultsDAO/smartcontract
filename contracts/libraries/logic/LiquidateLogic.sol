@@ -667,7 +667,7 @@ library LiquidateLogic {
         mapping(address => DataTypes.ReservesInfo) storage reservesData,
         mapping(address => DataTypes.NftsInfo) storage nftsData,
         DataTypes.ExecuteRebuyParams memory params
-    ) external {
+    ) external returns (uint256 dustAmount) {
         RebuyLocalVars memory vars;
         vars.loanId = params.loanId;
         require(vars.loanId != 0, Errors.LP_NFT_IS_NOT_USED_AS_COLLATERAL);
@@ -726,7 +726,7 @@ library LiquidateLogic {
         );
 
         require(
-            vars.rebuyAmount == params.rebuyAmount,
+            params.rebuyAmount >= vars.rebuyAmount,
             Errors.LPL_INVALID_REBUY_AMOUNT
         );
 
@@ -746,6 +746,7 @@ library LiquidateLogic {
                     msg.value >= vars.payAmount,
                     Errors.LPL_INVALID_REBUY_AMOUNT
                 );
+                dustAmount = msg.value - vars.payAmount;
             }
             // transfer rebuyAmount to winner
             TransferHelper.transferWETH2ETH(

@@ -554,4 +554,181 @@ contract ShopLoan is
             rebuyPrice
         );
     }
+
+    /**
+     * @dev Returns the debt data of the NFT
+     * @return nftAsset the address of the NFT
+     * @return nftTokenId nft token ID
+     * @return reserveAsset the address of the Reserve
+     * @return totalCollateral the total power of the NFT
+     * @return totalDebt the total debt of the NFT
+     * @return healthFactor the current health factor of the NFT
+     **/
+    function getNftDebtData(
+        uint256 loanId
+    )
+        external
+        view
+        override
+        returns (
+            address nftAsset,
+            uint256 nftTokenId,
+            address reserveAsset,
+            uint256 totalCollateral,
+            uint256 totalDebt,
+            uint256 healthFactor
+        )
+    {
+        if (loanId == 0) {
+            return (address(0), 0, address(0), 0, 0, 0);
+        }
+        DataTypes.LoanData memory loanData = IShopLoan(
+            IConfigProvider(_provider).loanManager()
+        ).getLoan(loanId);
+        uint256 liquidationThreshold = _provider.liquidationThreshold();
+
+        DataTypes.LoanData memory loan = _loans[loanId];
+
+        reserveAsset = loan.reserveAsset;
+        DataTypes.ReservesInfo memory reserveData = IShop(
+            IConfigProvider(_provider).shopFactory()
+        ).getReservesInfo(reserveAsset);
+
+        (, totalCollateral) = GenericLogic.calculateNftCollateralData(
+            loanData.reserveAsset,
+            reserveData,
+            loanData.nftAsset,
+            _provider.reserveOracle(),
+            _provider.nftOracle()
+        );
+
+        (, totalDebt) = GenericLogic.calculateNftDebtData(
+            reserveAsset,
+            reserveData,
+            _provider.loanManager(),
+            loanData.loanId,
+            _provider.reserveOracle()
+        );
+        if (loan.state == DataTypes.LoanState.Auction) {
+            totalDebt = loan.bidBorrowAmount;
+        }
+        if (loan.state == DataTypes.LoanState.Active) {
+            healthFactor = GenericLogic.calculateHealthFactorFromBalances(
+                totalCollateral,
+                totalDebt,
+                liquidationThreshold
+            );
+        }
+        nftAsset = loan.nftAsset;
+        nftTokenId = loan.nftTokenId;
+    }
+
+    /**
+     * @dev Returns the auction data of the NFT
+     * @param loanId the loan id of the NFT
+     * @return nftAsset The address of the NFT
+     * @return nftTokenId The token id of the NFT
+     * @return bidderAddress the highest bidder address of the loan
+     * @return bidPrice the highest bid price in Reserve of the loan
+     * @return bidBorrowAmount the borrow amount in Reserve of the loan
+     * @return bidFine the penalty fine of the loan
+     **/
+    function getNftAuctionData(
+        uint256 loanId
+    )
+        external
+        view
+        override
+        returns (
+            address nftAsset,
+            uint256 nftTokenId,
+            address bidderAddress,
+            uint256 bidPrice,
+            uint256 bidBorrowAmount,
+            uint256 bidFine
+        )
+    {
+        // DataTypes.NftsInfo storage nftData = nftsInfo[nftAsset];
+        if (loanId != 0) {
+            DataTypes.LoanData memory loan = _loans[loanId];
+            DataTypes.ReservesInfo memory reserveData = IShop(
+                IConfigProvider(_provider).shopFactory()
+            ).getReservesInfo(loan.reserveAsset);
+
+            bidderAddress = loan.bidderAddress;
+            bidPrice = loan.bidPrice;
+            bidBorrowAmount = loan.bidBorrowAmount;
+
+            (, bidFine) = GenericLogic.calculateLoanBidFine(
+                _provider,
+                loan.reserveAsset,
+                reserveData,
+                nftAsset,
+                loan,
+                _provider.loanManager(),
+                _provider.reserveOracle()
+            );
+            nftAsset = loan.nftAsset;
+            nftTokenId = loan.nftTokenId;
+        }
+    }
+
+    function getNftLiquidatePrice(
+        uint256 loanId
+    )
+        external
+        view
+        override
+        returns (uint256 liquidatePrice, uint256 paybackAmount)
+    {
+        DataTypes.GetLiquidationPriceLocalVars memory vars;
+
+        vars.poolLoan = _provider.loanManager();
+        vars.loanId = loanId;
+        if (vars.loanId == 0) {
+            return (0, 0);
+        }
+
+        DataTypes.LoanData memory loanData = _loans[vars.loanId];
+
+        DataTypes.ReservesInfo memory reserveData = IShop(
+            IConfigProvider(_provider).shopFactory()
+        ).getReservesInfo(loanData.reserveAsset);
+        (
+            vars.paybackAmount,
+            vars.thresholdPrice,
+            vars.liquidatePrice,
+            ,
+
+        ) = GenericLogic.calculateLoanLiquidatePrice(
+            _provider,
+            vars.loanId,
+            loanData.reserveAsset,
+            reserveData,
+            loanData.nftAsset
+        );
+
+        if (vars.liquidatePrice < vars.paybackAmount) {
+            vars.liquidatePrice = vars.paybackAmount;
+        }
+
+        return (vars.liquidatePrice, vars.paybackAmount);
+    }
+
+    function getRebuyAmount(
+        uint256 loanId
+    ) external view override returns (uint256 rebuyAmount, uint256 payAmount) {
+        DataTypes.GetLiquidationPriceLocalVars memory vars;
+
+        vars.poolLoan = _provider.loanManager();
+        vars.loanId = loanId;
+        if (vars.loanId == 0) {
+            return (0, 0);
+        }
+
+        (rebuyAmount, payAmount) = GenericLogic.calculateRebuyAmount(
+            _provider,
+            vars.loanId
+        );
+    }
 }

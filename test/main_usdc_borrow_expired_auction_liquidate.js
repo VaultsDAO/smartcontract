@@ -108,7 +108,7 @@ contract("Factory", function (accounts) {
     await utils.waitAndEvmMine(2000);
 
     //bidder1
-    rs = await shopFactory.getNftLiquidatePrice(
+    rs = await shopLoan.getNftLiquidatePrice(
       loanId1,
       { from: borrower }
     );
@@ -133,7 +133,7 @@ contract("Factory", function (accounts) {
     //bibder2
     preBalances = await utils.logPreBalances(preBalances, usdc, testAddress)
     //getNftAuctionData
-    rs = await shopFactory.getNftAuctionData(
+    rs = await shopLoan.getNftAuctionData(
       loanId1,
       { from: bidder2 }
     );
@@ -160,7 +160,7 @@ contract("Factory", function (accounts) {
     await provider.setRedeemDuration(0);
     await provider.setAuctionDuration(0);
 
-    rs = await shopFactory.getNftDebtData(
+    rs = await shopLoan.getNftDebtData(
       loanId1,
       { from: borrower }
     );

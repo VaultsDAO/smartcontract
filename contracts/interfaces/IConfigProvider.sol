@@ -60,4 +60,7 @@ interface IConfigProvider {
     function interestDuration() external view returns (uint256);
 
     function minBidDeltaPercentage() external view returns (uint256);
+
+    //mint eth amount to transfer back to user
+    function minDustAmount() external view returns (uint256);
 }

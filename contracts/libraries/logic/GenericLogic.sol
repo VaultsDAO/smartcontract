@@ -106,7 +106,7 @@ library GenericLogic {
 
     function calculateNftDebtData(
         address reserveAddress,
-        DataTypes.ReservesInfo storage reserveData,
+        DataTypes.ReservesInfo memory reserveData,
         address loanAddress,
         uint256 loanId,
         address reserveOracle
@@ -134,7 +134,7 @@ library GenericLogic {
 
     function calculateNftCollateralData(
         address reserveAddress,
-        DataTypes.ReservesInfo storage reserveData,
+        DataTypes.ReservesInfo memory reserveData,
         address nftAddress,
         address reserveOracle,
         address nftOracle
@@ -252,7 +252,7 @@ library GenericLogic {
         IConfigProvider provider,
         uint256 loanId,
         address reserveAsset,
-        DataTypes.ReservesInfo storage reserveData,
+        DataTypes.ReservesInfo memory reserveData,
         address nftAsset
     ) internal view returns (uint256, uint256, uint256, uint256, uint256) {
         CalcLiquidatePriceLocalVars memory vars;
@@ -336,7 +336,7 @@ library GenericLogic {
     function calculateLoanBidFine(
         IConfigProvider provider,
         address reserveAsset,
-        DataTypes.ReservesInfo storage reserveData,
+        DataTypes.ReservesInfo memory reserveData,
         address nftAsset,
         DataTypes.LoanData memory loanData,
         address poolLoan,

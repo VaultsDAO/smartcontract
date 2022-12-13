@@ -143,7 +143,6 @@ library DataTypes {
         uint256 rebuyAmount;
         uint256 payAmount;
         address shopCreator;
-        uint256 auctionEndTimestamp;
         bool isNative;
     }
 
@@ -159,5 +158,14 @@ library DataTypes {
         uint256 interestRate;
         uint256 ltvRate;
         bool active;
+    }
+
+    struct GetLiquidationPriceLocalVars {
+        address poolLoan;
+        uint256 loanId;
+        uint256 thresholdPrice;
+        uint256 liquidatePrice;
+        uint256 paybackAmount;
+        uint256 remainAmount;
     }
 }

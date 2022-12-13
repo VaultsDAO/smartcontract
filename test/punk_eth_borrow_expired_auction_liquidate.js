@@ -104,7 +104,7 @@ contract("Factory", function (accounts) {
     preETHBalances = await utils.logPreETHBalances(preETHBalances, testAddress)
     preWETHBalances = await utils.logPreBalances(preWETHBalances, weth, testAddress)
     //bidder1
-    rs = await shopFactory.getNftLiquidatePrice(
+    rs = await shopLoan.getNftLiquidatePrice(
       loanId1,
       { from: borrower }
     );
@@ -127,7 +127,7 @@ contract("Factory", function (accounts) {
     preETHBalances = await utils.logPreETHBalances(preETHBalances, testAddress)
     preWETHBalances = await utils.logPreBalances(preWETHBalances, weth, testAddress)
     //getNftAuctionData
-    rs = await shopFactory.getNftAuctionData(
+    rs = await shopLoan.getNftAuctionData(
       loanId1,
       { from: bidder2 }
     );
@@ -149,7 +149,7 @@ contract("Factory", function (accounts) {
     assert.isTrue(await utils.verifyBalance(weth, shopFactory.address, preWETHBalances[shopFactory.address], bidPrice, lastBid))
 
     //============================= liquidate
-    rs = await shopFactory.getNftDebtData(
+    rs = await shopLoan.getNftDebtData(
       loanId1,
       { from: borrower }
     );
@@ -163,7 +163,7 @@ contract("Factory", function (accounts) {
     await provider.setRedeemDuration(0);
     await provider.setAuctionDuration(0);
 
-    rs = await shopFactory.getNftDebtData(
+    rs = await shopLoan.getNftDebtData(
       loanId1,
       { from: borrower }
     );

@@ -93,6 +93,13 @@ contract("Factory", function (accounts) {
     assert.isTrue(await utils.verifyOwnerNft(testNft, 1, bnft.address))
     assert.isTrue(await utils.verifyOwnerNft(testNft, 2, bnft.address))
 
+    rs = await shopLoan.getNftLiquidatePrice(
+      loanId1,
+      { from: borrower }
+    );
+
+    let bidPrice = rs.liquidatePrice
+
     //======================= auction
     await utils.waitAndEvmMine(2000);
     preETHBalances = await utils.logPreETHBalances(preETHBalances, testAddress)
@@ -103,7 +110,7 @@ contract("Factory", function (accounts) {
       { from: borrower }
     );
 
-    let bidPrice = rs.liquidatePrice
+    bidPrice = rs.liquidatePrice
     rs = await shopFactory.auctionETH(
       loanId1,
       bidder1,
@@ -115,7 +122,7 @@ contract("Factory", function (accounts) {
     //verify bidder balance (-(bidPrice + gasCost))
     assert.isTrue(await utils.verifyETHBalance(bidder1, preETHBalances[bidder1], 0, bidPrice.add(gasCost)))
     //verify shopFactory balance (+bidPrice)
-    assert.isTrue(await utils.verifyBalance(weth, shopFactory.address, preWETHBalances[shopFactory.address], bidPrice, 0))
+    assert.isTrue(await utils.verifyBalance(weth, shopFactory.address, preWETHBalances[shopFactory.address], bidPrice, 0));
 
     //bibder2
     preETHBalances = await utils.logPreETHBalances(preETHBalances, testAddress)
@@ -133,64 +140,58 @@ contract("Factory", function (accounts) {
       { value: bidPrice, from: bidder2 }
     );
     gasCost = await utils.gasCost(rs);
-    //verify bidder1 balance (+lastBid) 
+    //verify bidder1 balance (+lastBid) ETH
     assert.isTrue(await utils.verifyETHBalance(bidder1, preETHBalances[bidder1], lastBid, 0))
 
     //verify bidder2 balance (-(bidPrice + gasCost))
     assert.isTrue(await utils.verifyETHBalance(bidder2, preETHBalances[bidder2], 0, bidPrice.add(gasCost)))
 
     //verify shopFactory balance (+bidPrice -lastBid) WETH
-    assert.isTrue(await utils.verifyBalance(weth, shopFactory.address, preWETHBalances[shopFactory.address], bidPrice, lastBid))
+    assert.isTrue(await utils.verifyBalance(weth, shopFactory.address, preWETHBalances[shopFactory.address], bidPrice, lastBid));
 
-    //============================= liquidate
-    rs = await shopLoan.getNftDebtData(
-      loanId1,
-      { from: borrower }
-    );
-    let totalDebt = rs.totalDebt
-
+    //============================= rebuy 
+    await provider.setRebuyDuration(100);// 100s
     await utils.waitAndEvmMine(1000);
-
-
     preETHBalances = await utils.logPreETHBalances(preETHBalances, testAddress)
     preWETHBalances = await utils.logPreBalances(preWETHBalances, weth, testAddress)
     await provider.setRedeemDuration(0);
     await provider.setAuctionDuration(0);
 
-    rs = await shopLoan.getNftDebtData(
+
+    rs = await shopLoan.getRebuyAmount(
       loanId1,
-      { from: borrower }
+      { from: lender }
     );
-    totalDebt = rs.totalDebt
+    let rebuyAmount = rs.rebuyAmount
+    let payAmount = rs.payAmount
 
-
-    rs = await shopFactory.liquidate(
-      loanId1,
-      { value: web3.utils.toWei('0', 'ether'), from: bidder2 }
+    rs = await shopFactory.rebuyETH(
+      loanId1, rebuyAmount,
+      { value: payAmount, from: lender }
     );
-
     gasCost = await utils.gasCost(rs);
-    logs = utils.getResultFromLogs(Ishop, rs.receipt.rawLogs, 'Liquidate')
-
-
-    let feeAmount = logs[0].feeAmount
-    let remainAmount = logs[0].remainAmount
+    let remainAmount = rs.logs[0].args.remainAmount
+    let feeAmount = rs.logs[0].args.feeAmount
+    let auctionFeeAmount = rs.logs[0].args.auctionFeeAmount
     //check loan status (Defaulted)
-    assert.isTrue(await utils.verifyLoanState(shopLoan, loanId1, utils.LoanState.Defaulted));
+    assert.isTrue(await utils.verifyLoanState(shopLoan, loanId1, utils.LoanState.Defaulted))
 
-    //verify owner nft (bidder2)
-    assert.isTrue(await utils.verifyOwnerNft(testNft, 1, bidder2))
+    //verify owner nft (lender)
+    assert.isTrue(await utils.verifyOwnerNft(testNft, 1, lender))
 
-    //verify lender balance (+totalDebt, -feeAmount)
-    assert.isTrue(await utils.verifyBalance(weth, lender, preWETHBalances[lender], totalDebt, feeAmount))
+    //verify lender balance ( - payAmount - gas)
+    assert.isTrue(await utils.verifyETHBalance(lender, preETHBalances[lender], 0, payAmount.add(gasCost)))
+
+    //verify bidder2 balance ( +rebuyAmount)
+    assert.isTrue(await utils.verifyETHBalance(bidder2, preETHBalances[bidder2], rebuyAmount, 0))
 
     //verify borrower balance (+remainAmount)
     assert.isTrue(await utils.verifyETHBalance(borrower, preETHBalances[borrower], remainAmount, 0))
 
-    //verify platformfee balance (+feeAmount)
-    assert.isTrue(await utils.verifyBalance(weth, platformFeeReceiver, preWETHBalances[platformFeeReceiver], feeAmount, 0))
-
+    //verify platformfee balance (+feeAmount + auction fee)
+    assert.isTrue(await utils.verifyBalance(weth, platformFeeReceiver, preWETHBalances[platformFeeReceiver], feeAmount.add(auctionFeeAmount), 0))
 
     return assert.isTrue(true);
+
   });
 });
