@@ -618,36 +618,36 @@ contract ShopFactory is
         }
     }
 
-    function getNftAuctionEndTime(
-        uint256 loanId
-    )
-        external
-        view
-        override
-        returns (
-            address nftAsset,
-            uint256 nftTokenId,
-            uint256 bidStartTimestamp,
-            uint256 bidEndTimestamp,
-            uint256 redeemEndTimestamp
-        )
-    {
-        if (loanId != 0) {
-            DataTypes.LoanData memory loan = IShopLoan(provider.loanManager())
-                .getLoan(loanId);
+    // function getNftAuctionEndTime(
+    //     uint256 loanId
+    // )
+    //     external
+    //     view
+    //     override
+    //     returns (
+    //         address nftAsset,
+    //         uint256 nftTokenId,
+    //         uint256 bidStartTimestamp,
+    //         uint256 bidEndTimestamp,
+    //         uint256 redeemEndTimestamp
+    //     )
+    // {
+    //     if (loanId != 0) {
+    //         DataTypes.LoanData memory loan = IShopLoan(provider.loanManager())
+    //             .getLoan(loanId);
 
-            nftAsset = loan.nftAsset;
-            nftTokenId = loan.nftTokenId;
-            bidStartTimestamp = loan.bidStartTimestamp;
-            if (bidStartTimestamp > 0) {
-                (bidEndTimestamp, redeemEndTimestamp) = GenericLogic
-                    .calculateLoanAuctionEndTimestamp(
-                        provider,
-                        bidStartTimestamp
-                    );
-            }
-        }
-    }
+    //         nftAsset = loan.nftAsset;
+    //         nftTokenId = loan.nftTokenId;
+    //         bidStartTimestamp = loan.bidStartTimestamp;
+    //         if (bidStartTimestamp > 0) {
+    //             (bidEndTimestamp, redeemEndTimestamp) = GenericLogic
+    //                 .calculateLoanAuctionEndTimestamp(
+    //                     provider,
+    //                     bidStartTimestamp
+    //                 );
+    //         }
+    //     }
+    // }
 
     struct GetLiquidationPriceLocalVars {
         address poolLoan;

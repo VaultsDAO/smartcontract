@@ -344,18 +344,18 @@ interface IShop {
             uint256 bidFine
         );
 
-    function getNftAuctionEndTime(
-        uint256 loanId
-    )
-        external
-        view
-        returns (
-            address nftAsset,
-            uint256 nftTokenId,
-            uint256 bidStartTimestamp,
-            uint256 bidEndTimestamp,
-            uint256 redeemEndTimestamp
-        );
+    // function getNftAuctionEndTime(
+    //     uint256 loanId
+    // )
+    //     external
+    //     view
+    //     returns (
+    //         address nftAsset,
+    //         uint256 nftTokenId,
+    //         uint256 bidStartTimestamp,
+    //         uint256 bidEndTimestamp,
+    //         uint256 redeemEndTimestamp
+    //     );
 
     function getNftLiquidatePrice(
         uint256 loanId
