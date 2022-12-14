@@ -371,7 +371,7 @@ library LiquidateLogic {
         );
 
         // check bid fine is enough
-        require(vars.bidFine == params.bidFine, Errors.LPL_INVALID_BID_FINE);
+        require(params.bidFine >= vars.bidFine, Errors.LPL_INVALID_BID_FINE);
 
         // check the minimum debt repay amount, use redeem threshold in config
         vars.repayAmount = params.amount;
@@ -412,6 +412,7 @@ library LiquidateLogic {
                     fee
                 );
             }
+            //transfer back to vars.initiator dust amount
             if (params.amount > (repayPrincipal + interest + fee)) {
                 TransferHelper.transferWETH2ETH(
                     loanData.reserveAsset,
