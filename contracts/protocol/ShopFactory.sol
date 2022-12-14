@@ -321,12 +321,28 @@ contract ShopFactory is
         for (uint256 i = 0; i < loanIds.length; i++) {
             val += amounts[i];
         }
-        require(val == msg.value, Errors.LP_INVALID_ETH_AMOUNT);
+        require(msg.value >= val, Errors.LP_INVALID_ETH_AMOUNT);
         //convert eth -> weth
         TransferHelper.convertETHToWETH(
             GenericLogic.getWETHAddress(IConfigProvider(provider)),
             msg.value
         );
+
+        uint256 dustAmount = msg.value - val;
+        //convert eth -> weth
+        TransferHelper.convertETHToWETH(
+            GenericLogic.getWETHAddress(IConfigProvider(provider)),
+            val
+        );
+        if (dustAmount >= IConfigProvider(provider).minDustAmount()) {
+            //transfer back eth to user
+            TransferHelper.safeTransferETH(
+                GenericLogic.getWETHAddress(IConfigProvider(provider)),
+                msg.sender,
+                dustAmount
+            );
+        }
+
         return _batchRepay(loanIds, amounts, true);
     }
 
@@ -437,13 +453,23 @@ contract ShopFactory is
             uint256 fee
         )
     {
-        require(amount + bidFine == msg.value, Errors.LP_INVALID_ETH_AMOUNT);
+        require(msg.value >= amount + bidFine, Errors.LP_INVALID_ETH_AMOUNT);
 
+        uint256 dustAmount = msg.value - (amount + bidFine);
         //convert eth -> weth
         TransferHelper.convertETHToWETH(
             GenericLogic.getWETHAddress(IConfigProvider(provider)),
-            msg.value
+            amount + bidFine
         );
+        if (dustAmount >= IConfigProvider(provider).minDustAmount()) {
+            //transfer back eth to user
+            TransferHelper.safeTransferETH(
+                GenericLogic.getWETHAddress(IConfigProvider(provider)),
+                msg.sender,
+                dustAmount
+            );
+        }
+
         return _redeem(loanId, amount, bidFine, true);
     }
 
@@ -503,73 +529,6 @@ contract ShopFactory is
                 })
             );
     }
-
-    // /**
-    //  * @dev Returns the debt data of the NFT
-    //  * @return nftAsset the address of the NFT
-    //  * @return nftTokenId nft token ID
-    //  * @return reserveAsset the address of the Reserve
-    //  * @return totalCollateral the total power of the NFT
-    //  * @return totalDebt the total debt of the NFT
-    //  * @return healthFactor the current health factor of the NFT
-    //  **/
-    // function getNftDebtData(
-    //     uint256 loanId
-    // )
-    //     external
-    //     view
-    //     override
-    //     returns (
-    //         address nftAsset,
-    //         uint256 nftTokenId,
-    //         address reserveAsset,
-    //         uint256 totalCollateral,
-    //         uint256 totalDebt,
-    //         uint256 healthFactor
-    //     )
-    // {
-    //     if (loanId == 0) {
-    //         return (address(0), 0, address(0), 0, 0, 0);
-    //     }
-    //     DataTypes.LoanData memory loanData = IShopLoan(
-    //         IConfigProvider(provider).loanManager()
-    //     ).getLoan(loanId);
-    //     uint256 liquidationThreshold = provider.liquidationThreshold();
-
-    //     DataTypes.LoanData memory loan = IShopLoan(provider.loanManager())
-    //         .getLoan(loanId);
-
-    //     reserveAsset = loan.reserveAsset;
-    //     DataTypes.ReservesInfo storage reserveData = reservesInfo[reserveAsset];
-
-    //     (, totalCollateral) = GenericLogic.calculateNftCollateralData(
-    //         loanData.reserveAsset,
-    //         reserveData,
-    //         loanData.nftAsset,
-    //         provider.reserveOracle(),
-    //         provider.nftOracle()
-    //     );
-
-    //     (, totalDebt) = GenericLogic.calculateNftDebtData(
-    //         reserveAsset,
-    //         reserveData,
-    //         provider.loanManager(),
-    //         loanData.loanId,
-    //         provider.reserveOracle()
-    //     );
-    //     if (loan.state == DataTypes.LoanState.Auction) {
-    //         totalDebt = loan.bidBorrowAmount;
-    //     }
-    //     if (loan.state == DataTypes.LoanState.Active) {
-    //         healthFactor = GenericLogic.calculateHealthFactorFromBalances(
-    //             totalCollateral,
-    //             totalDebt,
-    //             liquidationThreshold
-    //         );
-    //     }
-    //     nftAsset = loan.nftAsset;
-    //     nftTokenId = loan.nftTokenId;
-    // }
 
     /**
      * @dev Returns the list of the initialized reserves
@@ -728,7 +687,7 @@ contract ShopFactory is
             msg.value
         );
         uint256 dustAmount = _rebuy(loanId, rebuyAmount, msg.value, true);
-        if (dustAmount > IConfigProvider(provider).minDustAmount()) {
+        if (dustAmount >= IConfigProvider(provider).minDustAmount()) {
             //transfer back eth to user
             TransferHelper.transferWETH2ETH(
                 GenericLogic.getWETHAddress(IConfigProvider(provider)),
