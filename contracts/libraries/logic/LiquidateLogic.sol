@@ -668,7 +668,7 @@ library LiquidateLogic {
         mapping(address => DataTypes.ReservesInfo) storage reservesData,
         mapping(address => DataTypes.NftsInfo) storage nftsData,
         DataTypes.ExecuteRebuyParams memory params
-    ) external returns (uint256 dustAmount) {
+    ) external returns (uint256 payAmount, uint256 dustAmount) {
         RebuyLocalVars memory vars;
         vars.loanId = params.loanId;
         require(vars.loanId != 0, Errors.LP_NFT_IS_NOT_USED_AS_COLLATERAL);
@@ -678,7 +678,11 @@ library LiquidateLogic {
         ).getLoan(vars.loanId);
 
         //only lender can execute rebuy function
-        require(msg.sender == params.shopCreator, Errors.LPL_REBUY_ONLY_LENDER);
+        require(
+            msg.sender == params.shopCreator ||
+                msg.sender == configProvider.punkGateway(),
+            Errors.LPL_REBUY_ONLY_LENDER
+        );
 
         DataTypes.ReservesInfo storage reserveData = reservesData[
             loanData.reserveAsset
@@ -737,6 +741,8 @@ library LiquidateLogic {
             Errors.LPL_INVALID_REBUY_AMOUNT
         );
 
+        payAmount = vars.payAmount;
+
         IShopLoan(configProvider.loanManager()).rebuyLiquidateLoan(
             vars.loanId,
             vars.rebuyAmount
@@ -758,7 +764,7 @@ library LiquidateLogic {
         } else {
             // get payAmount from lender to this contract
             IERC20Upgradeable(loanData.reserveAsset).safeTransferFrom(
-                params.shopCreator,
+                params.initiator,
                 address(this),
                 vars.payAmount
             );

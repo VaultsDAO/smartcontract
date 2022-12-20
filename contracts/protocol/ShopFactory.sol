@@ -580,6 +580,12 @@ contract ShopFactory is
         return IConfigProvider(provider);
     }
 
+    function getShop(
+        uint256 shopId
+    ) external view returns (DataTypes.ShopData memory) {
+        return shops[shopId];
+    }
+
     function addReserve(
         address asset
     ) external override onlyFactoryConfigurator {
@@ -673,20 +679,43 @@ contract ShopFactory is
         uint256 loanId,
         uint256 rebuyAmount,
         uint256 payAmount
-    ) external override nonReentrant whenNotPaused {
-        _rebuy(loanId, rebuyAmount, payAmount, false);
+    )
+        external
+        override
+        nonReentrant
+        whenNotPaused
+        returns (uint256 paymentAmount, uint256 dustAmount)
+    {
+        (paymentAmount, dustAmount) = _rebuy(
+            loanId,
+            rebuyAmount,
+            payAmount,
+            false
+        );
     }
 
     function rebuyETH(
         uint256 loanId,
         uint256 rebuyAmount
-    ) external payable override nonReentrant whenNotPaused {
+    )
+        external
+        payable
+        override
+        nonReentrant
+        whenNotPaused
+        returns (uint256 paymentAmount, uint256 dustAmount)
+    {
         //convert eth -> weth
         TransferHelper.convertETHToWETH(
             GenericLogic.getWETHAddress(IConfigProvider(provider)),
             msg.value
         );
-        uint256 dustAmount = _rebuy(loanId, rebuyAmount, msg.value, true);
+        (paymentAmount, dustAmount) = _rebuy(
+            loanId,
+            rebuyAmount,
+            msg.value,
+            true
+        );
         if (dustAmount >= IConfigProvider(provider).minDustAmount()) {
             //transfer back eth to user
             TransferHelper.transferWETH2ETH(
@@ -702,7 +731,7 @@ contract ShopFactory is
         uint256 rebuyAmount,
         uint256 payAmount,
         bool isNative
-    ) internal returns (uint256) {
+    ) internal returns (uint256, uint256) {
         DataTypes.LoanData memory loanData = IShopLoan(
             IConfigProvider(provider).loanManager()
         ).getLoan(loanId);
@@ -712,6 +741,7 @@ contract ShopFactory is
                 reservesInfo,
                 nftsInfo,
                 DataTypes.ExecuteRebuyParams({
+                    initiator: msg.sender,
                     loanId: loanId,
                     rebuyAmount: rebuyAmount,
                     payAmount: payAmount,

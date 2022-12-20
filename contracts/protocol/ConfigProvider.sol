@@ -41,7 +41,8 @@ contract ConfigProvider is OwnableUpgradeable {
 
     /// @notice for gap, minus 1 if use
     uint256[22] public __number;
-    address[25] public __gapAddress;
+    address public punkGateway;
+    address[24] public __gapAddress;
 
     //event
     event AuctionDurationSet(uint256 _value);
@@ -66,6 +67,7 @@ contract ConfigProvider is OwnableUpgradeable {
     event RebuyDurationSet(uint256 _rebuyDuration);
     event RebuyFeePercentageSet(uint256 _rebuyFeePercentage);
     event MinDustAmountSet(uint256 _minDustAmount);
+    event PunkGatewaySet(address _punkGateway);
 
     //end event
 
@@ -209,5 +211,11 @@ contract ConfigProvider is OwnableUpgradeable {
         require(_loanManager != address(0), "cannot go to 0 address");
         loanManager = _loanManager;
         emit LoanManagerSet(_loanManager);
+    }
+
+    function setPunkGateway(address _punkGateway) external onlyOwner {
+        require(_punkGateway != address(0), "cannot go to 0 address");
+        punkGateway = _punkGateway;
+        emit PunkGatewaySet(_punkGateway);
     }
 }

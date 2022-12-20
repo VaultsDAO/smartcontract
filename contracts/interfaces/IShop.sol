@@ -303,9 +303,12 @@ interface IShop {
         uint256 loanId,
         uint256 rebuyAmount,
         uint256 payAmount
-    ) external;
+    ) external returns (uint256 paymentAmount, uint256 dustAmount);
 
-    function rebuyETH(uint256 loanId, uint256 rebuyAmount) external payable;
+    function rebuyETH(
+        uint256 loanId,
+        uint256 rebuyAmount
+    ) external payable returns (uint256 paymentAmount, uint256 dustAmount);
 
     function getReservesList() external view returns (address[] memory);
 
@@ -318,6 +321,10 @@ interface IShop {
     function getConfigProvider() external view returns (IConfigProvider);
 
     function addReserve(address asset) external;
+
+    function getShop(
+        uint256 shopId
+    ) external view returns (DataTypes.ShopData memory);
 
     function addNftCollection(
         address nftAddress,

@@ -139,6 +139,7 @@ library DataTypes {
     }
 
     struct ExecuteRebuyParams {
+        address initiator;
         uint256 loanId;
         uint256 rebuyAmount;
         uint256 payAmount;

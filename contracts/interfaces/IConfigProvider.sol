@@ -63,4 +63,6 @@ interface IConfigProvider {
 
     //mint eth amount to transfer back to user
     function minDustAmount() external view returns (uint256);
+
+    function punkGateway() external view returns (address);
 }

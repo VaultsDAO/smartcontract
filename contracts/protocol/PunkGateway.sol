@@ -390,6 +390,43 @@ contract PunkGateway is
         return 0;
     }
 
+    function rebuy(
+        uint256 loanId,
+        uint256 rebuyAmount,
+        uint256 payAmount
+    ) external override nonReentrant returns (uint256) {
+        IShop shopFactory = _getShopFactory();
+        IShopLoan loanManager = _getLoanManager();
+
+        DataTypes.LoanData memory loan = loanManager.getLoan(loanId);
+
+        IERC20Upgradeable(loan.reserveAsset).transferFrom(
+            msg.sender,
+            address(this),
+            payAmount
+        );
+
+        (uint256 paymentAmount, ) = shopFactory.rebuy(
+            loanId,
+            rebuyAmount,
+            payAmount
+        );
+
+        if (payAmount > paymentAmount) {
+            IERC20Upgradeable(loan.reserveAsset).safeTransfer(
+                msg.sender,
+                (payAmount - paymentAmount)
+            );
+        }
+
+        DataTypes.ShopData memory shop = shopFactory.getShop(loan.shopId);
+        require(
+            shop.creator == _msgSender(),
+            "PunkGateway: caller is not lender"
+        );
+        _withdrawPunk(loan.nftTokenId, shop.creator);
+    }
+
     function borrowETH(
         uint256 shopId,
         uint256 amount,
@@ -559,6 +596,34 @@ contract PunkGateway is
         }
 
         return paybackAmount;
+    }
+
+    function rebuyETH(
+        uint256 loanId,
+        uint256 rebuyAmount
+    ) external payable override nonReentrant returns (uint256) {
+        IShop shopFactory = _getShopFactory();
+        IShopLoan loanManager = _getLoanManager();
+
+        DataTypes.LoanData memory loan = loanManager.getLoan(loanId);
+
+        (, uint256 dustAmount) = shopFactory.rebuyETH{value: msg.value}(
+            loanId,
+            rebuyAmount
+        );
+
+        if (dustAmount > 0) {
+            _safeTransferETH(msg.sender, dustAmount);
+        }
+
+        DataTypes.ShopData memory shop = shopFactory.getShop(loan.shopId);
+        require(
+            shop.creator == _msgSender(),
+            "PunkGateway: caller is not lender"
+        );
+        _withdrawPunk(loan.nftTokenId, shop.creator);
+
+        return dustAmount;
     }
 
     /**

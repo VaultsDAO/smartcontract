@@ -16,21 +16,21 @@ module.exports = async function (deployer, network) {
     // 
     let configProvider = await ConfigProvider.at(deployData['ConfigProviderProxy']);
     // 
-    if ((await configProvider.redeemDuration()).toString() != '1800') {
+    if ((await configProvider.redeemDuration()).toString() != '300') {
       console.log('configProvider.setRedeemDuration')
-      await configProvider.setRedeemDuration(1800)
+      await configProvider.setRedeemDuration(300)
     }
-    if ((await configProvider.auctionDuration()).toString() != '1800') {
+    if ((await configProvider.auctionDuration()).toString() != '300') {
       console.log('configProvider.setAuctionDuration')
-      await configProvider.setAuctionDuration(1800)
+      await configProvider.setAuctionDuration(300)
     }
     if ((await configProvider.minBidFine()).toString() != '20') {
       console.log('configProvider.setMinBidFine')
       await configProvider.setMinBidFine(20)
     }
-    if ((await configProvider.maxLoanDuration()).toString() != '3600') {
+    if ((await configProvider.maxLoanDuration()).toString() != '300') {
       console.log('configProvider.setMaxLoanDuration')
-      await configProvider.setMaxLoanDuration(3600)
+      await configProvider.setMaxLoanDuration(300)
     }
     if ((await configProvider.interestDuration()).toString() != '600') {
       console.log('configProvider.setInterestDuration')

@@ -42,6 +42,12 @@ interface IPunkGateway {
 
     function liquidate(uint256 loanId) external returns (uint256);
 
+    function rebuy(
+        uint256 loanId,
+        uint256 rebuyAmount,
+        uint256 payAmount
+    ) external returns (uint256);
+
     function borrowETH(
         uint256 shopId,
         uint256 amount,
@@ -75,5 +81,10 @@ interface IPunkGateway {
         uint256 loanId,
         uint256 amount,
         uint256 bidFine
+    ) external payable returns (uint256);
+
+    function rebuyETH(
+        uint256 loanId,
+        uint256 rebuyAmount
     ) external payable returns (uint256);
 }

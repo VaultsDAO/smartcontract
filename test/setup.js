@@ -199,11 +199,11 @@ module.exports = async function (accounts) {
     await pawnProxyAdmin.createMultipleProxyImplementation(receiverMultipleUpgradeableProxy.address, airdropFlashLoanReceiver.address)
 
     await provider.setShopFactory(shopFactory.address, { from: pawnProxyAdminOwner })
+    await provider.setLoanManager(shopLoan.address, { from: pawnProxyAdminOwner })
     await provider.setBnftRegistry(bnftRegistry.address, { from: pawnProxyAdminOwner })
     await provider.setNftOracle(nftOracle.address, { from: pawnProxyAdminOwner })
     await provider.setReserveOracle(reserveOracle.address, { from: pawnProxyAdminOwner })
     await provider.setUserClaimRegistry(userFlashclaimRegistry.address, { from: pawnProxyAdminOwner })
-    await provider.setLoanManager(shopLoan.address, { from: pawnProxyAdminOwner })
     await provider.setPlatformFeeReceiver(platformFeeReceiver, { from: pawnProxyAdminOwner })
     await provider.setMinBidFine(2);// 1 * 2 / 10000 = 0.0002 ETH
     await provider.setRebuyDuration(0);// 0s
@@ -251,6 +251,8 @@ module.exports = async function (accounts) {
         { from: pawnProxyAdminOwner },
     );
     punkGateway = await PunkGateway.at(proxy.address);
+
+    await provider.setPunkGateway(punkGateway.address, { from: pawnProxyAdminOwner })
 
     // await punkGateway.authorizeLendPoolNFT([wPunk.address], { from: pawnProxyAdminOwner })
     await punkGateway.authorizeLendPoolERC20([usdc.address], { from: pawnProxyAdminOwner })
