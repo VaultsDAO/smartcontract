@@ -98,6 +98,7 @@ library Errors {
     string public constant LPL_REBUY_DURATION_NOT_END = "496";
     string public constant LPL_REBUY_ONLY_LENDER = "497";
     string public constant LPL_INVALID_REBUY_AMOUNT = "498";
+    string public constant LPL_INVALID_REBUY_AMOUNT_2 = "499";
 
     //common token errors
     string public constant CT_CALLER_MUST_BE_LEND_POOL = "500"; // 'The caller of this function must be a lending pool'

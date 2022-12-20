@@ -738,7 +738,7 @@ library LiquidateLogic {
         require(
             vars.payAmount + vars.borrowAmount - vars.feeAmount ==
                 params.rebuyAmount,
-            Errors.LPL_INVALID_REBUY_AMOUNT
+            Errors.LPL_INVALID_REBUY_AMOUNT_2
         );
 
         payAmount = vars.payAmount;
