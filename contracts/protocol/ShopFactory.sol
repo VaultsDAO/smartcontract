@@ -322,11 +322,6 @@ contract ShopFactory is
             val += amounts[i];
         }
         require(msg.value >= val, Errors.LP_INVALID_ETH_AMOUNT);
-        //convert eth -> weth
-        TransferHelper.convertETHToWETH(
-            GenericLogic.getWETHAddress(IConfigProvider(provider)),
-            msg.value
-        );
 
         uint256 dustAmount = msg.value - val;
         //convert eth -> weth
