@@ -47,7 +47,17 @@
         "0xE648756dbADDF44376De17603a06f342A0F5224D": true,
         "0xFaD3D25744CAb84336e9c6A2ac2c5E3afFD284E3": true,
         "0xD05Ba9e490FEA24B82B62ebe9F502F21ddA254E2": true,
-        "0x15559edefac6A861D305A9351F3d98cDeCA78830": true
+        "0x15559edefac6A861D305A9351F3d98cDeCA78830": true,
+        "0xe8853E4A6Bc2C1665308Aa9Dc780433F93B77843": true,
+        "0xcABc463df4453D276117EFeAfCCB920c391761bd": true,
+        "0x1B5397a5A5AD5d1c299453D734406D7A8A39Aa3F": true,
+        "0xAf3acA096ab8823E6d2deEA45416D33641d097C3": true,
+        "0x355b07f84EF097748314992aA91cE00991801a55": true,
+        "0x0Cfd65EBcae3ACb75D67419368120bAd8B889e2F": true,
+        "0x8E63Ad7173f1BB50E41c7830De31188Ac4AE9424": true,
+        "0x9D79CcBC333C735db1BadC85f70A034c03c7262c": true,
+        "0x7baAB978D67cc8eBFec18A570D2555e689522cF5": true,
+        "0x2913275B66A4d4382483c16184d7170b99d8CFCB": true
     },
     "NftsBk": [
         {
@@ -163,6 +173,16 @@
             "Total": 0,
             "BaseURI": "https://wrappedpunks.com:3000/api/punks/metadata/",
             "Finished": true
+        },
+        {
+            "Address": "0xcABc463df4453D276117EFeAfCCB920c391761bd",
+            "TargetAddress": "0xEc9eE81bA1D2FaCd60E9C99eC98e2D5A0c90Fa53",
+            "TargetPriceRate": 10000,
+            "Symbol": "WPUNKS",
+            "Name": "Wrapped Cryptopunks",
+            "Total": 0,
+            "BaseURI": "https://wrappedpunks.com:3000/api/punks/metadata/",
+            "Finished": true
         }
     ],
     "WETH": "0xB4FBF271143F4FBf7B91A5ded31805e42b2208d6",
@@ -181,7 +201,7 @@
     "PawnProxyAdmin": "0x5a80617f786CFf261DF6ADE23Fc992aAC3a80246",
     "MockNFTOracle": "0x87E11649dD11d932c84DbA1faF75ab25B2aFe6fE",
     "MockNFTOracleProxy": "0x25D6b71F2F003A7dcCF078226B9867c1af25b691",
-    "ConfigProvider": "0x4b32677cE9fB024B7b3c19bb74AB2Af84279C1E5",
+    "ConfigProvider": "0x355b07f84EF097748314992aA91cE00991801a55",
     "ConfigProviderProxy": "0x17d01D8E02c203edC9268C01F066Bb645F307aa1",
     "BNFT": "0xdCD954431E8f530a5b739a7C7e7a3125B3a3b515",
     "BNFTMultipleUpgradeableProxy": "0x8Ce6af43B512364E223f429bdb6b95Db0ED56c9b",
@@ -195,13 +215,17 @@
     "PawnNFTOracleProxy": "0x70Ee0eCB305095fcE1cEa873a37F0A4F6ab4fB52",
     "ReserveOracle": "0xD503E259d9ED67f247c141E8881a2D40481A3811",
     "ReserveOracleProxy": "0x20c4FEF043c219C18E87c1471CcB20092D6A6145",
-    "ValidationLogic": "0xfc7502Bbc5c3d11A47ad5E5fc87b90Ed0cCA138f",
-    "LiquidateLogic": "0xE648756dbADDF44376De17603a06f342A0F5224D",
-    "BorrowLogic": "0xFaD3D25744CAb84336e9c6A2ac2c5E3afFD284E3",
-    "ShopLoan": "0xD05Ba9e490FEA24B82B62ebe9F502F21ddA254E2",
+    "ValidationLogic": "0x0Cfd65EBcae3ACb75D67419368120bAd8B889e2F",
+    "LiquidateLogic": "0x8E63Ad7173f1BB50E41c7830De31188Ac4AE9424",
+    "BorrowLogic": "0x9D79CcBC333C735db1BadC85f70A034c03c7262c",
+    "ShopLoan": "0x7baAB978D67cc8eBFec18A570D2555e689522cF5",
     "ShopLoanProxy": "0x6a611E3CB048438A8612DC92d24fa52E69AF908D",
-    "ShopFactory": "0x15559edefac6A861D305A9351F3d98cDeCA78830",
+    "ShopFactory": "0x2913275B66A4d4382483c16184d7170b99d8CFCB",
     "ShopFactoryProxy": "0x6E5ABbE871eD81AB0a1e0091b43DE6563020268a",
     "WETHGateway": "0x598c6bEc271270Cf25d04A984A6766a9d9d01C41",
-    "WETHGatewayProxy": "0x0deA1b96EaB5F4f4742f6EA6d8e5AFC0D8Aa2AB4"
+    "WETHGatewayProxy": "0x0deA1b96EaB5F4f4742f6EA6d8e5AFC0D8Aa2AB4",
+    "CryptoPunksMarket": "0xe8853E4A6Bc2C1665308Aa9Dc780433F93B77843",
+    "WrappedPunk": "0xcABc463df4453D276117EFeAfCCB920c391761bd",
+    "PunkGateway": "0x1B5397a5A5AD5d1c299453D734406D7A8A39Aa3F",
+    "PunkGatewayProxy": "0xAf3acA096ab8823E6d2deEA45416D33641d097C3"
 }

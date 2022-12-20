@@ -5,6 +5,7 @@ const IWETH = artifacts.require("IWETH");
 const ReserveOracle = artifacts.require("ReserveOracle");
 const BNFTRegistry = artifacts.require("BNFTRegistry");
 const ShopFactory = artifacts.require("ShopFactory");
+const PunkGateway = artifacts.require("PunkGateway");
 
 const PawnNFTOracle = artifacts.require("PawnNFTOracle");
 const MockNFTOracle = artifacts.require("MockNFTOracle");
@@ -25,7 +26,7 @@ module.exports = async function (deployer, network) {
     // 
     let weth = await IWETH.at(deployData['WETH'])
     let shopFactory = await ShopFactory.at(deployData['ShopFactoryProxy']);
-    let punkGateway = await ShopFactory.at(deployData['PunkGatewayProxy']);
+    let punkGateway = await PunkGateway.at(deployData['PunkGatewayProxy']);
     let reserveOracle = await ReserveOracle.at(deployData['ReserveOracleProxy']);
     // setup data
     {
@@ -38,11 +39,11 @@ module.exports = async function (deployer, network) {
         console.log('shopFactory.addReserve', weth.address, '...Failed')
       }
       try {
-        await punkGateway.authorizeLendPoolERC20.estimateGas(weth.address)
-        await punkGateway.authorizeLendPoolERC20(weth.address)
+        await punkGateway.authorizeLendPoolERC20.estimateGas([weth.address])
+        await punkGateway.authorizeLendPoolERC20([weth.address])
         console.log('punkGateway.authorizeLendPoolERC20', weth.address, '...Done')
       } catch (ex) {
-        console.log('punkGateway.authorizeLendPoolERC20', weth.address, '...Failed')
+        console.log('punkGateway.authorizeLendPoolERC20', weth.address, '...Failed', ex)
       }
       let reserves = deployData["Reserves"]
       for (let i = 0; i < reserves.length; i++) {
@@ -57,11 +58,11 @@ module.exports = async function (deployer, network) {
             console.log('shopFactory.addReserve', reserveIns.address, '...Failed')
           }
           try {
-            await punkGateway.authorizeLendPoolERC20.estimateGas(reserveIns.address)
-            await punkGateway.authorizeLendPoolERC20(reserveIns.address)
+            await punkGateway.authorizeLendPoolERC20.estimateGas([reserveIns.address])
+            await punkGateway.authorizeLendPoolERC20([reserveIns.address])
             console.log('punkGateway.authorizeLendPoolERC20', reserveIns.address, '...Done')
           } catch (ex) {
-            console.log('punkGateway.authorizeLendPoolERC20', reserveIns.address, '...Failed')
+            console.log('punkGateway.authorizeLendPoolERC20', reserveIns.address, '...Failed', ex)
           }
           try {
             let rs = await reserveOracle.priceFeedMap(reserveIns.address)
