@@ -16,13 +16,13 @@ module.exports = async function (deployer, network) {
     // 
     let configProvider = await ConfigProvider.at(deployData['ConfigProviderProxy']);
     // 
-    if ((await configProvider.redeemDuration()).toString() != '300') {
+    if ((await configProvider.redeemDuration()).toString() != '60') {
       console.log('configProvider.setRedeemDuration')
-      await configProvider.setRedeemDuration(300)
+      await configProvider.setRedeemDuration(60)
     }
-    if ((await configProvider.auctionDuration()).toString() != '300') {
+    if ((await configProvider.auctionDuration()).toString() != '60') {
       console.log('configProvider.setAuctionDuration')
-      await configProvider.setAuctionDuration(300)
+      await configProvider.setAuctionDuration(60)
     }
     if ((await configProvider.minBidFine()).toString() != '20') {
       console.log('configProvider.setMinBidFine')
@@ -48,9 +48,9 @@ module.exports = async function (deployer, network) {
       console.log('configProvider.setAuctionFeePercentage')
       await configProvider.setAuctionFeePercentage(250)
     }
-    if ((await configProvider.rebuyDuration()).toString() != '900') {
+    if ((await configProvider.rebuyDuration()).toString() != '86400') {
       console.log('configProvider.setRebuyDuration')
-      await configProvider.setRebuyDuration(900)
+      await configProvider.setRebuyDuration(86400)
     }
     if ((await configProvider.rebuyFeePercentage()).toString() != '500') {
       console.log('configProvider.setRebuyFeePercentage')

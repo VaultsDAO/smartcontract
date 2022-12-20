@@ -31,6 +31,7 @@ module.exports = async function (deployer, network) {
     let userFlashclaimRegistry = await UserFlashclaimRegistry.at(deployData['UserFlashclaimRegistryProxy']);
     let shopFactory = await ShopFactory.at(deployData['ShopFactoryProxy']);
     let shopLoan = await ShopLoan.at(deployData['ShopLoanProxy']);
+    let punkGateway = await ShopLoan.at(deployData['PunkGatewayProxy']);
     let nftOracle = await PawnNFTOracle.at(deployData['PawnNFTOracleProxy']);
     let reserveOracle = await ReserveOracle.at(deployData['ReserveOracleProxy']);
     let airdropFlashLoanReceiver = await AirdropFlashLoanReceiver.at(deployData['AirdropFlashLoanReceiver']);
@@ -81,6 +82,10 @@ module.exports = async function (deployer, network) {
     if ((await configProvider.loanManager()) != shopLoan.address) {
       await configProvider.setLoanManager(shopLoan.address)
       console.log('configProvider.setLoanManager', shopLoan.address)
+    }
+    if ((await configProvider.punkGateway()) != punkGateway.address) {
+      await configProvider.setPunkGateway(punkGateway.address)
+      console.log('configProvider.setPunkGateway', punkGateway.address)
     }
   }
 };
