@@ -458,7 +458,8 @@ library GenericLogic {
                 loan.bidBorrowAmount > 0,
             Errors.LPL_INVALID_LOAN_STATE
         );
-        (vars.totalDebt, , , vars.platformFee) = calculateInterestInfo(
+        vars.totalDebt = loan.bidBorrowAmount;
+        (, , , vars.platformFee) = calculateInterestInfo(
             CalculateInterestInfoVars({
                 lastRepaidAt: loan.lastRepaidAt,
                 borrowAmount: loan.borrowAmount,
