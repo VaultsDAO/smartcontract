@@ -48,17 +48,14 @@ contract FragmentNFT is OwnableUpgradeable, ERC721A {
     receive() external payable {}
 
     function buyTokens(uint256 numToken) public payable {
-        require(totalSupply() < maxSupply);
+        require(totalSupply() + numToken <= maxSupply);
         //validate
         require(
             msg.value >= salePrice * numToken,
             Errors.FRAGMENT_INSUFICIENT_AMOUNT
         );
 
-        for (uint256 i = 0; i < numToken; i++) {
-            _currentTokenId++;
-            _safeMint(msg.sender, _currentTokenId);
-        }
+        _safeMint(msg.sender, numToken);
         //transfer eth to creator
         TransferHelper.safeTransferETH(creator, salePrice * numToken);
 
@@ -69,6 +66,14 @@ contract FragmentNFT is OwnableUpgradeable, ERC721A {
                 TransferHelper.safeTransferETH(msg.sender, dustAmount);
             }
         }
+
+        emit BuyTokens(address(this), msg.sender, salePrice, numToken);
+    }
+
+    function mint(uint256 numToken) public payable onlyOwner {
+        require(totalSupply() + numToken < maxSupply);
+
+        _safeMint(msg.sender, numToken);
 
         emit BuyTokens(address(this), msg.sender, salePrice, numToken);
     }
@@ -110,7 +115,8 @@ contract FragmentNFT is OwnableUpgradeable, ERC721A {
     ) public view virtual override returns (string memory) {
         _requireMinted(tokenId);
 
-        string memory baseURI = IConfigProvider(configProvider).getFragmentBaseURI();
+        string memory baseURI = IConfigProvider(configProvider)
+            .getFragmentBaseURI();
         return
             string(
                 abi.encodePacked(baseURI, address(this), "/", tokenId, ".json")
