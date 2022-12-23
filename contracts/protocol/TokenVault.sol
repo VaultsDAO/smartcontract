@@ -41,6 +41,13 @@ contract TokenVault is
     /// @notice  gap for reserve, minus 1 if use
     uint256[50] public __gapAddress;
 
+    event BuyTokens(
+        address vault,
+        address user,
+        uint256 salePrice,
+        uint256 numToken
+    );
+
     receive() external payable {}
 
     function buyTokens(uint256 numToken) public payable {
@@ -65,6 +72,8 @@ contract TokenVault is
                 TransferHelper.safeTransferETH(msg.sender, dustAmount);
             }
         }
+
+        emit BuyTokens(address(this), msg.sender, salePrice, numToken);
     }
 
     constructor(address _configProvider) {
