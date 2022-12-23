@@ -7,16 +7,17 @@ import {IConfigProvider} from "../interfaces/IConfigProvider.sol";
 contract ConfigProvider is OwnableUpgradeable, IConfigProvider {
     mapping(bytes32 => address) private _addresses;
     mapping(bytes32 => uint256) private _vars;
+    mapping(bytes32 => string) private _texts;
 
-    string public baseURI;
     bytes32 private constant WETH = "WETH";
     bytes32 private constant FRAGMENT_TPL = "FRAGMENT_TPL";
     bytes32 private constant FRAGMENT_IMPL = "FRAGMENT_IMPL";
+    bytes32 private constant FRAGMENT_BASEURI = "FRAGMENT_BASEURI";
 
     //EVENT
-    event FragmentTplSet(address _fragmentTpl);
-    event FragmentImplSet(address _fragmentImpl);
-    event BaseURISet(string _baseURI);
+    event FragmentTplSet(address _val);
+    event FragmentImplSet(address _val);
+    event FragmentBaseURISet(string _val);
 
     constructor() {}
 
@@ -24,55 +25,48 @@ contract ConfigProvider is OwnableUpgradeable, IConfigProvider {
         __Ownable_init();
     }
 
-    function setAddress(
-        bytes32 id,
-        address newAddress
-    ) external override onlyOwner {
-        _addresses[id] = newAddress;
-        emit AddressSet(id, newAddress, false, new bytes(0));
-    }
-
-    /**
-     * @dev Returns an address by id
-     * @return The address
-     */
     function getAddress(bytes32 id) public view override returns (address) {
         return _addresses[id];
-    }
-
-    function setVar(bytes32 id, uint256 newVal) external override onlyOwner {
-        _vars[id] = newVal;
-        emit VarSet(id, newVal);
     }
 
     function getVar(bytes32 id) public view override returns (uint256) {
         return _vars[id];
     }
 
-    function getWETH() external view override returns (address) {
-        return getAddress(WETH);
+    function getText(bytes32 id) public view override returns (string memory) {
+        return _texts[id];
     }
 
-    function setFragmentTpl(address _fragmentTpl) external override onlyOwner {
-        require(_fragmentTpl != address(0), "cannot go to 0 address");
-        _addresses[FRAGMENT_TPL] = _fragmentTpl;
-        emit FragmentTplSet(_fragmentTpl);
+    function setWETH(address _val) external onlyOwner {
+        require(_val != address(0), "cannot go to 0 address");
+        _addresses[WETH] = _val;
+        emit FragmentTplSet(_val);
+    }
+
+    function getWETH() public view override returns (address) {
+        return _addresses[WETH];
+    }
+
+    function setFragmentTpl(address _val) external onlyOwner {
+        require(_val != address(0), "cannot go to 0 address");
+        _addresses[FRAGMENT_TPL] = _val;
+        emit FragmentTplSet(_val);
     }
 
     function getFragmentTpl() external view override returns (address) {
         return getAddress(FRAGMENT_TPL);
     }
 
-    function getBaseURI() external view returns (string memory) {
-        return baseURI;
+    function getFragmentBaseURI() external view returns (string memory) {
+        return _texts[FRAGMENT_BASEURI];
     }
 
-    function setBaseURI(string memory val) external onlyOwner {
-        baseURI = val;
-        emit BaseURISet(val);
+    function setFragmentBaseURI(string memory _val) external onlyOwner {
+        _texts[FRAGMENT_BASEURI] = _val;
+        emit FragmentBaseURISet(_val);
     }
 
-    function setFragmentImpl(address _val) external override onlyOwner {
+    function setFragmentImpl(address _val) external onlyOwner {
         require(_val != address(0), "cannot go to 0 address");
         _addresses[FRAGMENT_IMPL] = _val;
         emit FragmentTplSet(_val);

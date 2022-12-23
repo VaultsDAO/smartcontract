@@ -35,6 +35,10 @@ async function main() {
     }
   }
   // 
+  if ((await configProvider.getFragmentBaseURI()).toString() != 'https://dev.vaults.wtf/api/vaults/meta-data/arbitrum/') {
+    await waitForTx(await configProvider.setFragmentBaseURI('https://dev.vaults.wtf/api/vaults/meta-data/arbitrum/'))
+    console.log('configProvider.setFragmentBaseURI()', 'https://dev.vaults.wtf/api/vaults/meta-data/arbitrum/')
+  }
   if ((await configProvider.getFragmentImpl()).toString().toLowerCase() != deployData.FragmentNFT.toLowerCase()) {
     await waitForTx(await configProvider.setFragmentImpl(deployData.FragmentNFT))
     console.log('configProvider.setFragmentImpl()', deployData.FragmentNFT)

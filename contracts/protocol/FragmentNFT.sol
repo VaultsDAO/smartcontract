@@ -110,7 +110,7 @@ contract FragmentNFT is OwnableUpgradeable, ERC721A {
     ) public view virtual override returns (string memory) {
         _requireMinted(tokenId);
 
-        string memory baseURI = IConfigProvider(configProvider).getBaseURI();
+        string memory baseURI = IConfigProvider(configProvider).getFragmentBaseURI();
         return
             string(
                 abi.encodePacked(baseURI, address(this), "/", tokenId, ".json")
