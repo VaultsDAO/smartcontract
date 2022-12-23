@@ -10,10 +10,15 @@ import {IERC721} from "../libraries/openzeppelin/token/ERC721/IERC721.sol";
 import {ERC721Upgradeable} from "../libraries/openzeppelin/upgradeable/token/ERC721/ERC721Upgradeable.sol";
 import {ERC721HolderUpgradeable} from "../libraries/openzeppelin/upgradeable/token/ERC721/utils/ERC721HolderUpgradeable.sol";
 import {ERC721EnumerableUpgradeable} from "../libraries/openzeppelin/upgradeable/token/ERC721/extensions/ERC721EnumerableUpgradeable.sol";
+import {IERC721ReceiverUpgradeable} from "../libraries/openzeppelin/upgradeable/token/ERC721/IERC721ReceiverUpgradeable.sol";
 import {OwnableUpgradeable} from "../libraries/openzeppelin/upgradeable/access/OwnableUpgradeable.sol";
 import {DataTypes} from "../libraries/types/DataTypes.sol";
 
-contract FragmentNFT is OwnableUpgradeable, ERC721A {
+contract FragmentNFT is
+    OwnableUpgradeable,
+    ERC721A,
+    IERC721ReceiverUpgradeable
+{
     address public immutable configProvider;
     uint256 private _currentTokenId;
     /// -----------------------------------
@@ -121,5 +126,18 @@ contract FragmentNFT is OwnableUpgradeable, ERC721A {
             string(
                 abi.encodePacked(baseURI, address(this), "/", tokenId, ".json")
             );
+    }
+
+    function onERC721Received(
+        address operator,
+        address from,
+        uint256 tokenId,
+        bytes calldata data
+    ) external pure override returns (bytes4) {
+        operator;
+        from;
+        tokenId;
+        data;
+        return IERC721ReceiverUpgradeable.onERC721Received.selector;
     }
 }
