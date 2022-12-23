@@ -23,8 +23,8 @@ contract FragmentFactory is OwnableUpgradeable, PausableUpgradeable {
     uint256[5] public __gapAddress;
 
     event Mint(
-        address[] tokens,
-        uint256[] ids,
+        address[] nftAssets,
+        uint256[] nftTokenIds,
         uint256 price,
         address fragment,
         uint256 fragmentId

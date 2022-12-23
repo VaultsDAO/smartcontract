@@ -25,7 +25,7 @@ const config: HardhatUserConfig = {
       mainnet: ETHERSCAN_API_KEY,
       goerli: ETHERSCAN_API_KEY,
       avalancheFujiTestnet: SNOWTRACE_API_KEY,
-      arbitrumTestnet: SNOWTRACE_API_KEY,
+      arbitrumGoerli: ARBISCAN_API_KEY,
 
       // mainnet: "YOUR_ETHERSCAN_API_KEY",
       // ropsten: "YOUR_ETHERSCAN_API_KEY",
