@@ -52,37 +52,6 @@ contract FragmentNFT is
 
     receive() external payable {}
 
-    function buyTokens(uint256 numToken) public payable {
-        require(totalSupply() + numToken <= maxSupply);
-        //validate
-        require(
-            msg.value >= salePrice * numToken,
-            Errors.FRAGMENT_INSUFICIENT_AMOUNT
-        );
-
-        _safeMint(msg.sender, numToken);
-        //transfer eth to creator
-        TransferHelper.safeTransferETH(creator, salePrice * numToken);
-
-        //return dust amount to msg.sender
-        if (msg.value > salePrice * numToken) {
-            uint256 dustAmount = msg.value - salePrice * numToken;
-            if (dustAmount >= 10 ** 14) {
-                TransferHelper.safeTransferETH(msg.sender, dustAmount);
-            }
-        }
-
-        emit BuyTokens(address(this), msg.sender, salePrice, numToken);
-    }
-
-    function mint(uint256 numToken) public payable onlyOwner {
-        require(totalSupply() + numToken <= maxSupply);
-
-        _safeMint(msg.sender, numToken);
-
-        emit BuyTokens(address(this), msg.sender, salePrice, numToken);
-    }
-
     constructor(address _configProvider) {
         configProvider = _configProvider;
     }
@@ -107,6 +76,11 @@ contract FragmentNFT is
         salePrice = params.salePrice;
     }
 
+    modifier onlyCreator() {
+        require(creator == _msgSender(), "caller is not the creator");
+        _;
+    }
+
     function getNftAssets(uint256 _index) external view returns (address) {
         return nftAssets[_index];
     }
@@ -122,10 +96,7 @@ contract FragmentNFT is
 
         string memory baseURI = IConfigProvider(configProvider)
             .getFragmentBaseURI();
-        return
-            string(
-                abi.encodePacked(baseURI, address(this), "/", tokenId, ".json")
-            );
+        return string(abi.encodePacked(baseURI, address(this), "/", tokenId));
     }
 
     function onERC721Received(
@@ -139,5 +110,36 @@ contract FragmentNFT is
         tokenId;
         data;
         return IERC721ReceiverUpgradeable.onERC721Received.selector;
+    }
+
+    function buyTokens(uint256 numToken) public payable {
+        require(totalSupply() + numToken <= maxSupply);
+        //validate
+        require(
+            msg.value >= salePrice * numToken,
+            Errors.FRAGMENT_INSUFICIENT_AMOUNT
+        );
+
+        _safeMint(msg.sender, numToken);
+        //transfer eth to creator
+        TransferHelper.safeTransferETH(creator, salePrice * numToken);
+
+        //return dust amount to msg.sender
+        if (msg.value > salePrice * numToken) {
+            uint256 dustAmount = msg.value - salePrice * numToken;
+            if (dustAmount >= 10 ** 14) {
+                TransferHelper.safeTransferETH(msg.sender, dustAmount);
+            }
+        }
+
+        emit BuyTokens(address(this), msg.sender, salePrice, numToken);
+    }
+
+    function creatorMint(uint256 numToken) public payable onlyCreator {
+        require(totalSupply() + numToken <= maxSupply);
+
+        _safeMint(msg.sender, numToken);
+
+        emit BuyTokens(address(this), msg.sender, salePrice, numToken);
     }
 }
