@@ -7,7 +7,7 @@ import {IConfigProvider} from "../../interfaces/IConfigProvider.sol";
  * @title InitializedProxy
  * @author 0xkongamoto
  */
-contract TokenVaultProxy is InitializedProxy {
+contract FragmentNFTProxy is InitializedProxy {
     constructor(address _configProvider) InitializedProxy(_configProvider) {}
 
     /**
@@ -20,6 +20,6 @@ contract TokenVaultProxy is InitializedProxy {
         override
         returns (address impl)
     {
-        return IConfigProvider(configProvider).getVaultImpl();
+        return IConfigProvider(configProvider).getFragmentImpl();
     }
 }

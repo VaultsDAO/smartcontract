@@ -13,55 +13,55 @@ async function main() {
   let dataText = await fs.readFileSync(fileName)
   deployData = JSON.parse(dataText.toString())
   // 
-  let TokenVault = await hre.ethers.getContractFactory('TokenVault');
-  let TokenVaultProxy = await hre.ethers.getContractFactory("TokenVaultProxy");
+  let FragmentNFT = await hre.ethers.getContractFactory('FragmentNFT');
+  let FragmentNFTProxy = await hre.ethers.getContractFactory("FragmentNFTProxy");
 
   var configProvider = await hre.ethers.getContractAt('ConfigProvider', deployData.ConfigProviderProxy);
   // 
-  if (deployData.TokenVault == undefined || deployData.TokenVault == '') {
-    let tokenVault = await waitForDeploy(await TokenVault.deploy(configProvider.address));
+  if (deployData.FragmentNFT == undefined || deployData.FragmentNFT == '') {
+    let tokenFragment = await waitForDeploy(await FragmentNFT.deploy(configProvider.address));
     {
-      deployData.TokenVault = tokenVault.address;
+      deployData.FragmentNFT = tokenFragment.address;
       await fs.writeFileSync(fileName, JSON.stringify(deployData))
-      console.log('TokenVault is deployed', tokenVault.address)
+      console.log('FragmentNFT is deployed', tokenFragment.address)
     }
   }
-  if (deployData.TokenVaultProxy == undefined || deployData.TokenVaultProxy == '') {
-    let tokenVaultProxy = await waitForDeploy(await TokenVaultProxy.deploy(configProvider.address));
+  if (deployData.FragmentNFTProxy == undefined || deployData.FragmentNFTProxy == '') {
+    let fragmentNFTProxy = await waitForDeploy(await FragmentNFTProxy.deploy(configProvider.address));
     {
-      deployData.TokenVaultProxy = tokenVaultProxy.address;
+      deployData.FragmentNFTProxy = fragmentNFTProxy.address;
       await fs.writeFileSync(fileName, JSON.stringify(deployData))
-      console.log('TokenVaultProxy is deployed', tokenVaultProxy.address)
+      console.log('FragmentNFTProxy is deployed', fragmentNFTProxy.address)
     }
   }
   // 
-  if ((await configProvider.getVaultImpl()).toString().toLowerCase() != deployData.TokenVault.toLowerCase()) {
-    await waitForTx(await configProvider.setVaultImpl(deployData.TokenVault))
-    console.log('configProvider.setVaultImpl()', deployData.TokenVault)
+  if ((await configProvider.getFragmentImpl()).toString().toLowerCase() != deployData.FragmentNFT.toLowerCase()) {
+    await waitForTx(await configProvider.setFragmentImpl(deployData.FragmentNFT))
+    console.log('configProvider.setFragmentImpl()', deployData.FragmentNFT)
   }
-  if ((await configProvider.getVaultTpl()).toString().toLowerCase() != deployData.TokenVaultProxy.toLowerCase()) {
-    await waitForTx(await configProvider.setVaultTpl(deployData.TokenVaultProxy))
-    console.log('configProvider.setVaultTpl()', deployData.TokenVaultProxy)
+  if ((await configProvider.getFragmentTpl()).toString().toLowerCase() != deployData.FragmentNFTProxy.toLowerCase()) {
+    await waitForTx(await configProvider.setFragmentTpl(deployData.FragmentNFTProxy))
+    console.log('configProvider.setFragmentTpl()', deployData.FragmentNFTProxy)
   }
   // 
   {
     await verifyContract(
       deployData,
       network,
-      deployData.TokenVault,
+      deployData.FragmentNFT,
       [configProvider.address],
       {},
-      "contracts/protocol/TokenVault.sol:TokenVault",
+      "contracts/protocol/FragmentNFT.sol:FragmentNFT",
     )
   }
   {
     await verifyContract(
       deployData,
       network,
-      deployData.TokenVaultProxy,
+      deployData.FragmentNFTProxy,
       [configProvider.address],
       {},
-      "contracts/libraries/proxy/TokenVaultProxy.sol:TokenVaultProxy",
+      "contracts/libraries/proxy/FragmentNFTProxy.sol:FragmentNFTProxy",
     )
   }
 }

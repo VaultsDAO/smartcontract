@@ -10,7 +10,7 @@ library Errors {
     // string public constant CALLER_NOT_OWNER = "100"; // 'The caller must be owner'
     string public constant ZERO_ADDRESS = "101"; // 'zero address'
 
-    //vault errors
-    string public constant VAULT_ = "200";
-    string public constant VAULT_INSUFICIENT_AMOUNT = "201";
+    //fragment errors
+    string public constant FRAGMENT_ = "200";
+    string public constant FRAGMENT_INSUFICIENT_AMOUNT = "201";
 }

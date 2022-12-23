@@ -5,9 +5,9 @@ module.exports = {
         let ProxyAdmin = await ethers.getContractFactory("ProxyAdmin");
         let TransparentUpgradeableProxy = await ethers.getContractFactory("TransparentUpgradeableProxy");
         let ConfigProvider = await ethers.getContractFactory("ConfigProvider");
-        let VaultFactory = await ethers.getContractFactory("VaultFactory");
-        let TokenVault = await ethers.getContractFactory("TokenVault");
-        let TokenVaultProxy = await ethers.getContractFactory("TokenVaultProxy");
+        let FragmentFactory = await ethers.getContractFactory("FragmentFactory");
+        let FragmentNFT = await ethers.getContractFactory("FragmentNFT");
+        let FragmentNFTProxy = await ethers.getContractFactory("FragmentNFTProxy");
 
         let proxyAdmin = await ProxyAdmin.connect(deployAdmin).deploy();
 
@@ -21,24 +21,24 @@ module.exports = {
 
         configProvider = await ethers.getContractAt('ConfigProvider', configProviderProxy.address)
 
-        let tokenVaultProxy = await TokenVaultProxy.connect(deployAdmin).deploy(configProvider.address);
+        let fragmentNFTProxy = await FragmentNFTProxy.connect(deployAdmin).deploy(configProvider.address);
 
-        await configProvider.connect(deployAdmin).setVaultTpl(tokenVaultProxy.address);
+        await configProvider.connect(deployAdmin).setFragmentTpl(fragmentNFTProxy.address);
 
         // let configProvider2 = await ConfigProvider.connect(deployAdmin).deploy();
         // await ProxyAdmin.connect(deployAdmin).upgrade(configProviderProxy.address, configProvider2.address)
 
-        let vaultFactory = await VaultFactory.connect(deployAdmin).deploy(configProvider.address);
-        initializeData = vaultFactory.interface.encodeFunctionData('initialize', []);
-        let vaultFactoryProxy = await TransparentUpgradeableProxy.connect(deployAdmin).deploy(
-            vaultFactory.address,
+        let fragmentFactory = await FragmentFactory.connect(deployAdmin).deploy(configProvider.address);
+        initializeData = fragmentFactory.interface.encodeFunctionData('initialize', []);
+        let fragmentFactoryProxy = await TransparentUpgradeableProxy.connect(deployAdmin).deploy(
+            fragmentFactory.address,
             proxyAdmin.address,
             initializeData,
         );
-        vaultFactory = await ethers.getContractAt('VaultFactory', vaultFactoryProxy.address)
+        fragmentFactory = await ethers.getContractAt('FragmentFactory', fragmentFactoryProxy.address)
 
-        let tokenVault = await TokenVault.connect(deployAdmin).deploy(configProvider.address);
-        await configProvider.connect(deployAdmin).setVaultImpl(tokenVault.address)
+        let tokenFragment = await FragmentNFT.connect(deployAdmin).deploy(configProvider.address);
+        await configProvider.connect(deployAdmin).setFragmentImpl(tokenFragment.address)
 
         //
         let MockNFT = await ethers.getContractFactory("MockNFT");
@@ -46,7 +46,7 @@ module.exports = {
         return {
             proxyAdmin: proxyAdmin,
             configProvider: configProvider,
-            vaultFactory: vaultFactory,
+            fragmentFactory: fragmentFactory,
             testNft: testNft,
             accounts: {
                 curator: curator,

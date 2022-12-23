@@ -3,7 +3,7 @@ pragma solidity ^0.8.0;
 import {Errors} from "../libraries/helpers/Errors.sol";
 import {TransferHelper} from "../libraries/helpers/TransferHelper.sol";
 import {IWETH} from "../interfaces/IWETH.sol";
-import {IVault} from "../interfaces/IVault.sol";
+import {IFragment} from "../interfaces/IFragment.sol";
 import {ERC721A} from "../interfaces/ERC721A.sol";
 import {IConfigProvider} from "../interfaces/IConfigProvider.sol";
 import {IERC721} from "../libraries/openzeppelin/token/ERC721/IERC721.sol";
@@ -13,7 +13,7 @@ import {ERC721EnumerableUpgradeable} from "../libraries/openzeppelin/upgradeable
 import {OwnableUpgradeable} from "../libraries/openzeppelin/upgradeable/access/OwnableUpgradeable.sol";
 import {DataTypes} from "../libraries/types/DataTypes.sol";
 
-contract TokenVault is OwnableUpgradeable, ERC721A {
+contract FragmentNFT is OwnableUpgradeable, ERC721A {
     address public immutable configProvider;
     uint256 private _currentTokenId;
     /// -----------------------------------
@@ -25,7 +25,7 @@ contract TokenVault is OwnableUpgradeable, ERC721A {
     uint256 public nftAssetLength;
 
     /// -----------------------------------
-    /// -------- VAULT INFORMATION --------
+    /// -------- FRAGMENT INFORMATION --------
     /// -----------------------------------
 
     /// @notice the address who initially deposited the NFT
@@ -39,7 +39,7 @@ contract TokenVault is OwnableUpgradeable, ERC721A {
     uint256[50] public __gapAddress;
 
     event BuyTokens(
-        address vault,
+        address fragment,
         address user,
         uint256 salePrice,
         uint256 numToken
@@ -52,7 +52,7 @@ contract TokenVault is OwnableUpgradeable, ERC721A {
         //validate
         require(
             msg.value >= salePrice * numToken,
-            Errors.VAULT_INSUFICIENT_AMOUNT
+            Errors.FRAGMENT_INSUFICIENT_AMOUNT
         );
 
         for (uint256 i = 0; i < numToken; i++) {
@@ -78,7 +78,7 @@ contract TokenVault is OwnableUpgradeable, ERC721A {
     }
 
     function initialize(
-        DataTypes.TokenVaultInitializeParams memory params
+        DataTypes.FragmentInitializeParams memory params
     ) external initializer {
         // initialize inherited contracts
         __ERC721_init(params.name, params.symbol);

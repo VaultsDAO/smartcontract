@@ -14,60 +14,60 @@ async function main() {
   deployData = JSON.parse(dataText.toString())
   // 
   let TransparentUpgradeableProxy = await hre.ethers.getContractFactory('TransparentUpgradeableProxy');
-  let VaultFactory = await hre.ethers.getContractFactory("VaultFactory");
+  let FragmentFactory = await hre.ethers.getContractFactory("FragmentFactory");
 
   var configProvider = await hre.ethers.getContractAt('ConfigProvider', deployData.ConfigProviderProxy);
   // 
   var pawnProxyAdmin = await hre.ethers.getContractAt('ProxyAdmin', deployData.ProxyAdmin);
   // 
-  if (deployData.VaultFactory == undefined || deployData.VaultFactory == '') {
-    let vaultFactory = await waitForDeploy(await VaultFactory.deploy(configProvider.address));
+  if (deployData.FragmentFactory == undefined || deployData.FragmentFactory == '') {
+    let fragmentFactory = await waitForDeploy(await FragmentFactory.deploy(configProvider.address));
     {
-      deployData.VaultFactory = vaultFactory.address;
+      deployData.FragmentFactory = fragmentFactory.address;
       await fs.writeFileSync(fileName, JSON.stringify(deployData))
-      console.log('ConfigProvider is deployed', vaultFactory.address)
+      console.log('ConfigProvider is deployed', fragmentFactory.address)
     }
   }
   // 
-  if (deployData.VaultFactoryProxy == undefined || deployData.VaultFactoryProxy == '') {
-    var vaultFactory = await hre.ethers.getContractAt('VaultFactory', deployData.VaultFactory);
+  if (deployData.FragmentFactoryProxy == undefined || deployData.FragmentFactoryProxy == '') {
+    var fragmentFactory = await hre.ethers.getContractAt('FragmentFactory', deployData.FragmentFactory);
     var initializeData = configProvider.interface.encodeFunctionData('initialize', []);
-    var vaultFactoryProxy = await waitForDeploy(
+    var fragmentFactoryProxy = await waitForDeploy(
       await TransparentUpgradeableProxy.deploy(
-        vaultFactory.address,
+        fragmentFactory.address,
         pawnProxyAdmin.address,
         initializeData,
       )
     );
     {
-      deployData.VaultFactoryProxy = vaultFactoryProxy.address;
+      deployData.FragmentFactoryProxy = fragmentFactoryProxy.address;
       await fs.writeFileSync(fileName, JSON.stringify(deployData))
-      console.log('VaultFactoryProxy is deployed', vaultFactoryProxy.address)
+      console.log('FragmentFactoryProxy is deployed', fragmentFactoryProxy.address)
     }
   }
   {
-    await upgradeContract(pawnProxyAdmin, deployData.VaultFactoryProxy, deployData.VaultFactory)
+    await upgradeContract(pawnProxyAdmin, deployData.FragmentFactoryProxy, deployData.FragmentFactory)
   }
   // 
   {
     await verifyContract(
       deployData,
       network,
-      deployData.VaultFactory,
+      deployData.FragmentFactory,
       [configProvider.address],
       {},
-      "contracts/protocol/VaultFactory.sol:VaultFactory",
+      "contracts/protocol/FragmentFactory.sol:FragmentFactory",
     )
   }
   {
-    var vaultFactory = await hre.ethers.getContractAt('VaultFactory', deployData.VaultFactory);
-    var initializeData = vaultFactory.interface.encodeFunctionData('initialize', []);
+    var fragmentFactory = await hre.ethers.getContractAt('FragmentFactory', deployData.FragmentFactory);
+    var initializeData = fragmentFactory.interface.encodeFunctionData('initialize', []);
     await verifyContract(
       deployData,
       network,
-      deployData.VaultFactoryProxy,
+      deployData.FragmentFactoryProxy,
       [
-        vaultFactory.address,
+        fragmentFactory.address,
         pawnProxyAdmin.address,
         initializeData,
       ],

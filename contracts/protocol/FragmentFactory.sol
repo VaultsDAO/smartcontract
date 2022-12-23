@@ -6,16 +6,16 @@ import {ClonesUpgradeable} from "../libraries/openzeppelin/upgradeable/proxy/Clo
 import {OwnableUpgradeable} from "../libraries/openzeppelin/upgradeable/access/OwnableUpgradeable.sol";
 import {PausableUpgradeable} from "../libraries/openzeppelin/upgradeable/security/PausableUpgradeable.sol";
 import {IERC721} from "../libraries/openzeppelin/token/ERC721/IERC721.sol";
-import {IVault} from "../interfaces/IVault.sol";
+import {IFragment} from "../interfaces/IFragment.sol";
 import {IConfigProvider} from "../interfaces/IConfigProvider.sol";
 import {DataTypes} from "../libraries/types/DataTypes.sol";
 
-contract VaultFactory is OwnableUpgradeable, PausableUpgradeable {
-    /// @notice the number of ERC721 vaults
-    uint256 public vaultCount;
+contract FragmentFactory is OwnableUpgradeable, PausableUpgradeable {
+    /// @notice the number of ERC721 fragments
+    uint256 public fragmentCount;
     address public immutable configProvider;
-    /// @notice the mapping of vault number to vault contract
-    mapping(uint256 => address) public vaults;
+    /// @notice the mapping of fragment number to fragment contract
+    mapping(uint256 => address) public fragments;
 
     /// @notice  gap for reserve, minus 1 if use
     uint256[10] public __gapUint256;
@@ -26,8 +26,8 @@ contract VaultFactory is OwnableUpgradeable, PausableUpgradeable {
         address[] tokens,
         uint256[] ids,
         uint256 price,
-        address vault,
-        uint256 vaultId
+        address fragment,
+        uint256 fragmentId
     );
 
     constructor(address _configProvider) {
@@ -54,7 +54,7 @@ contract VaultFactory is OwnableUpgradeable, PausableUpgradeable {
         );
         bytes memory _initializationCalldata = abi.encodeWithSignature(
             "initialize((address,address,address[],uint256[],uint256,string,string,uint256))",
-            DataTypes.TokenVaultInitializeParams({
+            DataTypes.FragmentInitializeParams({
                 configProvider: configProvider,
                 creator: msg.sender,
                 nftAssets: _nftAssets,
@@ -66,24 +66,30 @@ contract VaultFactory is OwnableUpgradeable, PausableUpgradeable {
             })
         );
 
-        address vault = ClonesUpgradeable.clone(
-            IConfigProvider(configProvider).getVaultTpl()
+        address fragment = ClonesUpgradeable.clone(
+            IConfigProvider(configProvider).getFragmentTpl()
         );
-        Address.functionCall(vault, _initializationCalldata);
+        Address.functionCall(fragment, _initializationCalldata);
 
         for (uint i = 0; i < _nftAssets.length; i++) {
             IERC721(_nftAssets[i]).safeTransferFrom(
                 msg.sender,
-                vault,
+                fragment,
                 _nftTokenIds[i]
             );
         }
-        emit Mint(_nftAssets, _nftTokenIds, _salePrice, vault, vaultCount);
+        emit Mint(
+            _nftAssets,
+            _nftTokenIds,
+            _salePrice,
+            fragment,
+            fragmentCount
+        );
 
-        vaultCount++;
-        vaults[vaultCount] = vault;
+        fragmentCount++;
+        fragments[fragmentCount] = fragment;
 
-        return vaultCount;
+        return fragmentCount;
     }
 
     function pause() external onlyOwner {

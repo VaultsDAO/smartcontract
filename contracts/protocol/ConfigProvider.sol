@@ -10,12 +10,12 @@ contract ConfigProvider is OwnableUpgradeable, IConfigProvider {
 
     string public baseURI;
     bytes32 private constant WETH = "WETH";
-    bytes32 private constant VAULT_TPL = "VAULT_TPL";
-    bytes32 private constant VAULT_IMPL = "VAULT_IMPL";
+    bytes32 private constant FRAGMENT_TPL = "FRAGMENT_TPL";
+    bytes32 private constant FRAGMENT_IMPL = "FRAGMENT_IMPL";
 
     //EVENT
-    event VaultTplSet(address _vaultTpl);
-    event VaultImplSet(address _vaultImpl);
+    event FragmentTplSet(address _fragmentTpl);
+    event FragmentImplSet(address _fragmentImpl);
     event BaseURISet(string _baseURI);
 
     constructor() {}
@@ -53,14 +53,14 @@ contract ConfigProvider is OwnableUpgradeable, IConfigProvider {
         return getAddress(WETH);
     }
 
-    function setVaultTpl(address _vaultTpl) external override onlyOwner {
-        require(_vaultTpl != address(0), "cannot go to 0 address");
-        _addresses[VAULT_TPL] = _vaultTpl;
-        emit VaultTplSet(_vaultTpl);
+    function setFragmentTpl(address _fragmentTpl) external override onlyOwner {
+        require(_fragmentTpl != address(0), "cannot go to 0 address");
+        _addresses[FRAGMENT_TPL] = _fragmentTpl;
+        emit FragmentTplSet(_fragmentTpl);
     }
 
-    function getVaultTpl() external view override returns (address) {
-        return getAddress(VAULT_TPL);
+    function getFragmentTpl() external view override returns (address) {
+        return getAddress(FRAGMENT_TPL);
     }
 
     function getBaseURI() external view returns (string memory) {
@@ -72,13 +72,13 @@ contract ConfigProvider is OwnableUpgradeable, IConfigProvider {
         emit BaseURISet(val);
     }
 
-    function setVaultImpl(address _val) external override onlyOwner {
+    function setFragmentImpl(address _val) external override onlyOwner {
         require(_val != address(0), "cannot go to 0 address");
-        _addresses[VAULT_IMPL] = _val;
-        emit VaultTplSet(_val);
+        _addresses[FRAGMENT_IMPL] = _val;
+        emit FragmentTplSet(_val);
     }
 
-    function getVaultImpl() external view override returns (address) {
-        return getAddress(VAULT_IMPL);
+    function getFragmentImpl() external view override returns (address) {
+        return getAddress(FRAGMENT_IMPL);
     }
 }

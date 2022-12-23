@@ -10,7 +10,7 @@ library DataTypes {
         ended,
         redeemed
     }
-    struct TokenVaultInitializeParams {
+    struct FragmentInitializeParams {
         address configProvider;
         address creator;
         address[] nftAssets;

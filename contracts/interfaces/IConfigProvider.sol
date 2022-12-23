@@ -26,11 +26,11 @@ interface IConfigProvider {
 
     function setBaseURI(string memory val) external;
 
-    function setVaultImpl(address newAddress) external;
+    function setFragmentImpl(address newAddress) external;
 
-    function getVaultImpl() external view returns (address);
+    function getFragmentImpl() external view returns (address);
 
-    function setVaultTpl(address newAddress) external;
+    function setFragmentTpl(address newAddress) external;
 
-    function getVaultTpl() external view returns (address);
+    function getFragmentTpl() external view returns (address);
 }

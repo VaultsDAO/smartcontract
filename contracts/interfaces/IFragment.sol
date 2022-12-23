@@ -9,7 +9,7 @@ import {IWETH} from "./IWETH.sol";
 /**
  * @dev Interface of the ERC20 standard as defined in the EIP.
  */
-interface IVault {
+interface IFragment {
     //
 
     function getNftAssets(uint256 _index) external view returns (address);
