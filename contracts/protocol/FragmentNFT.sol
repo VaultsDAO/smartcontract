@@ -76,7 +76,7 @@ contract FragmentNFT is
     }
 
     function mint(uint256 numToken) public payable onlyOwner {
-        require(totalSupply() + numToken < maxSupply);
+        require(totalSupply() + numToken <= maxSupply);
 
         _safeMint(msg.sender, numToken);
 
