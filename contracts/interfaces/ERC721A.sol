@@ -163,7 +163,7 @@ contract ERC721A is Initializable, ContextUpgradeable, IERC721A {
      * To change the starting token ID, please override this function.
      */
     function _startTokenId() internal view virtual returns (uint256) {
-        return 0;
+        return 1;
     }
 
     /**
