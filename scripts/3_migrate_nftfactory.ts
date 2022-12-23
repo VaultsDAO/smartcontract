@@ -54,7 +54,7 @@ async function main() {
       deployData,
       network,
       deployData.VaultFactory,
-      [],
+      [configProvider.address],
       {},
       "contracts/protocol/VaultFactory.sol:VaultFactory",
     )
@@ -72,7 +72,7 @@ async function main() {
         initializeData,
       ],
       {},
-      "contracts/openzeppelin/contracts/proxy/transparent/TransparentUpgradeableProxy.sol:TransparentUpgradeableProxy",
+      "contracts/libraries/openzeppelin/proxy/TransparentUpgradeableProxy.sol:TransparentUpgradeableProxy",
     )
   }
 }

@@ -20,4 +20,7 @@ type DeployData = {
   ConfigProviderProxy: string,
   VaultFactory:string,
   VaultFactoryProxy:string,
+  TokenVault:string,
+  TokenVaultProxy:string,
+  MockNFT:string,
 };
