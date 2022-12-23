@@ -4,6 +4,7 @@ import {Errors} from "../libraries/helpers/Errors.sol";
 import {TransferHelper} from "../libraries/helpers/TransferHelper.sol";
 import {IWETH} from "../interfaces/IWETH.sol";
 import {IVault} from "../interfaces/IVault.sol";
+import {ERC721A} from "../interfaces/ERC721A.sol";
 import {IConfigProvider} from "../interfaces/IConfigProvider.sol";
 import {IERC721} from "../libraries/openzeppelin/token/ERC721/IERC721.sol";
 import {ERC721Upgradeable} from "../libraries/openzeppelin/upgradeable/token/ERC721/ERC721Upgradeable.sol";
@@ -12,11 +13,7 @@ import {ERC721EnumerableUpgradeable} from "../libraries/openzeppelin/upgradeable
 import {OwnableUpgradeable} from "../libraries/openzeppelin/upgradeable/access/OwnableUpgradeable.sol";
 import {DataTypes} from "../libraries/types/DataTypes.sol";
 
-contract TokenVault is
-    OwnableUpgradeable,
-    ERC721HolderUpgradeable,
-    ERC721EnumerableUpgradeable
-{
+contract TokenVault is OwnableUpgradeable, ERC721A {
     address public immutable configProvider;
     uint256 private _currentTokenId;
     /// -----------------------------------
@@ -86,7 +83,6 @@ contract TokenVault is
         // initialize inherited contracts
         __ERC721_init(params.name, params.symbol);
         __Ownable_init();
-        __ERC721Holder_init();
         // set storage variables
         require(params.salePrice > 0, "bad list price");
         require(
