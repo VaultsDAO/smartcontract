@@ -1,292 +1,58 @@
-const MockReserve = artifacts.require("MockReserve");
-const MockWETH = artifacts.require("MockWETH");
-const MockNFT = artifacts.require("MockNFT");
-const MockNFTOracle = artifacts.require("MockNFTOracle");
-const PawnProxyAdmin = artifacts.require('PawnProxyAdmin');
-const TransparentUpgradeableProxy = artifacts.require('TransparentUpgradeableProxy');
-const MultipleUpgradeableProxy = artifacts.require('MultipleUpgradeableProxy');
-const ConfigProvider = artifacts.require("ConfigProvider");
-const ShopFactory = artifacts.require("ShopFactory");
-const MockChainlinkOracle = artifacts.require("MockChainlinkOracle");
-const ReserveOracle = artifacts.require("ReserveOracle");
-const PawnNFTOracle = artifacts.require("PawnNFTOracle");
-const BNFTRegistry = artifacts.require("BNFTRegistry");
-const BNFT = artifacts.require("BNFT");
-const AirdropFlashLoanReceiver = artifacts.require("AirdropFlashLoanReceiver");
-const UserFlashclaimRegistry = artifacts.require("UserFlashclaimRegistry");
-const ShopLoan = artifacts.require("ShopLoan");
+module.exports = {
+    setupInstance: async () => {
+        let [deployAdmin, platformFeeReceiver, curator, buyer1, buyer2] = await ethers.getSigners();
 
-const BorrowLogic = artifacts.require("BorrowLogic");
-const GenericLogic = artifacts.require("GenericLogic");
-const LiquidateLogic = artifacts.require("LiquidateLogic");
-const ValidationLogic = artifacts.require("ValidationLogic");
+        let ProxyAdmin = await ethers.getContractFactory("ProxyAdmin");
+        let TransparentUpgradeableProxy = await ethers.getContractFactory("TransparentUpgradeableProxy");
+        let ConfigProvider = await ethers.getContractFactory("ConfigProvider");
+        let VaultFactory = await ethers.getContractFactory("VaultFactory");
+        let TokenVault = await ethers.getContractFactory("TokenVault");
+        let TokenVaultProxy = await ethers.getContractFactory("TokenVaultProxy");
 
-const PunkGateway = artifacts.require("PunkGateway");
+        let proxyAdmin = await ProxyAdmin.connect(deployAdmin).deploy();
 
-const CryptoPunksMarket = artifacts.require("CryptoPunksMarket");
-const WrappedPunk = artifacts.require("WrappedPunk");
+        let configProvider = await ConfigProvider.connect(deployAdmin).deploy();
+        let initializeData = configProvider.interface.encodeFunctionData('initialize', []);
+        let configProviderProxy = await TransparentUpgradeableProxy.connect(deployAdmin).deploy(
+            configProvider.address,
+            proxyAdmin.address,
+            initializeData,
+        );
 
-module.exports = async function (accounts) {
-    const [pawnProxyAdminOwner, priceFeedAdmin, platformFeeReceiver, lender, borrower, bidder1, bidder2] = accounts;
-    let weth = await MockWETH.new();
-    let usdc = await MockReserve.new('USDC', 'USDC', '6');
+        configProvider = await ethers.getContractAt('ConfigProvider', configProviderProxy.address)
 
-    let testNft = await MockNFT.new('XXX', 'XXX', '');
+        let tokenVaultProxy = await TokenVaultProxy.connect(deployAdmin).deploy(configProvider.address);
 
-    //  ---------------------------------------------------------------
-    let pawnProxyAdmin = await PawnProxyAdmin.new({ from: pawnProxyAdminOwner });
+        await configProvider.connect(deployAdmin).setVaultTpl(tokenVaultProxy.address);
 
-    //   ---------------------------------------------------------------
-    let provider = await ConfigProvider.new();
+        // let configProvider2 = await ConfigProvider.connect(deployAdmin).deploy();
+        // await ProxyAdmin.connect(deployAdmin).upgrade(configProviderProxy.address, configProvider2.address)
 
-    let initializeData = provider.contract.methods.initialize().encodeABI();
-    let proxy = await TransparentUpgradeableProxy.new(
-        provider.address,
-        pawnProxyAdmin.address,
-        initializeData,
-        { from: pawnProxyAdminOwner },
-    );
+        let vaultFactory = await VaultFactory.connect(deployAdmin).deploy(configProvider.address);
+        initializeData = vaultFactory.interface.encodeFunctionData('initialize', []);
+        let vaultFactoryProxy = await TransparentUpgradeableProxy.connect(deployAdmin).deploy(
+            vaultFactory.address,
+            proxyAdmin.address,
+            initializeData,
+        );
+        vaultFactory = await ethers.getContractAt('VaultFactory', vaultFactoryProxy.address)
 
-    provider = await ConfigProvider.at(proxy.address)
+        let tokenVault = await TokenVault.connect(deployAdmin).deploy(configProvider.address);
+        await configProvider.connect(deployAdmin).setVaultImpl(tokenVault.address)
 
-
-    // new shop factory ---------------------------------------------------------------
-
-    const genericLogic = await GenericLogic.new();
-
-    await ValidationLogic.link("GenericLogic", genericLogic.address);
-    const validationLogic = await ValidationLogic.new();
-
-    await LiquidateLogic.link("GenericLogic", genericLogic.address);
-    await LiquidateLogic.link("ValidationLogic", validationLogic.address);
-    const liquidateLogic = await LiquidateLogic.new();
-
-    await BorrowLogic.link("GenericLogic", genericLogic.address);
-    await BorrowLogic.link("ValidationLogic", validationLogic.address);
-    const borrowLogic = await BorrowLogic.new();
-
-    await ShopLoan.link("GenericLogic", genericLogic.address);
-
-    await ShopFactory.link("GenericLogic", genericLogic.address);
-    await ShopFactory.link("BorrowLogic", borrowLogic.address);
-    await ShopFactory.link("LiquidateLogic", liquidateLogic.address);
-
-    let shopFactory = await ShopFactory.new();
-
-    initializeData = shopFactory.contract.methods.initialize(provider.address).encodeABI();
-    proxy = await TransparentUpgradeableProxy.new(
-        shopFactory.address,
-        pawnProxyAdmin.address,
-        initializeData,
-        { from: pawnProxyAdminOwner },
-    );
-
-    shopFactory = await ShopFactory.at(proxy.address)
-
-    // Shoploan  ---------------------------------------------------------------
-    let shopLoan = await ShopLoan.new();
-
-    initializeData = shopLoan.contract.methods.initialize(provider.address).encodeABI();
-    proxy = await TransparentUpgradeableProxy.new(
-        shopLoan.address,
-        pawnProxyAdmin.address,
-        initializeData,
-        { from: pawnProxyAdminOwner },
-    );
-
-    shopLoan = await ShopLoan.at(proxy.address)
-
-    // BNFT ---------------------------------------------------------------
-
-    let bnft = await BNFT.new();
-    let proxyKey = Buffer.from('BNFT');
-    let bnftMultipleUpgradeableProxy = await MultipleUpgradeableProxy.new(pawnProxyAdmin.address, proxyKey)
-    let bnftRegistry = await BNFTRegistry.new();
-    initializeData = bnftRegistry.contract.methods.initialize(
-        pawnProxyAdmin.address,
-        'BNFT',
-        'B',
-    ).encodeABI();
-    proxy = await TransparentUpgradeableProxy.new(
-        bnftRegistry.address,
-        pawnProxyAdmin.address,
-        initializeData,
-        { from: pawnProxyAdminOwner },
-    );
-    bnftRegistry = await BNFTRegistry.at(proxy.address)
-
-    // flash loan ---------------------------------------------------------------
-    let receiverKey = Buffer.from('AIR_DROP_FLASH_LOAN_RECEIVER');
-    let receiverMultipleUpgradeableProxy = await MultipleUpgradeableProxy.new(pawnProxyAdmin.address, receiverKey)
-    let airdropFlashLoanReceiver = await AirdropFlashLoanReceiver.new();
-    let userFlashclaimRegistry = await UserFlashclaimRegistry.new()
-    initializeData = userFlashclaimRegistry.contract.methods.initialize(
-        pawnProxyAdmin.address,
-        bnftRegistry.address,
-    ).encodeABI();
-
-    proxy = await TransparentUpgradeableProxy.new(
-        userFlashclaimRegistry.address,
-        pawnProxyAdmin.address,
-        initializeData,
-        { from: pawnProxyAdminOwner },
-    );
-    userFlashclaimRegistry = await UserFlashclaimRegistry.at(proxy.address)
-
-    // NFT Oracle ---------------------------------------------------------------
-    let mockNFTOracle = await MockNFTOracle.new();
-    initializeData = mockNFTOracle.contract.methods.initialize(
-        priceFeedAdmin,
-        web3.utils.toWei('0.2', 'ether'), // _maxPriceDeviation 20%
-        web3.utils.toWei('0.1', 'ether'), // _maxPriceDeviationWithTime 10%
-        // 30 * 60,// 30 minutes
-        1,
-        // 10*60,//_minUpdateTime 10 minutes
-        1,//_minUpdateTime
-        // 10 * 60 // _twapInterval 10 minutes
-        1,//_minUpdateTime
-    ).encodeABI();
-    mockNFTOracle = await TransparentUpgradeableProxy.new(
-        mockNFTOracle.address,
-        pawnProxyAdmin.address,
-        initializeData,
-        { from: pawnProxyAdminOwner },
-    );
-    mockNFTOracle = await MockNFTOracle.at(mockNFTOracle.address)
-
-    // nftOracle
-
-    let nftOracle = await PawnNFTOracle.new();
-    initializeData = nftOracle.contract.methods.initialize(
-        priceFeedAdmin,
-        // 10 * 60 // _twapInterval 10 minutes
-        30,//_minUpdateTime
-    ).encodeABI();
-
-    nftOracle = await TransparentUpgradeableProxy.new(
-        nftOracle.address,
-        pawnProxyAdmin.address,
-        initializeData,
-        { from: pawnProxyAdminOwner },
-    );
-
-    nftOracle = await PawnNFTOracle.at(nftOracle.address)
-
-    // reserve oracle ---------------------------------------------------------------
-
-    let mockUSDCChainlinkOracle = await MockChainlinkOracle.new(18);
-
-    let reserveOracle = await ReserveOracle.new();
-
-    initializeData = reserveOracle.contract.methods.initialize(weth.address).encodeABI();
-
-    proxy = await TransparentUpgradeableProxy.new(
-        reserveOracle.address,
-        pawnProxyAdmin.address,
-        initializeData,
-        { from: pawnProxyAdminOwner },
-    );
-
-    reserveOracle = await ReserveOracle.at(proxy.address);
-
-    //     const CryptoPunksMarket = artifacts.require("CryptoPunksMarket");
-    // const WrappedPunk = artifacts.require("WrappedPunk");
-    let cPunk = await CryptoPunksMarket.new()
-    let wPunk = await WrappedPunk.new(cPunk.address)
-
-    // config address ---------------------------------------------------------------
-    await pawnProxyAdmin.createMultipleProxyImplementation(bnftMultipleUpgradeableProxy.address, bnft.address)
-    await pawnProxyAdmin.createMultipleProxyImplementation(receiverMultipleUpgradeableProxy.address, airdropFlashLoanReceiver.address)
-
-    await provider.setShopFactory(shopFactory.address, { from: pawnProxyAdminOwner })
-    await provider.setLoanManager(shopLoan.address, { from: pawnProxyAdminOwner })
-    await provider.setBnftRegistry(bnftRegistry.address, { from: pawnProxyAdminOwner })
-    await provider.setNftOracle(nftOracle.address, { from: pawnProxyAdminOwner })
-    await provider.setReserveOracle(reserveOracle.address, { from: pawnProxyAdminOwner })
-    await provider.setUserClaimRegistry(userFlashclaimRegistry.address, { from: pawnProxyAdminOwner })
-    await provider.setPlatformFeeReceiver(platformFeeReceiver, { from: pawnProxyAdminOwner })
-    await provider.setMinBidFine(2);// 1 * 2 / 10000 = 0.0002 ETH
-    await provider.setRebuyDuration(0);// 0s
-
-    // setting oracle price and reserve price ---------------------------------------------------------------
-
-    await bnftRegistry.createBNFT(testNft.address)
-    await bnftRegistry.createBNFT(wPunk.address)
-
-    let rs = await bnftRegistry.bNftProxys(testNft.address);
-    bnft = await BNFT.at(rs)
-
-    rs = await bnftRegistry.bNftProxys(wPunk.address);
-    wPunkBnft = await BNFT.at(rs)
-
-    await shopFactory.addNftCollection(testNft.address, 'Test Nft', 0)
-    await shopFactory.addNftCollection(wPunk.address, 'WrapPunk', 0)
-
-    await mockNFTOracle.addAsset(testNft.address, { from: pawnProxyAdminOwner });
-    await mockNFTOracle.addAsset(wPunk.address, { from: pawnProxyAdminOwner });
-
-    await nftOracle.addAsset(testNft.address, mockNFTOracle.address, testNft.address, '10000', { from: pawnProxyAdminOwner });
-    await nftOracle.addAsset(wPunk.address, mockNFTOracle.address, testNft.address, '10000', { from: pawnProxyAdminOwner });
-
-    await shopFactory.addReserve(weth.address)
-
-    await shopFactory.addReserve(usdc.address)
-    await reserveOracle.addAggregator(usdc.address, mockUSDCChainlinkOracle.address, { from: pawnProxyAdminOwner });
-
-    await mockNFTOracle.setAssetData(testNft.address, web3.utils.toWei('0.1', 'ether'), { from: priceFeedAdmin });
-    await mockNFTOracle.setAssetData(wPunk.address, web3.utils.toWei('0.1', 'ether'), { from: priceFeedAdmin });
-
-    await mockUSDCChainlinkOracle.mockAddAnswer(1, web3.utils.toWei('0.001', 'ether'), 1666099852, 1666099852, 1);
-
-    let punkGateway = await PunkGateway.new();
-    initializeData = punkGateway.contract.methods.initialize(
-        provider.address,
-        cPunk.address,
-        wPunk.address
-    ).encodeABI();
-    proxy = await TransparentUpgradeableProxy.new(
-        punkGateway.address,
-        pawnProxyAdmin.address,
-        initializeData,
-        { from: pawnProxyAdminOwner },
-    );
-    punkGateway = await PunkGateway.at(proxy.address);
-
-    await provider.setPunkGateway(punkGateway.address, { from: pawnProxyAdminOwner })
-
-    // await punkGateway.authorizeLendPoolNFT([wPunk.address], { from: pawnProxyAdminOwner })
-    await punkGateway.authorizeLendPoolERC20([usdc.address], { from: pawnProxyAdminOwner })
-
-    await cPunk.allInitialOwnersAssigned()
-
-    return {
-        weth: weth,
-        usdc: usdc,
-        testNft: testNft,
-        pawnProxyAdmin: pawnProxyAdmin,
-        provider: provider,
-        shopFactory: shopFactory,
-        shopLoan: shopLoan,
-        bnft: bnft,
-        wPunkBnft: wPunkBnft,
-        bnftRegistry: bnftRegistry,
-        airdropFlashLoanReceiver: airdropFlashLoanReceiver,
-        userFlashclaimRegistry: userFlashclaimRegistry,
-        mockNFTOracle: mockNFTOracle,
-        nftOracle: nftOracle,
-        mockUSDCChainlinkOracle: mockUSDCChainlinkOracle,
-        reserveOracle: reserveOracle,
-        punkGateway: punkGateway,
-        cPunk: cPunk,
-        wPunk: wPunk,
-        accounts: {
-            pawnProxyAdminOwner: pawnProxyAdminOwner,
-            priceFeedAdmin: priceFeedAdmin,
-            platformFeeReceiver: platformFeeReceiver,
-            lender: lender,
-            borrower: borrower,
-            bidder1: bidder1,
-            bidder2: bidder2,
+        //
+        let MockNFT = await ethers.getContractFactory("MockNFT");
+        let testNft = await MockNFT.connect(curator).deploy('XXX', 'XXX');
+        return {
+            proxyAdmin: proxyAdmin,
+            configProvider: configProvider,
+            vaultFactory: vaultFactory,
+            testNft: testNft,
+            accounts: {
+                curator: curator,
+                buyer1: buyer1,
+                buyer2: buyer2,
+            }
         }
     }
 }

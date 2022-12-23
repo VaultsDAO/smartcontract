@@ -1,68 +1,36 @@
-// SPDX-License-Identifier: agpl-3.0
-pragma solidity ^0.8.4;
+//SPDX-License-Identifier: MIT
+pragma solidity ^0.8.0;
 
-/**
- * @title IConfigProvider contract
- * @dev Main registry of addresses part of or connected to the protocol, including permissioned roles
- * - Acting also as factory of proxies and admin of those, so with right to change its implementations
- **/
 interface IConfigProvider {
-    function owner() external view returns (address);
+    // interface
 
-    /// @notice nftOracle
-    function nftOracle() external view returns (address);
+    event AddressSet(
+        bytes32 id,
+        address indexed newAddress,
+        bool hasProxy,
+        bytes encodedCallData
+    );
+    event VarSet(bytes32 id, uint256 indexed newVal);
 
-    /// @notice reserveOracle
-    function reserveOracle() external view returns (address);
+    function setAddress(bytes32 id, address newAddress) external;
 
-    function userClaimRegistry() external view returns (address);
+    function getAddress(bytes32 id) external view returns (address);
 
-    function bnftRegistry() external view returns (address);
+    function setVar(bytes32 id, uint256 newAddress) external;
 
-    function shopFactory() external view returns (address);
+    function getVar(bytes32 id) external view returns (uint256);
 
-    function loanManager() external view returns (address);
+    function getWETH() external view returns (address);
 
-    //tien phat toi thieu theo % reserve price (ex : vay eth, setup 2% => phat 1*2/100 = 0.02 eth, 1 la ty le giua dong vay voi ETH) khi redeem nft bi auction
-    function minBidFine() external view returns (uint256);
+    function getBaseURI() external view returns (string memory);
 
-    //tien phat toi thieu theo % khoan vay khi redeem nft bi auction ex: vay 10 ETH, setup 5% => phat 10*5/100=0.5 ETH
-    function redeemFine() external view returns (uint256);
+    function setBaseURI(string memory val) external;
 
-    //time for borrower can redeem nft although kicked auction (hour)
-    function redeemDuration() external view returns (uint256);
+    function setVaultImpl(address newAddress) external;
 
-    function auctionDuration() external view returns (uint256);
+    function getVaultImpl() external view returns (address);
 
-    // auction fee base on final bid price
-    function auctionFeePercentage() external view returns (uint256);
+    function setVaultTpl(address newAddress) external;
 
-    //time for lender can re-buy nft after auction end (hour)
-    function rebuyDuration() external view returns (uint256);
-
-    function rebuyFeePercentage() external view returns (uint256);
-
-    function liquidationThreshold() external view returns (uint256);
-
-    //% giam gia khi thanh ly tai san
-    function liquidationBonus() external view returns (uint256);
-
-    function redeemThreshold() external view returns (uint256);
-
-    function maxLoanDuration() external view returns (uint256);
-
-    function platformFeeReceiver() external view returns (address);
-
-    //platform fee tinh theo pricipal
-    function platformFeePercentage() external view returns (uint256);
-
-    //block time to calculate interest
-    function interestDuration() external view returns (uint256);
-
-    function minBidDeltaPercentage() external view returns (uint256);
-
-    //mint eth amount to transfer back to user
-    function minDustAmount() external view returns (uint256);
-
-    function punkGateway() external view returns (address);
+    function getVaultTpl() external view returns (address);
 }
