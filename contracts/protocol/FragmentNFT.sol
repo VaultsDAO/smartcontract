@@ -7,16 +7,14 @@ import {IFragment} from "../interfaces/IFragment.sol";
 import {ERC721A} from "../interfaces/ERC721A.sol";
 import {IConfigProvider} from "../interfaces/IConfigProvider.sol";
 import {IERC721} from "../libraries/openzeppelin/token/ERC721/IERC721.sol";
-import {ERC721Upgradeable} from "../libraries/openzeppelin/upgradeable/token/ERC721/ERC721Upgradeable.sol";
-import {ERC721HolderUpgradeable} from "../libraries/openzeppelin/upgradeable/token/ERC721/utils/ERC721HolderUpgradeable.sol";
-import {ERC721EnumerableUpgradeable} from "../libraries/openzeppelin/upgradeable/token/ERC721/extensions/ERC721EnumerableUpgradeable.sol";
+import {ERC721AUpgradeable} from "../libraries/ERC721A/ERC721AUpgradeable.sol";
 import {IERC721ReceiverUpgradeable} from "../libraries/openzeppelin/upgradeable/token/ERC721/IERC721ReceiverUpgradeable.sol";
 import {OwnableUpgradeable} from "../libraries/openzeppelin/upgradeable/access/OwnableUpgradeable.sol";
 import {DataTypes} from "../libraries/types/DataTypes.sol";
 
 contract FragmentNFT is
     OwnableUpgradeable,
-    ERC721A,
+    ERC721AUpgradeable,
     IERC721ReceiverUpgradeable
 {
     address public immutable configProvider;
@@ -58,10 +56,10 @@ contract FragmentNFT is
 
     function initialize(
         DataTypes.FragmentInitializeParams memory params
-    ) external initializer {
+    ) external initializer initializerERC721A {
         // initialize inherited contracts
-        __ERC721_init(params.name, params.symbol);
         __Ownable_init();
+        __ERC721A_init(params.name, params.symbol);
         // set storage variables
         require(params.salePrice > 0, "bad list price");
         require(
@@ -92,7 +90,7 @@ contract FragmentNFT is
     function tokenURI(
         uint256 tokenId
     ) public view virtual override returns (string memory) {
-        _requireMinted(tokenId);
+        require(_exists(tokenId), "ERC721: invalid token ID");
 
         string memory baseURI = IConfigProvider(configProvider)
             .getFragmentBaseURI();
