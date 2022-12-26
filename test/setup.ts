@@ -41,6 +41,8 @@ export const setupInstance = async () => {
     let tokenFragment = await FragmentNFT.connect(deployAdmin).deploy(configProvider.address);
     await configProvider.connect(deployAdmin).setFragmentImpl(tokenFragment.address)
 
+    await configProvider.connect(deployAdmin).setFragmentBaseURI('https://dev.vaults.wtf/api/vaults/meta-data/arbitrum/')
+
     //
     let MockNFT = await ethers.getContractFactory("MockNFT");
     let testNft = await MockNFT.connect(curator).deploy('XXX', 'XXX', 'XXX');

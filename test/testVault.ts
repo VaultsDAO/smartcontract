@@ -18,5 +18,11 @@ describe("Test borrow", function () {
         let rs = await fragmentFactory.connect(curator).fragments('1');
         console.log(rs)
 
+        let fragmentNFT = await ethers.getContractAt('FragmentNFT', rs)
+
+        await fragmentNFT.buyTokens(2, {value: ethers.utils.parseUnits('0.2', 'ether')})
+
+        let tokenURI = await fragmentNFT.tokenURI('1')
+        console.log(tokenURI)
     });
 });

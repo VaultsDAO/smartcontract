@@ -10,6 +10,7 @@ import {IERC721} from "../libraries/openzeppelin/token/ERC721/IERC721.sol";
 import {ERC721AUpgradeable} from "../libraries/ERC721A/ERC721AUpgradeable.sol";
 import {IERC721ReceiverUpgradeable} from "../libraries/openzeppelin/upgradeable/token/ERC721/IERC721ReceiverUpgradeable.sol";
 import {OwnableUpgradeable} from "../libraries/openzeppelin/upgradeable/access/OwnableUpgradeable.sol";
+import {StringsUpgradeable} from "../libraries/openzeppelin/upgradeable/utils/StringsUpgradeable.sol";
 import {DataTypes} from "../libraries/types/DataTypes.sol";
 
 contract FragmentNFT is
@@ -17,6 +18,9 @@ contract FragmentNFT is
     ERC721AUpgradeable,
     IERC721ReceiverUpgradeable
 {
+    using StringsUpgradeable for address;
+    using StringsUpgradeable for uint256;
+
     address public immutable configProvider;
     uint256 private _currentTokenId;
     /// -----------------------------------
@@ -94,7 +98,16 @@ contract FragmentNFT is
 
         string memory baseURI = IConfigProvider(configProvider)
             .getFragmentBaseURI();
-        return string(abi.encodePacked(baseURI, address(this), "/", tokenId));
+
+        return
+            string(
+                abi.encodePacked(
+                    baseURI,
+                    address(this).toHexString(),
+                    "/",
+                    tokenId.toString()
+                )
+            );
     }
 
     function onERC721Received(
