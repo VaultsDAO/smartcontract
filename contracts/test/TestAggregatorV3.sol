@@ -6,7 +6,7 @@ import { AggregatorV3Interface } from "@chainlink/contracts/src/v0.6/interfaces/
 
 contract TestAggregatorV3 is AggregatorV3Interface {
     function decimals() external view override returns (uint8) {
-        revert();
+        return 8;
     }
 
     function description() external view override returns (string memory) {

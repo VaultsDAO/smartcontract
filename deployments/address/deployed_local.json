@@ -1,35 +1,91 @@
 {
     "verifiedContracts": {},
-    "collterals": [
-        {
-            "name": "WETH",
-            "symbol": "WETH",
-            "address": "",
-            "aggregatorAddress": "",
-            "priceFeedAddress": ""
-        }
-    ],
+    "priceFeedETH": {
+        "address": "0x2006eb650daF2a219eC307027282c4E99A4a0e6A",
+        "aggregatorAddress": "0x1441F50ceC2ba1419C7359a4AE55f9e7E8810E8a"
+    },
+    "priceFeedBTC": {
+        "address": "0x75aBD83A5B951fb2f5B004A36ebBE327B4627Ded",
+        "aggregatorAddress": "0xD4398F372aAd64974B1F38a4fFc1Fd06d6c37849"
+    },
+    "USDC": {
+        "address": "0xe91Af1bDD406cdeF165bc73aD951d3F123B6d02A",
+        "name": "USDC",
+        "symbol": "USDC",
+        "decimals": 6
+    },
+    "wETH": {
+        "address": "0x6Bc3992b447000c836cF4C23Ac8f29839f8A80eF",
+        "name": "WETH",
+        "symbol": "WETH",
+        "decimals": 18
+    },
+    "wBTC": {
+        "address": "0x4f058023BFf82Fb9c550D55aB81b1a97F514721f",
+        "name": "WBTC",
+        "symbol": "WBTC",
+        "decimals": 8
+    },
     "quoteToken": {
         "name": "vUSD",
         "symbol": "vUSD",
-        "address": "0xC8A626bD7Ef00e6c8e279a39Df856352F4BEF1F6",
-        "implAddress": "0x9f64D425B1042E9E9e6D28119701670F4ca07645"
+        "decimals": 18,
+        "address": "0x0F306D77a73CdA186E4C4bbaCA6B92dE10cB0Ab7",
+        "implAddress": "0x099f8eBEc26063D535c7Ed263b3F5d203525555E"
     },
     "baseToken": {
-        "implAddress": "0xd447d5A48e702791A085D31F8a5F503830322A66"
+        "implAddress": "0x09ea9b20C5031ebE57Ef6b8d4d11417E0fAED514"
     },
-    "baseTokens": [
-        {
-            "name": "vETH",
-            "symbol": "vETH",
-            "address": "",
-            "aggregatorAddress": "0x5f2eC65A38Bc4c9Cd75D8CBAf89Aa63277E2f981",
-            "priceFeedAddress": "0x9Ea109457A4716Bc6c43DaDfeb0456f2CBf854De",
-            "poolAddress": ""
-        }
-    ],
-    "proxyAdminAddress": "0x79217291c06368A8e898b52cDf10626cD7C5e26f",
+    "vETH": {
+        "address": "0xb96e0CCeAba5985Ff1cAB31272473f1D7e54E438",
+        "name": "vETH",
+        "symbol": "vETH",
+        "decimals": 18
+    },
+    "vBTC": {
+        "address": "0xa0EbA891E08994B8350c6927BC7807043c608eA4",
+        "name": "vBTC",
+        "symbol": "vBTC",
+        "decimals": 18
+    },
+    "proxyAdminAddress": "0x8E84106561496371480dCC0E7EdcFCdCafdf8f4A",
     "uniswapV3Factory": {
-        "address": "0xd447d5A48e702791A085D31F8a5F503830322A66"
+        "address": "0x6AA41508bd75835976EE9E737B3CA575dCe92c29"
+    },
+    "clearingHouseConfig": {
+        "address": "0xd7ceDdCce86392a40783cE8C465008a8dC875a34",
+        "implAddress": "0xCF732c2aF5C67f57E216A2069FAb84D55a9c4AdB"
+    },
+    "marketRegistry": {
+        "address": "0x314BF6890788E4e08F40F8A0D77C8124C44078e2",
+        "implAddress": "0xD5eD1DE99b4938474c2C6467C8efFB16f13Fe0a1"
+    },
+    "orderBook": {
+        "address": "0x866a98AAC053e765551d475f947B4FBA11A922CC",
+        "implAddress": "0x7915c07Eb6A981F82Ad8e0fBf90B61f5D2fC7CbA"
+    },
+    "accountBalance": {
+        "address": "0xf84ed417dcDAfaBE2412eB2Eb43f11aeE657fFd0",
+        "implAddress": "0xFae0e630fa7C61949DD66a9fAB705Ec2876699E5"
+    },
+    "exchange": {
+        "address": "0x70607ad1da761fa0257303C163BEE5501D2CF251",
+        "implAddress": "0x2c6522FF6520Aff031749aa4743c4f81f8af1098"
+    },
+    "insuranceFund": {
+        "address": "0xE2Baa109CE9b925f1cA900BE5Edec0eB4A9A4E9f",
+        "implAddress": "0x16e8354Ecc0f06F8F064f95E27B7Ac42Af6DB0E3"
+    },
+    "vault": {
+        "address": "0xc62b8e97ccEc65918f0ce94595168713655b41Aa",
+        "implAddress": "0xB6AcF5d76d1d45835B89F9F90b6c36f725F55aAB"
+    },
+    "collateralManager": {
+        "address": "0xaD2B7b179D3dbBe97C001a41d94D6AB7C1e902ce",
+        "implAddress": "0x687582D9034cCa23Ce716883c95Ca677521C83B2"
+    },
+    "clearingHouse": {
+        "address": "0xaAe1B28B024C8c988E1f7B42A8f4DBa5e8911115",
+        "implAddress": "0xBD7b4345356f35DFF331C7Aa3903C9826c4c900c"
     }
 }

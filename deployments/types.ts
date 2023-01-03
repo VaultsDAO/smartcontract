@@ -1,24 +1,17 @@
-type CollteralData = {
+type PriceFeedData = {
+    address: string,
+    aggregatorAddress: string,
+}
+
+type TokenData = {
     address: string,
     symbol: string,
     name: string,
     decimals: number,
-}
-
-type BaseTokenData = {
-    address: string,
-    symbol: string,
-    name: string,
+    implAddress: string,
     aggregatorAddress: string,
     priceFeedAddress: string,
     poolAddress: string,
-}
-
-type QuoteTokenData = {
-    address: string,
-    implAddress: string,
-    symbol: string,
-    name: string,
 }
 
 type ContractData = {
@@ -28,9 +21,24 @@ type ContractData = {
 
 type DeployData = {
     verifiedContracts: any,
+    priceFeedETH: PriceFeedData,
+    priceFeedBTC: PriceFeedData,
+    wETH: TokenData,
+    wBTC: TokenData,
+    USDC: TokenData,
+    quoteToken: TokenData,
     baseToken: ContractData,
-    baseTokens: Array<BaseTokenData>,
-    quoteToken: QuoteTokenData,
+    vETH: TokenData,
+    vBTC: TokenData,
     proxyAdminAddress: string,
     uniswapV3Factory: ContractData,
+    clearingHouseConfig: ContractData,
+    marketRegistry: ContractData,
+    orderBook: ContractData,
+    accountBalance: ContractData,
+    exchange: ContractData,
+    insuranceFund: ContractData,
+    vault: ContractData,
+    collateralManager: ContractData,
+    clearingHouse: ContractData,
 }
