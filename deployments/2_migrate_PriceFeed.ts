@@ -18,6 +18,7 @@ async function main() {
     }
     let dataText = await fs.readFileSync(fileName)
     deployData = JSON.parse(dataText.toString())
+    const cacheTwapInterval = 15 * 60
     // 
     if (deployData.priceFeedETH.address == undefined || deployData.priceFeedETH.address == '') {
         if (network == 'local') {
@@ -32,7 +33,6 @@ async function main() {
             }
         }
         const chainlinkPriceFeedFactory = await hre.ethers.getContractFactory("ChainlinkPriceFeedV2")
-        const cacheTwapInterval = 15 * 60
         const priceFeed = await waitForDeploy(await chainlinkPriceFeedFactory.deploy(deployData.priceFeedETH.aggregatorAddress, cacheTwapInterval))
         {
             deployData.priceFeedETH.address = priceFeed.address
@@ -53,7 +53,6 @@ async function main() {
             }
         }
         const chainlinkPriceFeedFactory = await hre.ethers.getContractFactory("ChainlinkPriceFeedV2")
-        const cacheTwapInterval = 15 * 60
         const priceFeed = await waitForDeploy(await chainlinkPriceFeedFactory.deploy(deployData.priceFeedBTC.aggregatorAddress, cacheTwapInterval))
         {
             deployData.priceFeedBTC.address = priceFeed.address
@@ -61,33 +60,26 @@ async function main() {
             console.log('ChainlinkPriceFeedV2 is deployed', priceFeed.address)
         }
     }
-    // {
-    //     await verifyContract(
-    //         deployData,
-    //         network,
-    //         deployData.baseToken.implAddress,
-    //         [],
-    //         {},
-    //         "contracts/BaseToken.sol:BaseToken",
-    //     )
-    // }
-    // for (let bTkn of deployData.baseTokens) {
-    //     {
-    //         var initializeData = baseToken.interface.encodeFunctionData('initialize', [bTkn.name, bTkn.symbol, bTkn.priceFeedAddress]);
-    //         await verifyContract(
-    //             deployData,
-    //             network,
-    //             bTkn.address,
-    //             [
-    //                 baseToken.address,
-    //                 proxyAdmin.address,
-    //                 initializeData,
-    //             ],
-    //             {},
-    //             "@openzeppelin/contracts/proxy/TransparentUpgradeableProxy.sol:TransparentUpgradeableProxy",
-    //         )
-    //     }
-    // }
+    {
+        await verifyContract(
+            deployData,
+            network,
+            deployData.priceFeedETH.address,
+            [deployData.priceFeedETH.aggregatorAddress, cacheTwapInterval],
+            {},
+            "@perp/perp-oracle-contract/contracts/ChainlinkPriceFeedV2.sol:ChainlinkPriceFeedV2",
+        )
+    }
+    {
+        await verifyContract(
+            deployData,
+            network,
+            deployData.priceFeedBTC.address,
+            [deployData.priceFeedBTC.aggregatorAddress, cacheTwapInterval],
+            {},
+            "@perp/perp-oracle-contract/contracts/ChainlinkPriceFeedV2.sol:ChainlinkPriceFeedV2",
+        )
+    }
 }
 
 // We recommend this pattern to be able to use async/await everywhere

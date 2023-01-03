@@ -52,6 +52,7 @@ async function main() {
     await exchange.setClearingHouse(clearingHouse.address)
     await accountBalance.setClearingHouse(clearingHouse.address)
     await vault.setClearingHouse(clearingHouse.address)
+    await vault.setWETH9(deployData.wETH.address)
 
     // deploy vault
     await collateralManager.addCollateral(deployData.wETH.address, {
@@ -67,21 +68,21 @@ async function main() {
         depositCap: parseUnits("1000", deployData.wBTC.decimals),
     })
 
-    var vUSD = await QuoteToken.attach(deployData.quoteToken.address)
+    var vUSD = await QuoteToken.attach(deployData.vUSD.address)
 
     var vETH = await BaseToken.attach(deployData.vETH.address)
-    const poolETHAddr = await uniswapV3Factory.getPool(deployData.vETH.address, deployData.quoteToken.address, uniFeeTier)
+    const poolETHAddr = await uniswapV3Factory.getPool(deployData.vETH.address, deployData.vUSD.address, uniFeeTier)
     if (poolETHAddr.toString() == "0x0000000000000000000000000000000000000000") {
-        await uniswapV3Factory.createPool(deployData.vETH.address, deployData.quoteToken.address, uniFeeTier)
+        await uniswapV3Factory.createPool(deployData.vETH.address, deployData.vUSD.address, uniFeeTier)
     }
     const poolETH = uniswapV3Pool.attach(poolETHAddr) as UniswapV3Pool
     await vETH.addWhitelist(poolETH.address)
     await vUSD.addWhitelist(poolETH.address)
 
     var vBTC = await BaseToken.attach(deployData.vBTC.address)
-    const poolBTCAddr = await uniswapV3Factory.getPool(deployData.vBTC.address, deployData.quoteToken.address, uniFeeTier)
+    const poolBTCAddr = await uniswapV3Factory.getPool(deployData.vBTC.address, deployData.vUSD.address, uniFeeTier)
     if (poolBTCAddr.toString() == "0x0000000000000000000000000000000000000000") {
-        await uniswapV3Factory.createPool(deployData.vBTC.address, deployData.quoteToken.address, uniFeeTier)
+        await uniswapV3Factory.createPool(deployData.vBTC.address, deployData.vUSD.address, uniFeeTier)
     }
     const poolBTC = uniswapV3Pool.attach(poolBTCAddr) as UniswapV3Pool
     await vBTC.addWhitelist(poolBTC.address)

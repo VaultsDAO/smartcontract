@@ -26,7 +26,7 @@ type DeployData = {
     wETH: TokenData,
     wBTC: TokenData,
     USDC: TokenData,
-    quoteToken: TokenData,
+    vUSD: TokenData,
     baseToken: ContractData,
     vETH: TokenData,
     vBTC: TokenData,

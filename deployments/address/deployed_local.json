@@ -26,7 +26,7 @@
         "symbol": "WBTC",
         "decimals": 8
     },
-    "quoteToken": {
+    "vUSD": {
         "name": "vUSD",
         "symbol": "vUSD",
         "decimals": 18,

@@ -67,33 +67,46 @@ async function main() {
         await upgradeContract(proxyAdmin as ProxyAdmin, deployData.vETH.address, deployData.baseToken.implAddress)
         await upgradeContract(proxyAdmin as ProxyAdmin, deployData.vBTC.address, deployData.baseToken.implAddress)
     }
-    // {
-    //     await verifyContract(
-    //         deployData,
-    //         network,
-    //         deployData.baseToken.implAddress,
-    //         [],
-    //         {},
-    //         "contracts/BaseToken.sol:BaseToken",
-    //     )
-    // }
-    // for (let bTkn of deployData.baseTokens) {
-    //     {
-    //         var initializeData = baseToken.interface.encodeFunctionData('initialize', [bTkn.name, bTkn.symbol, bTkn.priceFeedAddress]);
-    //         await verifyContract(
-    //             deployData,
-    //             network,
-    //             bTkn.address,
-    //             [
-    //                 baseToken.address,
-    //                 proxyAdmin.address,
-    //                 initializeData,
-    //             ],
-    //             {},
-    //             "@openzeppelin/contracts/proxy/TransparentUpgradeableProxy.sol:TransparentUpgradeableProxy",
-    //         )
-    //     }
-    // }
+    {
+        await verifyContract(
+            deployData,
+            network,
+            deployData.baseToken.implAddress,
+            [],
+            {},
+            "contracts/BaseToken.sol:BaseToken",
+        )
+    }
+    {
+        var initializeData = baseToken.interface.encodeFunctionData('initialize', [deployData.vETH.name, deployData.vETH.symbol, deployData.priceFeedETH.address]);
+        await verifyContract(
+            deployData,
+            network,
+            deployData.vETH.address,
+            [
+                baseToken.address,
+                proxyAdmin.address,
+                initializeData,
+            ],
+            {},
+            "@openzeppelin/contracts/proxy/TransparentUpgradeableProxy.sol:TransparentUpgradeableProxy",
+        )
+    }
+    {
+        var initializeData = baseToken.interface.encodeFunctionData('initialize', [deployData.vBTC.name, deployData.vBTC.symbol, deployData.priceFeedBTC.address]);
+        await verifyContract(
+            deployData,
+            network,
+            deployData.vBTC.address,
+            [
+                baseToken.address,
+                proxyAdmin.address,
+                initializeData,
+            ],
+            {},
+            "@openzeppelin/contracts/proxy/TransparentUpgradeableProxy.sol:TransparentUpgradeableProxy",
+        )
+    }
 }
 
 // We recommend this pattern to be able to use async/await everywhere
