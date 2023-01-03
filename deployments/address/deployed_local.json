@@ -1,0 +1,35 @@
+{
+    "verifiedContracts": {},
+    "collterals": [
+        {
+            "name": "WETH",
+            "symbol": "WETH",
+            "address": "",
+            "aggregatorAddress": "",
+            "priceFeedAddress": ""
+        }
+    ],
+    "quoteToken": {
+        "name": "vUSD",
+        "symbol": "vUSD",
+        "address": "0xC8A626bD7Ef00e6c8e279a39Df856352F4BEF1F6",
+        "implAddress": "0x9f64D425B1042E9E9e6D28119701670F4ca07645"
+    },
+    "baseToken": {
+        "implAddress": "0xd447d5A48e702791A085D31F8a5F503830322A66"
+    },
+    "baseTokens": [
+        {
+            "name": "vETH",
+            "symbol": "vETH",
+            "address": "",
+            "aggregatorAddress": "0x5f2eC65A38Bc4c9Cd75D8CBAf89Aa63277E2f981",
+            "priceFeedAddress": "0x9Ea109457A4716Bc6c43DaDfeb0456f2CBf854De",
+            "poolAddress": ""
+        }
+    ],
+    "proxyAdminAddress": "0x79217291c06368A8e898b52cDf10626cD7C5e26f",
+    "uniswapV3Factory": {
+        "address": "0xd447d5A48e702791A085D31F8a5F503830322A66"
+    }
+}

@@ -163,6 +163,7 @@ contract ClearingHouse is
         whenNotPaused
         nonReentrant
         checkDeadline(params.deadline)
+        // check onlyLiquidityAdmin
         returns (AddLiquidityResponse memory)
     {
         // input requirement checks:
