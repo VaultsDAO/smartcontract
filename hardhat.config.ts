@@ -64,7 +64,7 @@ const config: HardhatUserConfig = {
         alphaSort: true,
         runOnCompile: true,
         disambiguatePaths: true,
-        except: ["@openzeppelin/", "@uniswap/", "@perp/perp-oracle-contract/", "test/"],
+        except: ["@openzeppelin/", "@uniswap/", "test/"],
     },
     gasReporter: {
         excludeContracts: ["test"],
