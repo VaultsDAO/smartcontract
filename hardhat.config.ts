@@ -57,7 +57,6 @@ const config: HardhatUserConfig = {
             "@openzeppelin/contracts/proxy/TransparentUpgradeableProxy.sol",
             "@uniswap/v3-core/contracts/UniswapV3Factory.sol",
             "@uniswap/v3-core/contracts/UniswapV3Pool.sol",
-            "@perp/voting-escrow/contracts/SurplusBeneficiary.sol",
         ],
     },
     contractSizer: {

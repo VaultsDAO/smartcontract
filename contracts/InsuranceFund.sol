@@ -13,7 +13,7 @@ import {
     SafeERC20Upgradeable,
     IERC20Upgradeable
 } from "@openzeppelin/contracts-upgradeable/token/ERC20/SafeERC20Upgradeable.sol";
-import { ISurplusBeneficiary } from "@perp/voting-escrow/contracts/interface/ISurplusBeneficiary.sol";
+// import { ISurplusBeneficiary } from "@perp/voting-escrow/contracts/interface/ISurplusBeneficiary.sol";
 import { PerpSafeCast } from "./lib/PerpSafeCast.sol";
 import { InsuranceFundStorageV2 } from "./storage/InsuranceFundStorage.sol";
 import { OwnerPausable } from "./base/OwnerPausable.sol";
@@ -55,11 +55,11 @@ contract InsuranceFund is IInsuranceFund, ReentrancyGuardUpgradeable, OwnerPausa
     }
 
     function setSurplusBeneficiary(address surplusBeneficiary) external onlyOwner {
-        // IF_SNC: surplusBeneficiary is not a contract
-        require(surplusBeneficiary.isContract(), "IF_SNC");
+        // // IF_SNC: surplusBeneficiary is not a contract
+        // require(surplusBeneficiary.isContract(), "IF_SNC");
 
-        // IF_TNM: token is not match
-        require(ISurplusBeneficiary(surplusBeneficiary).getToken() == _token, "IF_TNM");
+        // // IF_TNM: token is not match
+        // require(ISurplusBeneficiary(surplusBeneficiary).getToken() == _token, "IF_TNM");
 
         _surplusBeneficiary = surplusBeneficiary;
         emit SurplusBeneficiaryChanged(surplusBeneficiary);
