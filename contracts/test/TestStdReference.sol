@@ -2,7 +2,7 @@
 pragma solidity 0.7.6;
 pragma experimental ABIEncoderV2;
 
-import { IStdReference } from "@perp/perp-oracle-contract/contracts/interface/bandProtocol/IStdReference.sol";
+import { IStdReference } from "../oracle/interface/bandProtocol/IStdReference.sol";
 
 contract TestStdReference is IStdReference {
     ReferenceData public refData;

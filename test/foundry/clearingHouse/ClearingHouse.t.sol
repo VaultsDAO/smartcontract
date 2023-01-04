@@ -6,7 +6,7 @@ import "../helper/Setup.sol";
 import "../../../contracts/interface/IExchange.sol";
 import "../../../contracts/interface/IClearingHouse.sol";
 import "../../../contracts/BaseToken.sol";
-import { IPriceFeed } from "@perp/perp-oracle-contract/contracts/interface/IPriceFeed.sol";
+import { IPriceFeed } from "./oracle/interface/IPriceFeed.sol";
 
 contract ClearingHouseTest is Setup {
     uint256 traderPrivateKey = uint256(1);

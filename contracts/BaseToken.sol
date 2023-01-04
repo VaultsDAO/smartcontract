@@ -2,7 +2,7 @@
 pragma solidity 0.7.6;
 
 import { SafeMathUpgradeable } from "@openzeppelin/contracts-upgradeable/math/SafeMathUpgradeable.sol";
-import { IPriceFeedV2 } from "@perp/perp-oracle-contract/contracts/interface/IPriceFeedV2.sol";
+import { IPriceFeedV2 } from "./oracle/interface/IPriceFeedV2.sol";
 import { IIndexPrice } from "./interface/IIndexPrice.sol";
 import { VirtualToken } from "./VirtualToken.sol";
 import { BaseTokenStorageV2 } from "./storage/BaseTokenStorage.sol";

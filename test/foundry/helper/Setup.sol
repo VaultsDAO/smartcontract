@@ -13,7 +13,7 @@ import "../../../contracts/QuoteToken.sol";
 import "../../../contracts/BaseToken.sol";
 import "../../../contracts/VirtualToken.sol";
 import "../../../contracts/test/TestERC20.sol";
-import "@perp/perp-oracle-contract/contracts/interface/IPriceFeed.sol";
+import { IPriceFeed } from "./oracle/interface/IPriceFeed.sol";
 import "@uniswap/v3-core/contracts/interfaces/IUniswapV3Factory.sol";
 import "@uniswap/v3-core/contracts/interfaces/IUniswapV3PoolDeployer.sol";
 import "@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol";

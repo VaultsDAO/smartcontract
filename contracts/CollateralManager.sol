@@ -5,7 +5,7 @@ pragma abicoder v2;
 import { OwnerPausable } from "./base/OwnerPausable.sol";
 import { CollateralManagerStorageV2 } from "./storage/CollateralManagerStorage.sol";
 import { AddressUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/AddressUpgradeable.sol";
-import { IPriceFeed } from "@perp/perp-oracle-contract/contracts/interface/IPriceFeed.sol";
+import { IPriceFeed } from "./oracle/interface/IPriceFeed.sol";
 import { Collateral } from "./lib/Collateral.sol";
 import { ICollateralManager } from "./interface/ICollateralManager.sol";
 import { IClearingHouseConfig } from "./interface/IClearingHouseConfig.sol";
