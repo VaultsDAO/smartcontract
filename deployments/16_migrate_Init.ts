@@ -37,7 +37,7 @@ async function main() {
     var collateralManager = await hre.ethers.getContractAt('CollateralManager', deployData.collateralManager.address);
     var clearingHouse = await hre.ethers.getContractAt('ClearingHouse', deployData.clearingHouse.address);
 
-    var uniFeeTier = 10000
+    var uniFeeTier = 3000 // 0.3%
 
     const uniswapV3Pool = await hre.ethers.getContractFactory("UniswapV3Pool")
 

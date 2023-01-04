@@ -4,7 +4,7 @@ import { BigNumber } from "ethers"
 import { parseEther, parseUnits } from "ethers/lib/utils"
 import { waffle } from "hardhat"
 import { BaseToken } from "../../typechain"
-import { BandPriceFeed, ChainlinkPriceFeedV2 } from "../../typechain/perp-oracle"
+import { BandPriceFeed, ChainlinkPriceFeedV2 } from "../../typechain"
 import { forwardRealTimestamp, getRealTimestamp, setRealTimestamp } from "../shared/time"
 import { baseTokenFixture } from "./fixtures"
 

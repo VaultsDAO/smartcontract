@@ -16,7 +16,7 @@ import {
     TestVault,
     UniswapV3Pool,
 } from "../../typechain"
-import { ChainlinkPriceFeedV2 } from "../../typechain/perp-oracle"
+import { ChainlinkPriceFeedV2 } from "../../typechain"
 import { ClearingHouseFixture, createClearingHouseFixture } from "../clearingHouse/fixtures"
 import {
     addOrder,

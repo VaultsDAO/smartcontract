@@ -21,7 +21,7 @@ import {
     UniswapV3Pool,
     Vault,
 } from "../../typechain"
-import { ChainlinkPriceFeedV2 } from "../../typechain/perp-oracle"
+import { ChainlinkPriceFeedV2 } from "../../typechain"
 import { QuoteToken } from "../../typechain/QuoteToken"
 import { TestAccountBalance } from "../../typechain/TestAccountBalance"
 import { createQuoteTokenFixture, token0Fixture, tokensFixture, uniswapV3FactoryFixture } from "../shared/fixtures"

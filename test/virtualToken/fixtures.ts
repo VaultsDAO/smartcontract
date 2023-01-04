@@ -1,7 +1,7 @@
 import { MockContract, smockit } from "@eth-optimism/smock"
 import { ethers } from "hardhat"
 import { BaseToken } from "../../typechain"
-import { BandPriceFeed, ChainlinkPriceFeedV2 } from "../../typechain/perp-oracle"
+import { BandPriceFeed, ChainlinkPriceFeedV2 } from "../../typechain"
 
 interface BaseTokenFixture {
     baseToken: BaseToken

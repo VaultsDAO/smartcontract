@@ -4,7 +4,7 @@ import hre from "hardhat";
 import helpers from "./helpers";
 
 import { ProxyAdmin } from "../typechain/openzeppelin/ProxyAdmin";
-import { ChainlinkPriceFeedV2 } from "../typechain/perp-oracle"
+import { ChainlinkPriceFeedV2 } from "../typechain"
 
 const { waitForDeploy, verifyContract, upgradeContract } = helpers;
 

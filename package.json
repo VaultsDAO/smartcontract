@@ -1,35 +1,23 @@
 {
-  "name": "@perp/curie-contract",
+  "name": "@pnft/contract",
   "version": "2.4.1",
-  "description": "Perpetual Protocol Curie (V2) core contracts",
+  "description": "pnft exchange contracts",
   "license": "GPL-3.0-or-later",
   "author": {
-    "name": "Perpetual Protocol",
-    "email": "hi@perp.fi",
-    "url": "https://perp.com/"
+    "name": "pnft exchange",
+    "email": "hello@pnft.exchange",
+    "url": "https://www.pnft.exchange"
   },
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/perpetual-protocol/perp-curie-contract.git"
-  },
-  "homepage": "https://perp.com/",
-  "keywords": [
-    "perpetual-protocol",
-    "perpetual-protocol-v2",
-    "perp",
-    "core",
-    "contracts",
-    "artifacts"
-  ],
+  "homepage": "https://www.pnft.exchange",
+  "keywords": [],
   "main": "index.js",
   "files": [
     "artifacts/contracts/",
     "contracts/"
   ],
   "scripts": {
-    "typechain": "npm run typechain-openzeppelin && npm run typechain-perp-oracle",
+    "typechain": "npm run typechain-openzeppelin",
     "typechain-openzeppelin": "typechain --target ethers-v5 --out-dir ./typechain/openzeppelin './node_modules/@openzeppelin/contracts/build/contracts/**/*.json'",
-    "typechain-perp-oracle": "typechain --target ethers-v5 --out-dir ./typechain/perp-oracle './node_modules/@perp/perp-oracle-contract/artifacts/contracts/**/*.json'",
     "clean": "rm -rf typechain && rm -rf artifacts && rm -rf cache",
     "test": "hardhat test",
     "parallel-test": "hardhat test --parallel",
