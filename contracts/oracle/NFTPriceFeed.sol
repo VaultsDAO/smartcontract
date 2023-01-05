@@ -20,7 +20,8 @@ contract NFTPriceFeed is IPriceFeedV2, Ownable, BlockContext {
     }
 
     modifier onlyAdmin() {
-        require(msg.sender == priceFeedAdmin, "NFTOracle: !admin");
+        // NPF_NA: Not admin
+        require(msg.sender == priceFeedAdmin, "NPF_NA");
         _;
     }
 
@@ -38,13 +39,14 @@ contract NFTPriceFeed is IPriceFeedV2, Ownable, BlockContext {
     }
 
     function setPrice(uint256 _price) external onlyAdmin {
+        require(_price > 0, "NPF_IP");
         latestPrice = _price;
         emit SetPrice(_price);
     }
 
     function getPrice(uint256 interval) external view override returns (uint256) {
-        // NO_IP: invalid price
-        require(latestPrice > 0, "NO_IP");
+        // NPF_IP: invalid price
+        require(latestPrice > 0, "NPF_IP");
         return latestPrice;
     }
 }

@@ -5,7 +5,7 @@ import helpers from "./helpers";
 
 import { TestERC20, TestWETH9 } from "../typechain";
 
-const { waitForDeploy, verifyContract, upgradeContract } = helpers;
+const { waitForDeploy, verifyContract } = helpers;
 
 async function main() {
     const network = hre.network.name;

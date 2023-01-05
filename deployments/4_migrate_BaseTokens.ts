@@ -4,8 +4,6 @@ import hre from "hardhat";
 import helpers from "./helpers";
 
 import { ProxyAdmin } from "../typechain/openzeppelin/ProxyAdmin";
-import { ChainlinkPriceFeedV2 } from "../typechain"
-import { TestERC20 } from "../typechain";
 
 const { waitForDeploy, verifyContract, upgradeContract } = helpers;
 
