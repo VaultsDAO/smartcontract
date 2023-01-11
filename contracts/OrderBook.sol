@@ -126,9 +126,7 @@ contract OrderBook is
                     params.lowerTick,
                     currentTick,
                     Tick.GrowthInfo(
-                        feeGrowthGlobalX128,
-                        params.fundingGrowthGlobal.twPremiumX96,
-                        params.fundingGrowthGlobal.twPremiumDivBySqrtPriceX96
+                        feeGrowthGlobalX128
                     )
                 );
             }
@@ -137,9 +135,7 @@ contract OrderBook is
                     params.upperTick,
                     currentTick,
                     Tick.GrowthInfo(
-                        feeGrowthGlobalX128,
-                        params.fundingGrowthGlobal.twPremiumX96,
-                        params.fundingGrowthGlobal.twPremiumDivBySqrtPriceX96
+                        feeGrowthGlobalX128
                     )
                 );
             }
@@ -192,47 +188,6 @@ contract OrderBook is
                     liquidity: params.liquidity
                 })
             );
-    }
-
-    /// @inheritdoc IOrderBook
-    function updateFundingGrowthAndLiquidityCoefficientInFundingPayment(
-        address trader,
-        address baseToken,
-        Funding.Growth memory fundingGrowthGlobal
-    ) external override returns (int256 liquidityCoefficientInFundingPayment) {
-        _requireOnlyExchange();
-
-        bytes32[] memory orderIds = _openOrderIdsMap[trader][baseToken];
-        mapping(int24 => Tick.GrowthInfo) storage tickMap = _growthOutsideTickMap[baseToken];
-        address pool = IMarketRegistry(_marketRegistry).getPool(baseToken);
-
-        // funding of liquidity coefficient
-        uint256 orderIdLength = orderIds.length;
-        (, int24 tick, , , , , ) = UniswapV3Broker.getSlot0(pool);
-        for (uint256 i = 0; i < orderIdLength; i++) {
-            OpenOrder.Info storage order = _openOrderMap[orderIds[i]];
-            Tick.FundingGrowthRangeInfo memory fundingGrowthRangeInfo =
-                tickMap.getAllFundingGrowth(
-                    order.lowerTick,
-                    order.upperTick,
-                    tick,
-                    fundingGrowthGlobal.twPremiumX96,
-                    fundingGrowthGlobal.twPremiumDivBySqrtPriceX96
-                );
-
-            // the calculation here is based on cached values
-            liquidityCoefficientInFundingPayment = liquidityCoefficientInFundingPayment.add(
-                Funding.calcLiquidityCoefficientInFundingPaymentByOrder(order, fundingGrowthRangeInfo)
-            );
-
-            // thus, state updates have to come after
-            order.lastTwPremiumGrowthInsideX96 = fundingGrowthRangeInfo.twPremiumGrowthInsideX96;
-            order.lastTwPremiumGrowthBelowX96 = fundingGrowthRangeInfo.twPremiumGrowthBelowX96;
-            order.lastTwPremiumDivBySqrtPriceGrowthInsideX96 = fundingGrowthRangeInfo
-                .twPremiumDivBySqrtPriceGrowthInsideX96;
-        }
-
-        return liquidityCoefficientInFundingPayment;
     }
 
     /// @inheritdoc IOrderBook
@@ -348,9 +303,7 @@ contract OrderBook is
                         tickMap.cross(
                             step.nextTick,
                             Tick.GrowthInfo({
-                                feeX128: swapState.feeGrowthGlobalX128,
-                                twPremiumX96: params.globalFundingGrowth.twPremiumX96,
-                                twPremiumDivBySqrtPriceX96: params.globalFundingGrowth.twPremiumDivBySqrtPriceX96
+                                feeX128: swapState.feeGrowthGlobalX128
                             })
                         );
                     }
@@ -437,38 +390,6 @@ contract OrderBook is
         bool fetchBase // true: fetch base amount, false: fetch quote amount
     ) external view override returns (uint256 tokenAmount, uint256 pendingFee) {
         (tokenAmount, pendingFee) = _getTotalTokenAmountInPool(trader, baseToken, fetchBase);
-    }
-
-    /// @inheritdoc IOrderBook
-    function getLiquidityCoefficientInFundingPayment(
-        address trader,
-        address baseToken,
-        Funding.Growth memory fundingGrowthGlobal
-    ) external view override returns (int256 liquidityCoefficientInFundingPayment) {
-        bytes32[] memory orderIds = _openOrderIdsMap[trader][baseToken];
-        mapping(int24 => Tick.GrowthInfo) storage tickMap = _growthOutsideTickMap[baseToken];
-        address pool = IMarketRegistry(_marketRegistry).getPool(baseToken);
-
-        // funding of liquidity coefficient
-        (, int24 tick, , , , , ) = UniswapV3Broker.getSlot0(pool);
-        for (uint256 i = 0; i < orderIds.length; i++) {
-            OpenOrder.Info memory order = _openOrderMap[orderIds[i]];
-            Tick.FundingGrowthRangeInfo memory fundingGrowthRangeInfo =
-                tickMap.getAllFundingGrowth(
-                    order.lowerTick,
-                    order.upperTick,
-                    tick,
-                    fundingGrowthGlobal.twPremiumX96,
-                    fundingGrowthGlobal.twPremiumDivBySqrtPriceX96
-                );
-
-            // the calculation here is based on cached values
-            liquidityCoefficientInFundingPayment = liquidityCoefficientInFundingPayment.add(
-                Funding.calcLiquidityCoefficientInFundingPaymentByOrder(order, fundingGrowthRangeInfo)
-            );
-        }
-
-        return liquidityCoefficientInFundingPayment;
     }
 
     /// @inheritdoc IOrderBook
@@ -627,18 +548,6 @@ contract OrderBook is
 
             (, int24 tick, , , , , ) = UniswapV3Broker.getSlot0(params.pool);
             mapping(int24 => Tick.GrowthInfo) storage tickMap = _growthOutsideTickMap[params.baseToken];
-            Tick.FundingGrowthRangeInfo memory fundingGrowthRangeInfo =
-                tickMap.getAllFundingGrowth(
-                    openOrder.lowerTick,
-                    openOrder.upperTick,
-                    tick,
-                    params.globalFundingGrowth.twPremiumX96,
-                    params.globalFundingGrowth.twPremiumDivBySqrtPriceX96
-                );
-            openOrder.lastTwPremiumGrowthInsideX96 = fundingGrowthRangeInfo.twPremiumGrowthInsideX96;
-            openOrder.lastTwPremiumGrowthBelowX96 = fundingGrowthRangeInfo.twPremiumGrowthBelowX96;
-            openOrder.lastTwPremiumDivBySqrtPriceGrowthInsideX96 = fundingGrowthRangeInfo
-                .twPremiumDivBySqrtPriceGrowthInsideX96;
         }
 
         // fee should be calculated before the states are updated, as for

@@ -6,6 +6,7 @@ library AccountMarket {
     struct Info {
         int256 takerPositionSize;
         int256 takerOpenNotional;
-        int256 lastTwPremiumGrowthGlobalX96;
+        int256 lastLongTwPremiumGrowthGlobalX96;
+        int256 lastShortTwPremiumGrowthGlobalX96;
     }
 }

@@ -1036,7 +1036,8 @@ contract ClearingHouse is
         IAccountBalance(_accountBalance).updateTwPremiumGrowthGlobal(
             trader,
             baseToken,
-            fundingGrowthGlobal.twPremiumX96
+            fundingGrowthGlobal.twLongPremiumX96,
+            fundingGrowthGlobal.twShortPremiumX96
         );
         return fundingGrowthGlobal;
     }

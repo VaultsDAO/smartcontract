@@ -137,10 +137,12 @@ contract AccountBalance is IAccountBalance, BlockContext, ClearingHouseCallee, A
     function updateTwPremiumGrowthGlobal(
         address trader,
         address baseToken,
-        int256 lastTwPremiumGrowthGlobalX96
+        int256 lastLongTwPremiumGrowthGlobalX96,
+        int256 lastShortTwPremiumGrowthGlobalX96
     ) external override {
         _requireOnlyClearingHouse();
-        _accountMarketMap[trader][baseToken].lastTwPremiumGrowthGlobalX96 = lastTwPremiumGrowthGlobalX96;
+        _accountMarketMap[trader][baseToken].lastLongTwPremiumGrowthGlobalX96 = lastLongTwPremiumGrowthGlobalX96;
+        _accountMarketMap[trader][baseToken].lastShortTwPremiumGrowthGlobalX96 = lastShortTwPremiumGrowthGlobalX96;
     }
 
     /// @inheritdoc IAccountBalance

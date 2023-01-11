@@ -259,7 +259,8 @@ contract Exchange is
             trader,
             baseToken,
             IAccountBalance(_accountBalance).getBase(trader, baseToken),
-            IAccountBalance(_accountBalance).getAccountInfo(trader, baseToken).lastTwPremiumGrowthGlobalX96,
+            IAccountBalance(_accountBalance).getAccountInfo(trader, baseToken).lastLongTwPremiumGrowthGlobalX96,
+            IAccountBalance(_accountBalance).getAccountInfo(trader, baseToken).lastShortTwPremiumGrowthGlobalX96,
             fundingGrowthGlobal
         );
 
@@ -274,9 +275,17 @@ contract Exchange is
             Funding.Growth storage lastFundingGrowthGlobal = _globalFundingGrowthX96Map[baseToken];
             (
                 _lastSettledTimestampMap[baseToken],
-                lastFundingGrowthGlobal.twPremiumX96,
-                lastFundingGrowthGlobal.twPremiumDivBySqrtPriceX96
-            ) = (timestamp, fundingGrowthGlobal.twPremiumX96, fundingGrowthGlobal.twPremiumDivBySqrtPriceX96);
+                lastFundingGrowthGlobal.twLongPremiumX96,
+                lastFundingGrowthGlobal.twShortPremiumX96,
+                lastFundingGrowthGlobal.twLongPremiumDivBySqrtPriceX96,
+                lastFundingGrowthGlobal.twShortPremiumDivBySqrtPriceX96
+            ) = (
+                timestamp,
+                fundingGrowthGlobal.twLongPremiumX96,
+                fundingGrowthGlobal.twShortPremiumX96,
+                fundingGrowthGlobal.twLongPremiumDivBySqrtPriceX96,
+                fundingGrowthGlobal.twShortPremiumDivBySqrtPriceX96
+            );
 
             emit FundingUpdated(baseToken, markTwap, indexTwap);
 
@@ -366,19 +375,12 @@ contract Exchange is
     /// @inheritdoc IExchange
     function getPendingFundingPayment(address trader, address baseToken) public view override returns (int256) {
         (Funding.Growth memory fundingGrowthGlobal, , ) = _getFundingGrowthGlobalAndTwaps(baseToken);
-
-        int256 liquidityCoefficientInFundingPayment = IOrderBook(_orderBook).getLiquidityCoefficientInFundingPayment(
-            trader,
-            baseToken,
-            fundingGrowthGlobal
-        );
-
         return
             Funding.calcPendingFundingPaymentWithLiquidityCoefficient(
                 IAccountBalance(_accountBalance).getBase(trader, baseToken),
-                IAccountBalance(_accountBalance).getAccountInfo(trader, baseToken).lastTwPremiumGrowthGlobalX96,
-                fundingGrowthGlobal,
-                liquidityCoefficientInFundingPayment
+                IAccountBalance(_accountBalance).getAccountInfo(trader, baseToken).lastLongTwPremiumGrowthGlobalX96,
+                IAccountBalance(_accountBalance).getAccountInfo(trader, baseToken).lastShortTwPremiumGrowthGlobalX96,
+                fundingGrowthGlobal
             );
     }
 
@@ -437,7 +439,12 @@ contract Exchange is
                 exchangeFeeRatio: exchangeFeeRatio,
                 uniswapFeeRatio: uniswapFeeRatio,
                 shouldUpdateState: false,
-                globalFundingGrowth: Funding.Growth({ twPremiumX96: 0, twPremiumDivBySqrtPriceX96: 0 })
+                globalFundingGrowth: Funding.Growth({
+                    twLongPremiumX96: 0,
+                    twLongPremiumDivBySqrtPriceX96: 0,
+                    twShortPremiumX96: 0,
+                    twShortPremiumDivBySqrtPriceX96: 0
+                })
             })
         );
         return response.tick;
@@ -551,18 +558,16 @@ contract Exchange is
         address trader,
         address baseToken,
         int256 baseBalance,
-        int256 twPremiumGrowthGlobalX96,
+        int256 twLongPremiumGrowthGlobalX96,
+        int256 twShortPremiumGrowthGlobalX96,
         Funding.Growth memory fundingGrowthGlobal
     ) internal returns (int256 pendingFundingPayment) {
-        int256 liquidityCoefficientInFundingPayment = IOrderBook(_orderBook)
-            .updateFundingGrowthAndLiquidityCoefficientInFundingPayment(trader, baseToken, fundingGrowthGlobal);
-
         return
             Funding.calcPendingFundingPaymentWithLiquidityCoefficient(
                 baseBalance,
-                twPremiumGrowthGlobalX96,
-                fundingGrowthGlobal,
-                liquidityCoefficientInFundingPayment
+                twLongPremiumGrowthGlobalX96,
+                twShortPremiumGrowthGlobalX96,
+                fundingGrowthGlobal
             );
     }
 
@@ -635,28 +640,65 @@ contract Exchange is
             fundingGrowthGlobal = lastFundingGrowthGlobal;
         } else {
             // deltaTwPremium = (markTwap - indexTwap) * (now - lastSettledTimestamp)
-            int256 deltaTwPremiumX96 = _getDeltaTwapX96(markTwapX96, indexTwap.formatX10_18ToX96()).mul(
-                timestamp.sub(lastSettledTimestamp).toInt256()
-            );
-            fundingGrowthGlobal.twPremiumX96 = lastFundingGrowthGlobal.twPremiumX96.add(deltaTwPremiumX96);
+            // int256 deltaTwPremiumX96 = _getDeltaTwapX96(markTwapX96, indexTwap.formatX10_18ToX96()).mul(
+            //     timestamp.sub(lastSettledTimestamp).toInt256()
+            // );
+            // fundingGrowthGlobal.twPremiumX96 = lastFundingGrowthGlobal.twPremiumX96.add(deltaTwPremiumX96);
 
-            // overflow inspection:
-            // assuming premium = 1 billion (1e9), time diff = 1 year (3600 * 24 * 365)
-            // log(1e9 * 2^96 * (3600 * 24 * 365) * 2^96) / log(2) = 246.8078491997 < 255
-            // twPremiumDivBySqrtPrice += deltaTwPremium / getSqrtMarkTwap(baseToken)
-            fundingGrowthGlobal.twPremiumDivBySqrtPriceX96 = lastFundingGrowthGlobal.twPremiumDivBySqrtPriceX96.add(
-                PerpMath.mulDiv(deltaTwPremiumX96, PerpFixedPoint96._IQ96, getSqrtMarkTwapX96(baseToken, 0))
-            );
+            // // overflow inspection:
+            // // assuming premium = 1 billion (1e9), time diff = 1 year (3600 * 24 * 365)
+            // // log(1e9 * 2^96 * (3600 * 24 * 365) * 2^96) / log(2) = 246.8078491997 < 255
+            // // twPremiumDivBySqrtPrice += deltaTwPremium / getSqrtMarkTwap(baseToken)
+            // fundingGrowthGlobal.twPremiumDivBySqrtPriceX96 = lastFundingGrowthGlobal.twPremiumDivBySqrtPriceX96.add(
+            //     PerpMath.mulDiv(deltaTwPremiumX96, PerpFixedPoint96._IQ96, getSqrtMarkTwapX96(baseToken, 0))
+            // );
 
-            uint256 longPositionSize = 0;
-            uint256 shortPositionSize = 0;
-            int256 twLongPremiumX96 = 0;
-            int256 twShortPremiumX96 = 0;
-            int256 deltaTwapX96 = _getDeltaTwapX96(markTwapX96, indexTwap.formatX10_18ToX96());
-            if (deltaTwapX96 > 0) {
-
-            } else if (deltaTwapX96 < 0) {
-                
+            (uint256 longPositionSize, uint256 shortPositionSize) = IAccountBalance(_accountBalance)
+                .getMarketPositionSize(baseToken);
+            if (longPositionSize != 0 && shortPositionSize != 0) {
+                uint256 sqrtMarkTwapX96 = getSqrtMarkTwapX96(baseToken, 0);
+                int256 deltaTwapX96 = _getDeltaTwapX96(markTwapX96, indexTwap.formatX10_18ToX96());
+                // TODO: ajust deltaTwPremiumX96 by 2.5% -> config
+                if ((deltaTwapX96.abs() * 1e6) > (indexTwap.formatX10_18ToX96() * 25000)) {
+                    // deltaTwapX96 > 2.5%
+                    deltaTwapX96 = PerpMath.mulDiv(deltaTwapX96, 500000, 1e6); // 50%
+                }
+                int256 deltaTwPremiumX96 = deltaTwapX96.mul(timestamp.sub(lastSettledTimestamp).toInt256());
+                if (deltaTwapX96 > 0) {
+                    fundingGrowthGlobal.twLongPremiumX96 = lastFundingGrowthGlobal.twLongPremiumX96.add(
+                        deltaTwPremiumX96
+                    );
+                    fundingGrowthGlobal.twLongPremiumDivBySqrtPriceX96 = lastFundingGrowthGlobal
+                        .twLongPremiumDivBySqrtPriceX96
+                        .add(PerpMath.mulDiv(deltaTwPremiumX96, PerpFixedPoint96._IQ96, sqrtMarkTwapX96));
+                    //
+                    int256 deltaShortTwPremiumX96 = deltaTwPremiumX96.mul(shortPositionSize.toInt256()).div(
+                        longPositionSize.toInt256()
+                    );
+                    fundingGrowthGlobal.twShortPremiumX96 = lastFundingGrowthGlobal.twShortPremiumX96.add(
+                        deltaShortTwPremiumX96
+                    );
+                    fundingGrowthGlobal.twShortPremiumDivBySqrtPriceX96 = lastFundingGrowthGlobal
+                        .twShortPremiumDivBySqrtPriceX96
+                        .add(PerpMath.mulDiv(deltaShortTwPremiumX96, PerpFixedPoint96._IQ96, sqrtMarkTwapX96));
+                } else if (deltaTwapX96 < 0) {
+                    int256 deltaLongTwPremiumX96 = deltaTwPremiumX96.mul(longPositionSize.toInt256()).div(
+                        shortPositionSize.toInt256()
+                    );
+                    fundingGrowthGlobal.twLongPremiumX96 = lastFundingGrowthGlobal.twLongPremiumX96.add(
+                        deltaLongTwPremiumX96
+                    );
+                    fundingGrowthGlobal.twLongPremiumDivBySqrtPriceX96 = lastFundingGrowthGlobal
+                        .twLongPremiumDivBySqrtPriceX96
+                        .add(PerpMath.mulDiv(deltaLongTwPremiumX96, PerpFixedPoint96._IQ96, sqrtMarkTwapX96));
+                    //
+                    fundingGrowthGlobal.twShortPremiumX96 = lastFundingGrowthGlobal.twShortPremiumX96.add(
+                        deltaTwPremiumX96
+                    );
+                    fundingGrowthGlobal.twShortPremiumDivBySqrtPriceX96 = lastFundingGrowthGlobal
+                        .twShortPremiumDivBySqrtPriceX96
+                        .add(PerpMath.mulDiv(deltaTwPremiumX96, PerpFixedPoint96._IQ96, sqrtMarkTwapX96));
+                }
             }
         }
         return (fundingGrowthGlobal, markTwap, indexTwap);

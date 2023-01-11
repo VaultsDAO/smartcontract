@@ -81,11 +81,13 @@ interface IAccountBalance {
     /// @dev Only used by `ClearingHouse` contract
     /// @param trader The address of trader
     /// @param baseToken The address of baseToken
-    /// @param lastTwPremiumGrowthGlobalX96 The last Twap Premium
+    /// @param lastLongTwPremiumGrowthGlobalX96 The last Twap Premium
+    /// @param lastShortTwPremiumGrowthGlobalX96 The last Twap Premium
     function updateTwPremiumGrowthGlobal(
         address trader,
         address baseToken,
-        int256 lastTwPremiumGrowthGlobalX96
+        int256 lastLongTwPremiumGrowthGlobalX96,
+        int256 lastShortTwPremiumGrowthGlobalX96
     ) external;
 
     /// @notice Settle trader's PnL in closed market

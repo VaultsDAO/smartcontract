@@ -78,18 +78,6 @@ interface IOrderBook {
         external
         returns (RemoveLiquidityResponse memory response);
 
-    /// @dev This is the non-view version of `getLiquidityCoefficientInFundingPayment()`,
-    /// only can be called by `ClearingHouse` contract
-    /// @param trader The trader address
-    /// @param baseToken The base token address
-    /// @param fundingGrowthGlobal The funding growth info, detail on `Funding.Growth`
-    /// @return liquidityCoefficientInFundingPayment the funding payment of all orders/liquidity of a maker
-    function updateFundingGrowthAndLiquidityCoefficientInFundingPayment(
-        address trader,
-        address baseToken,
-        Funding.Growth memory fundingGrowthGlobal
-    ) external returns (int256 liquidityCoefficientInFundingPayment);
-
     /// @notice Replay the swap and get the swap result (price impact and swap fee),
     /// only can be called by `ClearingHouse` contract;
     /// @dev `ReplaySwapResponse.insuranceFundFee = fee * insuranceFundFeeRatio`
@@ -165,17 +153,6 @@ interface IOrderBook {
         address baseToken,
         bool fetchBase
     ) external view returns (uint256 debtAmount);
-
-    /// @notice Get the pending funding payment of all orders in the given market
-    /// @dev This is the view version of `updateFundingGrowthAndLiquidityCoefficientInFundingPayment()`, so only
-    /// part of the funding payment will be returned. Use it with caution because it does not return all the pending
-    /// funding payment of orders. **Normally you won't need to use this function**
-    /// @return liquidityCoefficientInFundingPayment the funding payment of all orders/liquidity of a maker
-    function getLiquidityCoefficientInFundingPayment(
-        address trader,
-        address baseToken,
-        Funding.Growth memory fundingGrowthGlobal
-    ) external view returns (int256 liquidityCoefficientInFundingPayment);
 
     /// @notice Get the pending fees of a order
     /// @param trader The trader address
