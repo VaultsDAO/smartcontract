@@ -18,6 +18,8 @@ import { AccountBalanceStorageV1, AccountMarket, Market } from "./storage/Accoun
 import { BlockContext } from "./base/BlockContext.sol";
 import { IAccountBalance } from "./interface/IAccountBalance.sol";
 
+import "hardhat/console.sol";
+
 // never inherit any new stateful contract. never change the orders of parent stateful contracts
 contract AccountBalance is IAccountBalance, BlockContext, ClearingHouseCallee, AccountBalanceStorageV1 {
     using AddressUpgradeable for address;
@@ -510,5 +512,27 @@ contract AccountBalance is IAccountBalance, BlockContext, ClearingHouseCallee, A
             }
         }
         return false;
+    }
+
+    function modifyMarketPositionSize(IAccountBalance.ModifyTotalPositionParams memory params) public override {
+        if (params.isLong) {
+            //long
+            if (params.isDecrease) {
+                require(_marketMap[params.baseToken].longPositionSize >= params.positionSize, "Invalid position size");
+                _marketMap[params.baseToken].longPositionSize -= params.positionSize;
+            } else {
+                _marketMap[params.baseToken].longPositionSize += params.positionSize;
+            }
+        } else {
+            //short
+            if (params.isDecrease) {
+                require(_marketMap[params.baseToken].shortPositionSize >= params.positionSize, "Invalid position size");
+                _marketMap[params.baseToken].shortPositionSize -= params.positionSize;
+            } else {
+                _marketMap[params.baseToken].shortPositionSize += params.positionSize;
+            }
+        }
+        console.log("total long %d", _marketMap[params.baseToken].longPositionSize);
+        console.log("total short %d", _marketMap[params.baseToken].shortPositionSize);
     }
 }

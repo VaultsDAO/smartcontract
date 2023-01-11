@@ -5,6 +5,13 @@ pragma abicoder v2;
 import { AccountMarket } from "../lib/AccountMarket.sol";
 
 interface IAccountBalance {
+    struct ModifyTotalPositionParams {
+        address baseToken;
+        uint256 positionSize;
+        bool isLong;
+        bool isDecrease;
+    }
+
     /// @param vault The address of the vault contract
     event VaultChanged(address indexed vault);
 
@@ -222,4 +229,6 @@ interface IAccountBalance {
     ) external view returns (int256);
 
     function getMarketPositionSize(address baseToken) external view returns (uint256, uint256);
+
+    function modifyMarketPositionSize(IAccountBalance.ModifyTotalPositionParams memory params) external;
 }

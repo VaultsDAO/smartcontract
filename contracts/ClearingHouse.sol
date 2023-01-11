@@ -900,23 +900,38 @@ contract ClearingHouse is
             })
         );
 
-        uint24 insuranceFundFeeRatio = IMarketRegistry(_marketRegistry)
-            .getMarketInfo(params.baseToken)
-            .insuranceFundFeeRatio;
-        uint256 insuranceFundFee = FullMath.mulDivRoundingUp(response.fee, insuranceFundFeeRatio, 1e6);
-        _modifyOwedRealizedPnl(_insuranceFund, insuranceFundFee.toInt256());
+        //
+        IMarketRegistry.MarketInfo memory marketInfo = IMarketRegistry(_marketRegistry).getMarketInfo(params.baseToken);
 
-        uint24 platformFundFeeRatio = IMarketRegistry(_marketRegistry)
-            .getMarketInfo(params.baseToken)
-            .platformFundFeeRatio;
-        uint256 platformFundFee = FullMath.mulDivRoundingUp(response.fee, platformFundFeeRatio, 1e6);
-        _modifyOwedRealizedPnl(_platformFund, platformFundFee.toInt256());
+        _modifyOwedRealizedPnl(
+            _insuranceFund,
+            FullMath.mulDivRoundingUp(response.fee, marketInfo.insuranceFundFeeRatio, 1e6).toInt256()
+        );
 
-        // console.log(insuranceFundFeeRatio);
-        // console.log(fundingFundFeeRatio);
-        // console.log(platformFundFeeRatio);
+        _modifyOwedRealizedPnl(
+            _platformFund,
+            FullMath.mulDivRoundingUp(response.fee, marketInfo.platformFundFeeRatio, 1e6).toInt256()
+        );
+
         // CH_IF: invalid fee
-        require((insuranceFundFeeRatio + platformFundFeeRatio) == 1e6, "CH_IF");
+        require((marketInfo.insuranceFundFeeRatio + marketInfo.platformFundFeeRatio) == 1e6, "CH_IF");
+
+        //update total long/short
+        IAccountBalance.ModifyTotalPositionParams memory tmp = IAccountBalance.ModifyTotalPositionParams({
+            isLong: true,
+            baseToken: params.baseToken,
+            isDecrease: params.isClose,
+            positionSize: response.exchangedPositionSize.abs()
+        });
+        tmp.isLong =
+            (params.isBaseToQuote == false && params.isExactInput == false) ||
+            (params.isBaseToQuote == false && params.isExactInput == true);
+        if (params.isClose) {
+            tmp.isLong = !tmp.isLong;
+        }
+        IAccountBalance(_accountBalance).modifyMarketPositionSize(tmp);
+
+        //
 
         // examples:
         // https://www.figma.com/file/xuue5qGH4RalX7uAbbzgP3/swap-accounting-and-events?node-id=0%3A1
