@@ -657,23 +657,23 @@ contract Exchange is
                 .getMarketPositionSize(baseToken);
             if (longPositionSize != 0 && shortPositionSize != 0) {
                 uint256 sqrtMarkTwapX96 = getSqrtMarkTwapX96(baseToken, 0);
-                int256 deltaTwapX96 = _getDeltaTwapX96(markTwapX96, indexTwap.formatX10_18ToX96());
-                // TODO: ajust deltaTwPremiumX96 by 2.5% -> config
-                if ((deltaTwapX96.abs() * 1e6) > (indexTwap.formatX10_18ToX96() * 25000)) {
-                    // deltaTwapX96 > 2.5%
-                    deltaTwapX96 = PerpMath.mulDiv(deltaTwapX96, 500000, 1e6); // 50%
-                }
+                int256 deltaTwapX96 = _getDeltaTwapX96AfterOptimal(
+                    baseToken,
+                    _getDeltaTwapX96(markTwapX96, indexTwap.formatX10_18ToX96()),
+                    indexTwap.formatX10_18ToX96()
+                );
                 int256 deltaTwPremiumX96 = deltaTwapX96.mul(timestamp.sub(lastSettledTimestamp).toInt256());
                 if (deltaTwapX96 > 0) {
+                    // LONG pay
                     fundingGrowthGlobal.twLongPremiumX96 = lastFundingGrowthGlobal.twLongPremiumX96.add(
                         deltaTwPremiumX96
                     );
                     fundingGrowthGlobal.twLongPremiumDivBySqrtPriceX96 = lastFundingGrowthGlobal
                         .twLongPremiumDivBySqrtPriceX96
                         .add(PerpMath.mulDiv(deltaTwPremiumX96, PerpFixedPoint96._IQ96, sqrtMarkTwapX96));
-                    //
-                    int256 deltaShortTwPremiumX96 = deltaTwPremiumX96.mul(shortPositionSize.toInt256()).div(
-                        longPositionSize.toInt256()
+                    // SHORT receive
+                    int256 deltaShortTwPremiumX96 = deltaTwPremiumX96.mul(longPositionSize.toInt256()).div(
+                        shortPositionSize.toInt256()
                     );
                     fundingGrowthGlobal.twShortPremiumX96 = lastFundingGrowthGlobal.twShortPremiumX96.add(
                         deltaShortTwPremiumX96
@@ -682,8 +682,9 @@ contract Exchange is
                         .twShortPremiumDivBySqrtPriceX96
                         .add(PerpMath.mulDiv(deltaShortTwPremiumX96, PerpFixedPoint96._IQ96, sqrtMarkTwapX96));
                 } else if (deltaTwapX96 < 0) {
-                    int256 deltaLongTwPremiumX96 = deltaTwPremiumX96.mul(longPositionSize.toInt256()).div(
-                        shortPositionSize.toInt256()
+                    // LONG pay
+                    int256 deltaLongTwPremiumX96 = deltaTwPremiumX96.mul(shortPositionSize.toInt256()).div(
+                        longPositionSize.toInt256()
                     );
                     fundingGrowthGlobal.twLongPremiumX96 = lastFundingGrowthGlobal.twLongPremiumX96.add(
                         deltaLongTwPremiumX96
@@ -691,7 +692,7 @@ contract Exchange is
                     fundingGrowthGlobal.twLongPremiumDivBySqrtPriceX96 = lastFundingGrowthGlobal
                         .twLongPremiumDivBySqrtPriceX96
                         .add(PerpMath.mulDiv(deltaLongTwPremiumX96, PerpFixedPoint96._IQ96, sqrtMarkTwapX96));
-                    //
+                    // SHORT receive
                     fundingGrowthGlobal.twShortPremiumX96 = lastFundingGrowthGlobal.twShortPremiumX96.add(
                         deltaTwPremiumX96
                     );
@@ -702,6 +703,18 @@ contract Exchange is
             }
         }
         return (fundingGrowthGlobal, markTwap, indexTwap);
+    }
+
+    function _getDeltaTwapX96AfterOptimal(
+        address baseToken,
+        int256 deltaTwapX96,
+        uint256 indexTwapX96
+    ) internal view returns (int256) {
+        IMarketRegistry.MarketInfo memory marketInfo = IMarketRegistry(_marketRegistry).getMarketInfo(baseToken);
+        if ((deltaTwapX96.abs() * 1e6) <= (indexTwapX96 * marketInfo.optimalDeltaTwapRatio)) {
+            return deltaTwapX96 = PerpMath.mulDiv(deltaTwapX96, marketInfo.optimalFundingRatio, 1e6); // 25%;
+        }
+        return deltaTwapX96;
     }
 
     /// @dev get a price limit for replaySwap s.t. it can stop when reaching the limit to save gas

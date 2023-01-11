@@ -23,4 +23,8 @@ abstract contract MarketRegistryStorageV1 {
 
     // key: baseToken, _uniswapFeeRatioMap cache only
     mapping(address => uint24) internal _uniswapFeeRatioMap;
+
+    mapping(address => uint24) internal _optimalDeltaTwapRatioMap;
+
+    mapping(address => uint24) internal _optimalFundingRatioMap;
 }

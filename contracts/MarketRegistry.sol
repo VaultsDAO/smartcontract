@@ -85,8 +85,10 @@ contract MarketRegistry is IMarketRegistry, ClearingHouseCallee, MarketRegistryS
         _poolMap[baseToken] = pool;
         _uniswapFeeRatioMap[baseToken] = feeRatio;
         _exchangeFeeRatioMap[baseToken] = feeRatio;
-        _insuranceFundFeeRatioMap[baseToken] = 500000;
-        _platformFundFeeRatioMap[baseToken] = 500000;
+        _insuranceFundFeeRatioMap[baseToken] = 500000; // 50%
+        _platformFundFeeRatioMap[baseToken] = 500000; // 50%
+        _optimalDeltaTwapRatioMap[baseToken] = 25000; // 2.5%
+        _optimalFundingRatioMap[baseToken] = 250000; // 25%
 
         emit PoolAdded(baseToken, feeRatio, pool);
         return pool;
@@ -154,6 +156,14 @@ contract MarketRegistry is IMarketRegistry, ClearingHouseCallee, MarketRegistryS
         return _platformFundFeeRatioMap[baseToken];
     }
 
+    function getOptimalDeltaTwapRatio(address baseToken) external view override checkPool(baseToken) returns (uint24) {
+        return _optimalDeltaTwapRatioMap[baseToken];
+    }
+
+    function getOptimalFundingRatio(address baseToken) external view override checkPool(baseToken) returns (uint24) {
+        return _optimalFundingRatioMap[baseToken];
+    }
+
     /// @inheritdoc IMarketRegistry
     function getMarketInfo(address baseToken) external view override checkPool(baseToken) returns (MarketInfo memory) {
         return
@@ -162,7 +172,9 @@ contract MarketRegistry is IMarketRegistry, ClearingHouseCallee, MarketRegistryS
                 exchangeFeeRatio: _exchangeFeeRatioMap[baseToken],
                 uniswapFeeRatio: _uniswapFeeRatioMap[baseToken],
                 insuranceFundFeeRatio: _insuranceFundFeeRatioMap[baseToken],
-                platformFundFeeRatio: _platformFundFeeRatioMap[baseToken]
+                platformFundFeeRatio: _platformFundFeeRatioMap[baseToken],
+                optimalDeltaTwapRatio: _optimalDeltaTwapRatioMap[baseToken],
+                optimalFundingRatio: _optimalFundingRatioMap[baseToken]
             });
     }
 
