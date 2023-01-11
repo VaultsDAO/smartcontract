@@ -14,7 +14,7 @@ import {
     Vault,
 } from "../../typechain"
 import { QuoteToken } from "../../typechain/QuoteToken"
-import { b2qExactInput, q2bExactOutput } from "../helper/clearingHouseHelper"
+import { b2qExactInput, findLiquidityChangedEvents, q2bExactOutput } from "../helper/clearingHouseHelper"
 import { initMarket } from "../helper/marketHelper"
 import { deposit } from "../helper/token"
 import { forwardBothTimestamps, initiateBothTimestamps } from "../shared/time"
@@ -400,6 +400,26 @@ describe("ClearingHouse funding", () => {
                 // alice's funding payment = 0
                 // there is minor imprecision in this case
                 expect(await exchange.getPendingFundingPayment(alice.address, baseToken.address)).to.eq(
+                    parseEther("0"),
+                )
+
+                // bob's position -0.0990000001 + 0.18 -> 0.0809999999 long
+                await clearingHouse.connect(bob).openPosition({
+                    baseToken: baseToken.address,
+                    isBaseToQuote: false,
+                    isExactInput: true,
+                    oppositeAmountBound: ethers.constants.Zero,
+                    amount: parseEther("27"),
+                    sqrtPriceLimitX96: 0,
+                    deadline: ethers.constants.MaxUint256,
+                    referralCode: ethers.constants.HashZero,
+                })
+
+                // carol + bob = 0.09 + 0.0809999999
+                expect((await accountBalance.getMarketPositionSize(baseToken.address))[0]).to.eq(
+                    parseEther("0.1709999999"),
+                )
+                expect((await accountBalance.getMarketPositionSize(baseToken.address))[1]).to.eq(
                     parseEther("0"),
                 )
             })
