@@ -233,7 +233,6 @@ export function createClearingHouseFixture(
                 accountBalance.address,
                 marketRegistry.address,
                 insuranceFund.address,
-                fundingFund.address,
                 platformFund.address,
             )
             clearingHouse = testClearingHouse
@@ -249,7 +248,6 @@ export function createClearingHouseFixture(
                 accountBalance.address,
                 marketRegistry.address,
                 insuranceFund.address,
-                fundingFund.address,
                 platformFund.address,
             )
         }
@@ -418,7 +416,6 @@ export async function mockedClearingHouseFixture(): Promise<MockedClearingHouseF
         mockedAccountBalance.address,
         marketRegistry.address,
         insuranceFund.address,
-        fundingFund.address,
         platformFund.address,
     )
     return {

@@ -20,7 +20,6 @@ abstract contract ClearingHouseStorageV1 {
     address internal _accountBalance;
     address internal _marketRegistry;
     address internal _insuranceFund;
-    address internal _fundingFund;
     address internal _platformFund;
 }
 

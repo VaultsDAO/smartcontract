@@ -85,9 +85,8 @@ contract MarketRegistry is IMarketRegistry, ClearingHouseCallee, MarketRegistryS
         _poolMap[baseToken] = pool;
         _uniswapFeeRatioMap[baseToken] = feeRatio;
         _exchangeFeeRatioMap[baseToken] = feeRatio;
-        _insuranceFundFeeRatioMap[baseToken] = 333333;
-        _fundingFundFeeRatioMap[baseToken] = 333333;
-        _platformFundFeeRatioMap[baseToken] = 333334;
+        _insuranceFundFeeRatioMap[baseToken] = 500000;
+        _platformFundFeeRatioMap[baseToken] = 500000;
 
         emit PoolAdded(baseToken, feeRatio, pool);
         return pool;
@@ -151,10 +150,6 @@ contract MarketRegistry is IMarketRegistry, ClearingHouseCallee, MarketRegistryS
         return _insuranceFundFeeRatioMap[baseToken];
     }
 
-    function getFundingFundFeeRatio(address baseToken) external view override checkPool(baseToken) returns (uint24) {
-        return _fundingFundFeeRatioMap[baseToken];
-    }
-
     function getPlatformFundFeeRatio(address baseToken) external view override checkPool(baseToken) returns (uint24) {
         return _platformFundFeeRatioMap[baseToken];
     }
@@ -167,7 +162,6 @@ contract MarketRegistry is IMarketRegistry, ClearingHouseCallee, MarketRegistryS
                 exchangeFeeRatio: _exchangeFeeRatioMap[baseToken],
                 uniswapFeeRatio: _uniswapFeeRatioMap[baseToken],
                 insuranceFundFeeRatio: _insuranceFundFeeRatioMap[baseToken],
-                fundingFundFeeRatio: _fundingFundFeeRatioMap[baseToken],
                 platformFundFeeRatio: _platformFundFeeRatioMap[baseToken]
             });
     }

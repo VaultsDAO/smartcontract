@@ -107,7 +107,6 @@ contract ClearingHouse is
         address accountBalanceArg,
         address marketRegistryArg,
         address insuranceFundArg,
-        address fundingFundArg,
         address platformFundArg
     ) public initializer {
         // CH_VANC: Vault address is not contract
@@ -143,7 +142,6 @@ contract ClearingHouse is
         _accountBalance = accountBalanceArg;
         _marketRegistry = marketRegistryArg;
         _insuranceFund = insuranceFundArg;
-        _fundingFund = fundingFundArg;
         _platformFund = platformFundArg;
 
         _settlementTokenDecimals = IVault(_vault).decimals();
@@ -908,12 +906,6 @@ contract ClearingHouse is
         uint256 insuranceFundFee = FullMath.mulDivRoundingUp(response.fee, insuranceFundFeeRatio, 1e6);
         _modifyOwedRealizedPnl(_insuranceFund, insuranceFundFee.toInt256());
 
-        uint24 fundingFundFeeRatio = IMarketRegistry(_marketRegistry)
-            .getMarketInfo(params.baseToken)
-            .fundingFundFeeRatio;
-        uint256 fundingFundFee = FullMath.mulDivRoundingUp(response.fee, fundingFundFeeRatio, 1e6);
-        _modifyOwedRealizedPnl(_fundingFund, fundingFundFee.toInt256());
-
         uint24 platformFundFeeRatio = IMarketRegistry(_marketRegistry)
             .getMarketInfo(params.baseToken)
             .platformFundFeeRatio;
@@ -924,7 +916,7 @@ contract ClearingHouse is
         // console.log(fundingFundFeeRatio);
         // console.log(platformFundFeeRatio);
         // CH_IF: invalid fee
-        require((insuranceFundFeeRatio + fundingFundFeeRatio + platformFundFeeRatio) == 1e6, "CH_IF");
+        require((insuranceFundFeeRatio + platformFundFeeRatio) == 1e6, "CH_IF");
 
         // examples:
         // https://www.figma.com/file/xuue5qGH4RalX7uAbbzgP3/swap-accounting-and-events?node-id=0%3A1

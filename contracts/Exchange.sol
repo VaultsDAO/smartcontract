@@ -155,8 +155,10 @@ contract Exchange is
         // EX_MIP: market is paused
         require(_maxTickCrossedWithinBlockMap[params.baseToken] > 0, "EX_MIP");
 
-        int256 takerPositionSize =
-            IAccountBalance(_accountBalance).getTakerPositionSize(params.trader, params.baseToken);
+        int256 takerPositionSize = IAccountBalance(_accountBalance).getTakerPositionSize(
+            params.trader,
+            params.baseToken
+        );
 
         bool isPartialClose;
         bool isOverPriceLimit = _isOverPriceLimit(params.baseToken);
@@ -193,8 +195,10 @@ contract Exchange is
         }
 
         // get openNotional before swap
-        int256 oldTakerOpenNotional =
-            IAccountBalance(_accountBalance).getTakerOpenNotional(params.trader, params.baseToken);
+        int256 oldTakerOpenNotional = IAccountBalance(_accountBalance).getTakerOpenNotional(
+            params.trader,
+            params.baseToken
+        );
         InternalSwapResponse memory response = _swap(params);
 
         // if (!params.isClose) {
@@ -219,8 +223,9 @@ contract Exchange is
             );
         }
 
-        (uint256 sqrtPriceX96, , , , , , ) =
-            UniswapV3Broker.getSlot0(IMarketRegistry(_marketRegistry).getPool(params.baseToken));
+        (uint256 sqrtPriceX96, , , , , , ) = UniswapV3Broker.getSlot0(
+            IMarketRegistry(_marketRegistry).getPool(params.baseToken)
+        );
         return
             SwapResponse({
                 base: response.base.abs(),
@@ -236,11 +241,10 @@ contract Exchange is
     }
 
     /// @inheritdoc IExchange
-    function settleFunding(address trader, address baseToken)
-        external
-        override
-        returns (int256 fundingPayment, Funding.Growth memory fundingGrowthGlobal)
-    {
+    function settleFunding(
+        address trader,
+        address baseToken
+    ) external override returns (int256 fundingPayment, Funding.Growth memory fundingGrowthGlobal) {
         _requireOnlyClearingHouse();
         // EX_BTNE: base token does not exists
         require(IMarketRegistry(_marketRegistry).hasPool(baseToken), "EX_BTNE");
@@ -260,8 +264,9 @@ contract Exchange is
         );
 
         // funding will be stopped once the market is being paused
-        uint256 timestamp =
-            IBaseToken(baseToken).isOpen() ? _blockTimestamp() : IBaseToken(baseToken).getPausedTimestamp();
+        uint256 timestamp = IBaseToken(baseToken).isOpen()
+            ? _blockTimestamp()
+            : IBaseToken(baseToken).getPausedTimestamp();
 
         // update states before further actions in this block; once per block
         if (timestamp != _lastSettledTimestampMap[baseToken]) {
@@ -308,8 +313,10 @@ contract Exchange is
 
     /// @inheritdoc IExchange
     function getPnlToBeRealized(RealizePnlParams memory params) external view override returns (int256) {
-        AccountMarket.Info memory info =
-            IAccountBalance(_accountBalance).getAccountInfo(params.trader, params.baseToken);
+        AccountMarket.Info memory info = IAccountBalance(_accountBalance).getAccountInfo(
+            params.trader,
+            params.baseToken
+        );
 
         int256 takerOpenNotional = info.takerOpenNotional;
         int256 takerPositionSize = info.takerPositionSize;
@@ -345,8 +352,9 @@ contract Exchange is
     /// @inheritdoc IExchange
     function isOverPriceSpread(address baseToken) external view override returns (bool) {
         uint256 markPrice = getSqrtMarkTwapX96(baseToken, 0).formatSqrtPriceX96ToPriceX96().formatX96ToX10_18();
-        uint256 indexTwap =
-            IIndexPrice(baseToken).getIndexPrice(IClearingHouseConfig(_clearingHouseConfig).getTwapInterval());
+        uint256 indexTwap = IIndexPrice(baseToken).getIndexPrice(
+            IClearingHouseConfig(_clearingHouseConfig).getTwapInterval()
+        );
         uint256 spread = markPrice > indexTwap ? markPrice.sub(indexTwap) : indexTwap.sub(markPrice);
         return spread > PerpMath.mulRatio(indexTwap, _MAX_PRICE_SPREAD_RATIO);
     }
@@ -359,8 +367,11 @@ contract Exchange is
     function getPendingFundingPayment(address trader, address baseToken) public view override returns (int256) {
         (Funding.Growth memory fundingGrowthGlobal, , ) = _getFundingGrowthGlobalAndTwaps(baseToken);
 
-        int256 liquidityCoefficientInFundingPayment =
-            IOrderBook(_orderBook).getLiquidityCoefficientInFundingPayment(trader, baseToken, fundingGrowthGlobal);
+        int256 liquidityCoefficientInFundingPayment = IOrderBook(_orderBook).getLiquidityCoefficientInFundingPayment(
+            trader,
+            baseToken,
+            fundingGrowthGlobal
+        );
 
         return
             Funding.calcPendingFundingPaymentWithLiquidityCoefficient(
@@ -408,29 +419,27 @@ contract Exchange is
         IMarketRegistry.MarketInfo memory marketInfo = IMarketRegistry(_marketRegistry).getMarketInfo(params.baseToken);
         uint24 exchangeFeeRatio = marketInfo.exchangeFeeRatio;
         uint24 uniswapFeeRatio = marketInfo.uniswapFeeRatio;
-        (, int256 signedScaledAmountForReplaySwap) =
-            SwapMath.calcScaledAmountForSwaps(
-                params.isBaseToQuote,
-                params.isExactInput,
-                params.amount,
-                exchangeFeeRatio,
-                uniswapFeeRatio
-            );
+        (, int256 signedScaledAmountForReplaySwap) = SwapMath.calcScaledAmountForSwaps(
+            params.isBaseToQuote,
+            params.isExactInput,
+            params.amount,
+            exchangeFeeRatio,
+            uniswapFeeRatio
+        );
 
         // globalFundingGrowth can be empty if shouldUpdateState is false
-        IOrderBook.ReplaySwapResponse memory response =
-            IOrderBook(_orderBook).replaySwap(
-                IOrderBook.ReplaySwapParams({
-                    baseToken: params.baseToken,
-                    isBaseToQuote: params.isBaseToQuote,
-                    amount: signedScaledAmountForReplaySwap,
-                    sqrtPriceLimitX96: params.sqrtPriceLimitX96,
-                    exchangeFeeRatio: exchangeFeeRatio,
-                    uniswapFeeRatio: uniswapFeeRatio,
-                    shouldUpdateState: false,
-                    globalFundingGrowth: Funding.Growth({ twPremiumX96: 0, twPremiumDivBySqrtPriceX96: 0 })
-                })
-            );
+        IOrderBook.ReplaySwapResponse memory response = IOrderBook(_orderBook).replaySwap(
+            IOrderBook.ReplaySwapParams({
+                baseToken: params.baseToken,
+                isBaseToQuote: params.isBaseToQuote,
+                amount: signedScaledAmountForReplaySwap,
+                sqrtPriceLimitX96: params.sqrtPriceLimitX96,
+                exchangeFeeRatio: exchangeFeeRatio,
+                uniswapFeeRatio: uniswapFeeRatio,
+                shouldUpdateState: false,
+                globalFundingGrowth: Funding.Growth({ twPremiumX96: 0, twPremiumDivBySqrtPriceX96: 0 })
+            })
+        );
         return response.tick;
     }
 
@@ -438,8 +447,8 @@ contract Exchange is
     function _swap(SwapParams memory params) internal returns (InternalSwapResponse memory) {
         IMarketRegistry.MarketInfo memory marketInfo = IMarketRegistry(_marketRegistry).getMarketInfo(params.baseToken);
 
-        (uint256 scaledAmountForUniswapV3PoolSwap, int256 signedScaledAmountForReplaySwap) =
-            SwapMath.calcScaledAmountForSwaps(
+        (uint256 scaledAmountForUniswapV3PoolSwap, int256 signedScaledAmountForReplaySwap) = SwapMath
+            .calcScaledAmountForSwaps(
                 params.isBaseToQuote,
                 params.isExactInput,
                 params.amount,
@@ -449,40 +458,38 @@ contract Exchange is
 
         (Funding.Growth memory fundingGrowthGlobal, , ) = _getFundingGrowthGlobalAndTwaps(params.baseToken);
         // simulate the swap to calculate the fees charged in exchange
-        IOrderBook.ReplaySwapResponse memory replayResponse =
-            IOrderBook(_orderBook).replaySwap(
-                IOrderBook.ReplaySwapParams({
-                    baseToken: params.baseToken,
-                    isBaseToQuote: params.isBaseToQuote,
-                    shouldUpdateState: true,
-                    amount: signedScaledAmountForReplaySwap,
-                    sqrtPriceLimitX96: params.sqrtPriceLimitX96,
-                    exchangeFeeRatio: marketInfo.exchangeFeeRatio,
-                    uniswapFeeRatio: marketInfo.uniswapFeeRatio,
-                    globalFundingGrowth: fundingGrowthGlobal
-                })
-            );
-        UniswapV3Broker.SwapResponse memory response =
-            UniswapV3Broker.swap(
-                UniswapV3Broker.SwapParams(
-                    marketInfo.pool,
-                    _clearingHouse,
-                    params.isBaseToQuote,
-                    params.isExactInput,
-                    // mint extra base token before swap
-                    scaledAmountForUniswapV3PoolSwap,
-                    params.sqrtPriceLimitX96,
-                    abi.encode(
-                        SwapCallbackData({
-                            trader: params.trader,
-                            baseToken: params.baseToken,
-                            pool: marketInfo.pool,
-                            fee: replayResponse.fee,
-                            uniswapFeeRatio: marketInfo.uniswapFeeRatio
-                        })
-                    )
+        IOrderBook.ReplaySwapResponse memory replayResponse = IOrderBook(_orderBook).replaySwap(
+            IOrderBook.ReplaySwapParams({
+                baseToken: params.baseToken,
+                isBaseToQuote: params.isBaseToQuote,
+                shouldUpdateState: true,
+                amount: signedScaledAmountForReplaySwap,
+                sqrtPriceLimitX96: params.sqrtPriceLimitX96,
+                exchangeFeeRatio: marketInfo.exchangeFeeRatio,
+                uniswapFeeRatio: marketInfo.uniswapFeeRatio,
+                globalFundingGrowth: fundingGrowthGlobal
+            })
+        );
+        UniswapV3Broker.SwapResponse memory response = UniswapV3Broker.swap(
+            UniswapV3Broker.SwapParams(
+                marketInfo.pool,
+                _clearingHouse,
+                params.isBaseToQuote,
+                params.isExactInput,
+                // mint extra base token before swap
+                scaledAmountForUniswapV3PoolSwap,
+                params.sqrtPriceLimitX96,
+                abi.encode(
+                    SwapCallbackData({
+                        trader: params.trader,
+                        baseToken: params.baseToken,
+                        pool: marketInfo.pool,
+                        fee: replayResponse.fee,
+                        uniswapFeeRatio: marketInfo.uniswapFeeRatio
+                    })
                 )
-            );
+            )
+        );
 
         // as we charge fees in ClearingHouse instead of in Uniswap pools,
         // we need to scale up base or quote amounts to get the exact exchanged position size and notional
@@ -547,12 +554,8 @@ contract Exchange is
         int256 twPremiumGrowthGlobalX96,
         Funding.Growth memory fundingGrowthGlobal
     ) internal returns (int256 pendingFundingPayment) {
-        int256 liquidityCoefficientInFundingPayment =
-            IOrderBook(_orderBook).updateFundingGrowthAndLiquidityCoefficientInFundingPayment(
-                trader,
-                baseToken,
-                fundingGrowthGlobal
-            );
+        int256 liquidityCoefficientInFundingPayment = IOrderBook(_orderBook)
+            .updateFundingGrowthAndLiquidityCoefficientInFundingPayment(trader, baseToken, fundingGrowthGlobal);
 
         return
             Funding.calcPendingFundingPaymentWithLiquidityCoefficient(
@@ -590,15 +593,9 @@ contract Exchange is
     /// @return fundingGrowthGlobal the up-to-date globalFundingGrowth
     /// @return markTwap only for settleFunding()
     /// @return indexTwap only for settleFunding()
-    function _getFundingGrowthGlobalAndTwaps(address baseToken)
-        internal
-        view
-        returns (
-            Funding.Growth memory fundingGrowthGlobal,
-            uint256 markTwap,
-            uint256 indexTwap
-        )
-    {
+    function _getFundingGrowthGlobalAndTwaps(
+        address baseToken
+    ) internal view returns (Funding.Growth memory fundingGrowthGlobal, uint256 markTwap, uint256 indexTwap) {
         bool marketOpen = IBaseToken(baseToken).isOpen();
         uint256 timestamp = marketOpen ? _blockTimestamp() : IBaseToken(baseToken).getPausedTimestamp();
 
@@ -638,10 +635,9 @@ contract Exchange is
             fundingGrowthGlobal = lastFundingGrowthGlobal;
         } else {
             // deltaTwPremium = (markTwap - indexTwap) * (now - lastSettledTimestamp)
-            int256 deltaTwPremiumX96 =
-                _getDeltaTwapX96(markTwapX96, indexTwap.formatX10_18ToX96()).mul(
-                    timestamp.sub(lastSettledTimestamp).toInt256()
-                );
+            int256 deltaTwPremiumX96 = _getDeltaTwapX96(markTwapX96, indexTwap.formatX10_18ToX96()).mul(
+                timestamp.sub(lastSettledTimestamp).toInt256()
+            );
             fundingGrowthGlobal.twPremiumX96 = lastFundingGrowthGlobal.twPremiumX96.add(deltaTwPremiumX96);
 
             // overflow inspection:
@@ -651,8 +647,18 @@ contract Exchange is
             fundingGrowthGlobal.twPremiumDivBySqrtPriceX96 = lastFundingGrowthGlobal.twPremiumDivBySqrtPriceX96.add(
                 PerpMath.mulDiv(deltaTwPremiumX96, PerpFixedPoint96._IQ96, getSqrtMarkTwapX96(baseToken, 0))
             );
-        }
 
+            uint256 longPositionSize = 0;
+            uint256 shortPositionSize = 0;
+            int256 twLongPremiumX96 = 0;
+            int256 twShortPremiumX96 = 0;
+            int256 deltaTwapX96 = _getDeltaTwapX96(markTwapX96, indexTwap.formatX10_18ToX96());
+            if (deltaTwapX96 > 0) {
+
+            } else if (deltaTwapX96 < 0) {
+                
+            }
+        }
         return (fundingGrowthGlobal, markTwap, indexTwap);
     }
 
@@ -662,8 +668,9 @@ contract Exchange is
         uint24 maxDeltaTick = _maxTickCrossedWithinBlockMap[baseToken];
 
         // price limit = max tick + 1 or min tick - 1, depending on which direction
-        int24 tickBoundary =
-            isLong ? lastUpdatedTick + int24(maxDeltaTick) + 1 : lastUpdatedTick - int24(maxDeltaTick) - 1;
+        int24 tickBoundary = isLong
+            ? lastUpdatedTick + int24(maxDeltaTick) + 1
+            : lastUpdatedTick - int24(maxDeltaTick) - 1;
 
         // tickBoundary should be in [MIN_TICK, MAX_TICK]
         tickBoundary = tickBoundary > TickMath.MAX_TICK ? TickMath.MAX_TICK : tickBoundary;
