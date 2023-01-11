@@ -916,23 +916,6 @@ contract ClearingHouse is
         // CH_IF: invalid fee
         require((marketInfo.insuranceFundFeeRatio + marketInfo.platformFundFeeRatio) == 1e6, "CH_IF");
 
-        //update total long/short
-        IAccountBalance.ModifyTotalPositionParams memory tmp = IAccountBalance.ModifyTotalPositionParams({
-            isLong: true,
-            baseToken: params.baseToken,
-            isDecrease: params.isClose,
-            positionSize: response.exchangedPositionSize.abs()
-        });
-        tmp.isLong =
-            (params.isBaseToQuote == false && params.isExactInput == false) ||
-            (params.isBaseToQuote == false && params.isExactInput == true);
-        if (params.isClose) {
-            tmp.isLong = !tmp.isLong;
-        }
-        IAccountBalance(_accountBalance).modifyMarketPositionSize(tmp);
-
-        //
-
         // examples:
         // https://www.figma.com/file/xuue5qGH4RalX7uAbbzgP3/swap-accounting-and-events?node-id=0%3A1
         _settleBalanceAndDeregister(

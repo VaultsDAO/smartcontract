@@ -410,8 +410,38 @@ contract AccountBalance is IAccountBalance, BlockContext, ClearingHouseCallee, A
         int256 quote
     ) internal returns (int256, int256) {
         AccountMarket.Info storage accountInfo = _accountMarketMap[trader][baseToken];
+        int256 oldPos = accountInfo.takerPositionSize;
         accountInfo.takerPositionSize = accountInfo.takerPositionSize.add(base);
         accountInfo.takerOpenNotional = accountInfo.takerOpenNotional.add(quote);
+        if (oldPos >= 0 && base >= 0) {
+            //long
+            _marketMap[baseToken].longPositionSize += base.abs();
+        } else if (oldPos <= 0 && base <= 0) {
+            //short
+            _marketMap[baseToken].shortPositionSize += base.abs();
+        } else if (oldPos >= 0 && base <= 0) {
+            //long => short
+            if (accountInfo.takerPositionSize >= 0) {
+                //new short <= old long
+                _marketMap[baseToken].longPositionSize -= base.abs();
+            } else {
+                //new short > old long
+                _marketMap[baseToken].longPositionSize -= oldPos.abs();
+                _marketMap[baseToken].shortPositionSize += accountInfo.takerPositionSize.abs();
+            }
+        } else {
+            //short => long
+            if (accountInfo.takerPositionSize <= 0) {
+                //new long <= old short
+                _marketMap[baseToken].shortPositionSize -= base.abs();
+            } else {
+                //new long > old short
+                _marketMap[baseToken].shortPositionSize -= oldPos.abs();
+                _marketMap[baseToken].longPositionSize += accountInfo.takerPositionSize.abs();
+            }
+        }
+        console.log("total long  %d", _marketMap[baseToken].longPositionSize);
+        console.log("total short %d", _marketMap[baseToken].shortPositionSize);
         return (accountInfo.takerPositionSize, accountInfo.takerOpenNotional);
     }
 
@@ -512,27 +542,5 @@ contract AccountBalance is IAccountBalance, BlockContext, ClearingHouseCallee, A
             }
         }
         return false;
-    }
-
-    function modifyMarketPositionSize(IAccountBalance.ModifyTotalPositionParams memory params) public override {
-        if (params.isLong) {
-            //long
-            if (params.isDecrease) {
-                require(_marketMap[params.baseToken].longPositionSize >= params.positionSize, "Invalid position size");
-                _marketMap[params.baseToken].longPositionSize -= params.positionSize;
-            } else {
-                _marketMap[params.baseToken].longPositionSize += params.positionSize;
-            }
-        } else {
-            //short
-            if (params.isDecrease) {
-                require(_marketMap[params.baseToken].shortPositionSize >= params.positionSize, "Invalid position size");
-                _marketMap[params.baseToken].shortPositionSize -= params.positionSize;
-            } else {
-                _marketMap[params.baseToken].shortPositionSize += params.positionSize;
-            }
-        }
-        console.log("total long %d", _marketMap[params.baseToken].longPositionSize);
-        console.log("total short %d", _marketMap[params.baseToken].shortPositionSize);
     }
 }

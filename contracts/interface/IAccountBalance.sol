@@ -229,6 +229,4 @@ interface IAccountBalance {
     ) external view returns (int256);
 
     function getMarketPositionSize(address baseToken) external view returns (uint256, uint256);
-
-    function modifyMarketPositionSize(IAccountBalance.ModifyTotalPositionParams memory params) external;
 }
