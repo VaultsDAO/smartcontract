@@ -32,6 +32,9 @@ import { BlockContext } from "./base/BlockContext.sol";
 import { IClearingHouse } from "./interface/IClearingHouse.sol";
 import { AccountMarket } from "./lib/AccountMarket.sol";
 import { OpenOrder } from "./lib/OpenOrder.sol";
+import { IMarketRegistry } from "./interface/IMarketRegistry.sol";
+
+import "hardhat/console.sol";
 
 // never inherit any new stateful contract. never change the orders of parent stateful contracts
 contract ClearingHouse is
@@ -102,7 +105,10 @@ contract ClearingHouse is
         address uniV3FactoryArg,
         address exchangeArg,
         address accountBalanceArg,
-        address insuranceFundArg
+        address marketRegistryArg,
+        address insuranceFundArg,
+        address fundingFundArg,
+        address platformFundArg
     ) public initializer {
         // CH_VANC: Vault address is not contract
         _isContract(vaultArg, "CH_VANC");
@@ -135,7 +141,10 @@ contract ClearingHouse is
         _exchange = exchangeArg;
         _orderBook = orderBookArg;
         _accountBalance = accountBalanceArg;
+        _marketRegistry = marketRegistryArg;
         _insuranceFund = insuranceFundArg;
+        _fundingFund = fundingFundArg;
+        _platformFund = platformFundArg;
 
         _settlementTokenDecimals = IVault(_vault).decimals();
     }
@@ -157,14 +166,18 @@ contract ClearingHouse is
     }
 
     /// @inheritdoc IClearingHouse
-    function addLiquidity(AddLiquidityParams calldata params)
+    function addLiquidity(
+        AddLiquidityParams calldata params
+    )
         external
         override
         whenNotPaused
         nonReentrant
         checkDeadline(params.deadline)
-        // check onlyLiquidityAdmin
-        returns (AddLiquidityResponse memory)
+        returns (
+            // check onlyLiquidityAdmin
+            AddLiquidityResponse memory
+        )
     {
         // input requirement checks:
         //   baseToken: in Exchange.settleFunding()
@@ -189,18 +202,17 @@ contract ClearingHouse is
         Funding.Growth memory fundingGrowthGlobal = _settleFunding(trader, params.baseToken);
 
         // note that we no longer check available tokens here because CH will always auto-mint in UniswapV3MintCallback
-        IOrderBook.AddLiquidityResponse memory response =
-            IOrderBook(_orderBook).addLiquidity(
-                IOrderBook.AddLiquidityParams({
-                    trader: trader,
-                    baseToken: params.baseToken,
-                    base: params.base,
-                    quote: params.quote,
-                    lowerTick: params.lowerTick,
-                    upperTick: params.upperTick,
-                    fundingGrowthGlobal: fundingGrowthGlobal
-                })
-            );
+        IOrderBook.AddLiquidityResponse memory response = IOrderBook(_orderBook).addLiquidity(
+            IOrderBook.AddLiquidityParams({
+                trader: trader,
+                baseToken: params.baseToken,
+                base: params.base,
+                quote: params.quote,
+                lowerTick: params.lowerTick,
+                upperTick: params.upperTick,
+                fundingGrowthGlobal: fundingGrowthGlobal
+            })
+        );
 
         _checkSlippageAfterLiquidityChange(response.base, params.minBase, response.quote, params.minQuote);
 
@@ -211,8 +223,10 @@ contract ClearingHouse is
             // can't add liquidity within range from take position
             require(isBaseAdded != (response.quote != 0), "CH_CALWRFTP");
 
-            AccountMarket.Info memory accountMarketInfo =
-                IAccountBalance(_accountBalance).getAccountInfo(trader, params.baseToken);
+            AccountMarket.Info memory accountMarketInfo = IAccountBalance(_accountBalance).getAccountInfo(
+                trader,
+                params.baseToken
+            );
 
             // the signs of removedPositionSize and removedOpenNotional are always the opposite.
             int256 removedPositionSize;
@@ -258,13 +272,12 @@ contract ClearingHouse is
             );
 
             // update takerBalances as we're using takerBalances to provide liquidity
-            (, int256 takerOpenNotional) =
-                IAccountBalance(_accountBalance).modifyTakerBalance(
-                    trader,
-                    params.baseToken,
-                    removedPositionSize,
-                    removedOpenNotional
-                );
+            (, int256 takerOpenNotional) = IAccountBalance(_accountBalance).modifyTakerBalance(
+                trader,
+                params.baseToken,
+                removedPositionSize,
+                removedOpenNotional
+            );
 
             uint256 sqrtPrice = _getSqrtMarkX96(params.baseToken);
             _emitPositionChanged(
@@ -307,7 +320,9 @@ contract ClearingHouse is
     }
 
     /// @inheritdoc IClearingHouse
-    function removeLiquidity(RemoveLiquidityParams calldata params)
+    function removeLiquidity(
+        RemoveLiquidityParams calldata params
+    )
         external
         override
         whenNotPaused
@@ -329,16 +344,15 @@ contract ClearingHouse is
         // must settle funding first
         _settleFunding(trader, params.baseToken);
 
-        IOrderBook.RemoveLiquidityResponse memory response =
-            _removeLiquidity(
-                IOrderBook.RemoveLiquidityParams({
-                    maker: trader,
-                    baseToken: params.baseToken,
-                    lowerTick: params.lowerTick,
-                    upperTick: params.upperTick,
-                    liquidity: params.liquidity
-                })
-            );
+        IOrderBook.RemoveLiquidityResponse memory response = _removeLiquidity(
+            IOrderBook.RemoveLiquidityParams({
+                maker: trader,
+                baseToken: params.baseToken,
+                lowerTick: params.lowerTick,
+                upperTick: params.upperTick,
+                liquidity: params.liquidity
+            })
+        );
 
         _checkSlippageAfterLiquidityChange(response.base, params.minBase, response.quote, params.minQuote);
 
@@ -380,7 +394,9 @@ contract ClearingHouse is
     }
 
     /// @inheritdoc IClearingHouse
-    function openPosition(OpenPositionParams memory params)
+    function openPosition(
+        OpenPositionParams memory params
+    )
         external
         override
         whenNotPaused
@@ -394,17 +410,16 @@ contract ClearingHouse is
     }
 
     /// @inheritdoc IClearingHouse
-    function openPositionFor(address trader, OpenPositionParams memory params)
+    function openPositionFor(
+        address trader,
+        OpenPositionParams memory params
+    )
         external
         override
         whenNotPaused
         nonReentrant
         checkDeadline(params.deadline)
-        returns (
-            uint256 base,
-            uint256 quote,
-            uint256 fee
-        )
+        returns (uint256 base, uint256 quote, uint256 fee)
     {
         // CH_SHNAOPT: Sender Has No Approval to Open Position for Trader
         require(IDelegateApproval(_delegateApproval).canOpenPositionFor(trader, _msgSender()), "CH_SHNAOPT");
@@ -413,7 +428,9 @@ contract ClearingHouse is
     }
 
     /// @inheritdoc IClearingHouse
-    function closePosition(ClosePositionParams calldata params)
+    function closePosition(
+        ClosePositionParams calldata params
+    )
         external
         override
         whenNotPaused
@@ -441,18 +458,17 @@ contract ClearingHouse is
         // old position is short. when closing, it's quoteToBase && exactOutput (buy exact base back)
         bool isBaseToQuote = positionSize > 0;
 
-        IExchange.SwapResponse memory response =
-            _openPosition(
-                InternalOpenPositionParams({
-                    trader: trader,
-                    baseToken: params.baseToken,
-                    isBaseToQuote: isBaseToQuote,
-                    isExactInput: isBaseToQuote,
-                    isClose: true,
-                    amount: positionSize.abs(),
-                    sqrtPriceLimitX96: params.sqrtPriceLimitX96
-                })
-            );
+        IExchange.SwapResponse memory response = _openPosition(
+            InternalOpenPositionParams({
+                trader: trader,
+                baseToken: params.baseToken,
+                isBaseToQuote: isBaseToQuote,
+                isExactInput: isBaseToQuote,
+                isClose: true,
+                amount: positionSize.abs(),
+                sqrtPriceLimitX96: params.sqrtPriceLimitX96
+            })
+        );
 
         _checkSlippage(
             InternalCheckSlippageParams({
@@ -529,8 +545,9 @@ contract ClearingHouse is
             return (0, 0);
         }
 
-        (int256 positionNotional, int256 openNotional, int256 realizedPnl, uint256 closedPrice) =
-            IAccountBalance(_accountBalance).settlePositionInClosedMarket(trader, baseToken);
+        (int256 positionNotional, int256 openNotional, int256 realizedPnl, uint256 closedPrice) = IAccountBalance(
+            _accountBalance
+        ).settlePositionInClosedMarket(trader, baseToken);
 
         emit PositionClosed(trader, baseToken, positionSize, positionNotional, openNotional, realizedPnl, closedPrice);
 
@@ -541,11 +558,7 @@ contract ClearingHouse is
 
     /// @inheritdoc IUniswapV3MintCallback
     /// @dev namings here follow Uniswap's convention
-    function uniswapV3MintCallback(
-        uint256 amount0Owed,
-        uint256 amount1Owed,
-        bytes calldata data
-    ) external override {
+    function uniswapV3MintCallback(uint256 amount0Owed, uint256 amount1Owed, bytes calldata data) external override {
         // input requirement checks:
         //   amount0Owed: here
         //   amount1Owed: here
@@ -570,11 +583,7 @@ contract ClearingHouse is
 
     /// @inheritdoc IUniswapV3SwapCallback
     /// @dev namings here follow Uniswap's convention
-    function uniswapV3SwapCallback(
-        int256 amount0Delta,
-        int256 amount1Delta,
-        bytes calldata data
-    ) external override {
+    function uniswapV3SwapCallback(int256 amount0Delta, int256 amount1Delta, bytes calldata data) external override {
         // input requirement checks:
         //   amount0Delta: here
         //   amount1Delta: here
@@ -591,10 +600,9 @@ contract ClearingHouse is
         IUniswapV3Pool uniswapV3Pool = IUniswapV3Pool(callbackData.pool);
 
         // amount0Delta & amount1Delta are guaranteed to be positive when being the amount to be paid
-        (address token, uint256 amountToPay) =
-            amount0Delta > 0
-                ? (uniswapV3Pool.token0(), uint256(amount0Delta))
-                : (uniswapV3Pool.token1(), uint256(amount1Delta));
+        (address token, uint256 amountToPay) = amount0Delta > 0
+            ? (uniswapV3Pool.token0(), uint256(amount0Delta))
+            : (uniswapV3Pool.token1(), uint256(amount1Delta));
 
         // swap
         _requireTransfer(token, callbackData.pool, amountToPay);
@@ -658,20 +666,12 @@ contract ClearingHouse is
     // INTERNAL NON-VIEW
     //
 
-    function _requireTransfer(
-        address token,
-        address to,
-        uint256 amount
-    ) internal {
+    function _requireTransfer(address token, address to, uint256 amount) internal {
         // CH_TF: Transfer failed
         require(IERC20Metadata(token).transfer(to, amount), "CH_TF");
     }
 
-    function _liquidate(
-        address trader,
-        address baseToken,
-        int256 positionSizeToBeLiquidated
-    ) internal {
+    function _liquidate(address trader, address baseToken, int256 positionSizeToBeLiquidated) internal {
         _checkMarketOpen(baseToken);
 
         // CH_CLWTISO: cannot liquidate when there is still order
@@ -696,8 +696,12 @@ contract ClearingHouse is
         int256 accountValue = getAccountValue(trader);
 
         // trader's position is closed at index price and pnl realized
-        (int256 liquidatedPositionSize, int256 liquidatedPositionNotional) =
-            _getLiquidatedPositionSizeAndNotional(trader, baseToken, accountValue, positionSizeToBeLiquidated);
+        (int256 liquidatedPositionSize, int256 liquidatedPositionNotional) = _getLiquidatedPositionSizeAndNotional(
+            trader,
+            baseToken,
+            accountValue,
+            positionSizeToBeLiquidated
+        );
         _modifyPositionAndRealizePnl(trader, baseToken, liquidatedPositionSize, liquidatedPositionNotional, 0, 0);
 
         // trader pays liquidation penalty
@@ -723,10 +727,9 @@ contract ClearingHouse is
             int256 accountValueAfterLiquidationX10_18 = getAccountValue(trader);
 
             if (accountValueAfterLiquidationX10_18 < 0) {
-                int256 insuranceFundCapacityX10_18 =
-                    IInsuranceFund(insuranceFund).getInsuranceFundCapacity().parseSettlementToken(
-                        _settlementTokenDecimals
-                    );
+                int256 insuranceFundCapacityX10_18 = IInsuranceFund(insuranceFund)
+                    .getInsuranceFundCapacity()
+                    .parseSettlementToken(_settlementTokenDecimals);
 
                 // CH_IIC: insufficient insuranceFund capacity
                 require(insuranceFundCapacityX10_18 >= accountValueAfterLiquidationX10_18.neg256(), "CH_IIC");
@@ -736,8 +739,9 @@ contract ClearingHouse is
         // liquidator opens a position with liquidationFeeToLiquidator as a discount
         // liquidator's openNotional = -liquidatedPositionNotional + liquidationFeeToLiquidator
         int256 liquidatorExchangedPositionSize = liquidatedPositionSize.neg256();
-        int256 liquidatorExchangedPositionNotional =
-            liquidatedPositionNotional.neg256().add(liquidationFeeToLiquidator.toInt256());
+        int256 liquidatorExchangedPositionNotional = liquidatedPositionNotional.neg256().add(
+            liquidationFeeToLiquidator.toInt256()
+        );
         // note that this function will realize pnl if it's reducing liquidator's existing position size
         _modifyPositionAndRealizePnl(
             liquidator,
@@ -810,11 +814,7 @@ contract ClearingHouse is
 
     /// @dev only cancel open orders if there are not enough free collateral with mmRatio
     /// or account is able to being liquidated.
-    function _cancelExcessOrders(
-        address maker,
-        address baseToken,
-        bytes32[] memory orderIds
-    ) internal {
+    function _cancelExcessOrders(address maker, address baseToken, bytes32[] memory orderIds) internal {
         _checkMarketOpen(baseToken);
 
         if (orderIds.length == 0) {
@@ -835,11 +835,7 @@ contract ClearingHouse is
         _removeAllLiquidity(maker, baseToken, orderIds);
     }
 
-    function _removeAllLiquidity(
-        address maker,
-        address baseToken,
-        bytes32[] memory orderIds
-    ) internal {
+    function _removeAllLiquidity(address maker, address baseToken, bytes32[] memory orderIds) internal {
         IOrderBook.RemoveLiquidityResponse memory removeLiquidityResponse;
 
         uint256 length = orderIds.length;
@@ -852,16 +848,15 @@ contract ClearingHouse is
                 "CH_ONBM"
             );
 
-            IOrderBook.RemoveLiquidityResponse memory response =
-                _removeLiquidity(
-                    IOrderBook.RemoveLiquidityParams({
-                        maker: maker,
-                        baseToken: baseToken,
-                        lowerTick: order.lowerTick,
-                        upperTick: order.upperTick,
-                        liquidity: order.liquidity
-                    })
-                );
+            IOrderBook.RemoveLiquidityResponse memory response = _removeLiquidity(
+                IOrderBook.RemoveLiquidityParams({
+                    maker: maker,
+                    baseToken: baseToken,
+                    lowerTick: order.lowerTick,
+                    upperTick: order.upperTick,
+                    liquidity: order.liquidity
+                })
+            );
 
             removeLiquidityResponse.base = removeLiquidityResponse.base.add(response.base);
             removeLiquidityResponse.quote = removeLiquidityResponse.quote.add(response.quote);
@@ -895,20 +890,41 @@ contract ClearingHouse is
     /// @dev explainer diagram for the relationship between exchangedPositionNotional, fee and openNotional:
     ///      https://www.figma.com/file/xuue5qGH4RalX7uAbbzgP3/swap-accounting-and-events
     function _openPosition(InternalOpenPositionParams memory params) internal returns (IExchange.SwapResponse memory) {
-        IExchange.SwapResponse memory response =
-            IExchange(_exchange).swap(
-                IExchange.SwapParams({
-                    trader: params.trader,
-                    baseToken: params.baseToken,
-                    isBaseToQuote: params.isBaseToQuote,
-                    isExactInput: params.isExactInput,
-                    isClose: params.isClose,
-                    amount: params.amount,
-                    sqrtPriceLimitX96: params.sqrtPriceLimitX96
-                })
-            );
+        IExchange.SwapResponse memory response = IExchange(_exchange).swap(
+            IExchange.SwapParams({
+                trader: params.trader,
+                baseToken: params.baseToken,
+                isBaseToQuote: params.isBaseToQuote,
+                isExactInput: params.isExactInput,
+                isClose: params.isClose,
+                amount: params.amount,
+                sqrtPriceLimitX96: params.sqrtPriceLimitX96
+            })
+        );
 
-        _modifyOwedRealizedPnl(_insuranceFund, response.insuranceFundFee.toInt256());
+        uint24 insuranceFundFeeRatio = IMarketRegistry(_marketRegistry)
+            .getMarketInfo(params.baseToken)
+            .insuranceFundFeeRatio;
+        uint256 insuranceFundFee = FullMath.mulDivRoundingUp(response.fee, insuranceFundFeeRatio, 1e6);
+        _modifyOwedRealizedPnl(_insuranceFund, insuranceFundFee.toInt256());
+
+        uint24 fundingFundFeeRatio = IMarketRegistry(_marketRegistry)
+            .getMarketInfo(params.baseToken)
+            .fundingFundFeeRatio;
+        uint256 fundingFundFee = FullMath.mulDivRoundingUp(response.fee, fundingFundFeeRatio, 1e6);
+        _modifyOwedRealizedPnl(_fundingFund, fundingFundFee.toInt256());
+
+        uint24 platformFundFeeRatio = IMarketRegistry(_marketRegistry)
+            .getMarketInfo(params.baseToken)
+            .platformFundFeeRatio;
+        uint256 platformFundFee = FullMath.mulDivRoundingUp(response.fee, platformFundFeeRatio, 1e6);
+        _modifyOwedRealizedPnl(_platformFund, platformFundFee.toInt256());
+
+        // console.log(insuranceFundFeeRatio);
+        // console.log(fundingFundFeeRatio);
+        // console.log(platformFundFeeRatio);
+        // CH_IF: invalid fee
+        require((insuranceFundFeeRatio + fundingFundFeeRatio + platformFundFeeRatio) == 1e6, "CH_IF");
 
         // examples:
         // https://www.figma.com/file/xuue5qGH4RalX7uAbbzgP3/swap-accounting-and-events?node-id=0%3A1
@@ -957,14 +973,10 @@ contract ClearingHouse is
         return response;
     }
 
-    function _openPositionFor(address trader, OpenPositionParams memory params)
-        internal
-        returns (
-            uint256 base,
-            uint256 quote,
-            uint256 fee
-        )
-    {
+    function _openPositionFor(
+        address trader,
+        OpenPositionParams memory params
+    ) internal returns (uint256 base, uint256 quote, uint256 fee) {
         // input requirement checks:
         //   baseToken: in Exchange.settleFunding()
         //   isBaseToQuote & isExactInput: X
@@ -982,18 +994,17 @@ contract ClearingHouse is
         // must settle funding first
         _settleFunding(trader, params.baseToken);
 
-        IExchange.SwapResponse memory response =
-            _openPosition(
-                InternalOpenPositionParams({
-                    trader: trader,
-                    baseToken: params.baseToken,
-                    isBaseToQuote: params.isBaseToQuote,
-                    isExactInput: params.isExactInput,
-                    amount: params.amount,
-                    isClose: false,
-                    sqrtPriceLimitX96: params.sqrtPriceLimitX96
-                })
-            );
+        IExchange.SwapResponse memory response = _openPosition(
+            InternalOpenPositionParams({
+                trader: trader,
+                baseToken: params.baseToken,
+                isBaseToQuote: params.isBaseToQuote,
+                isExactInput: params.isExactInput,
+                amount: params.amount,
+                isClose: false,
+                sqrtPriceLimitX96: params.sqrtPriceLimitX96
+            })
+        );
 
         _checkSlippage(
             InternalCheckSlippageParams({
@@ -1011,18 +1022,17 @@ contract ClearingHouse is
     }
 
     /// @dev Remove maker's liquidity.
-    function _removeLiquidity(IOrderBook.RemoveLiquidityParams memory params)
-        internal
-        returns (IOrderBook.RemoveLiquidityResponse memory)
-    {
+    function _removeLiquidity(
+        IOrderBook.RemoveLiquidityParams memory params
+    ) internal returns (IOrderBook.RemoveLiquidityResponse memory) {
         return IOrderBook(_orderBook).removeLiquidity(params);
     }
 
     /// @dev Settle trader's funding payment to his/her realized pnl.
-    function _settleFunding(address trader, address baseToken)
-        internal
-        returns (Funding.Growth memory fundingGrowthGlobal)
-    {
+    function _settleFunding(
+        address trader,
+        address baseToken
+    ) internal returns (Funding.Growth memory fundingGrowthGlobal) {
         int256 fundingPayment;
         (fundingPayment, fundingGrowthGlobal) = IExchange(_exchange).settleFunding(trader, baseToken);
 
@@ -1181,16 +1191,21 @@ contract ClearingHouse is
         int256 accountValue,
         int256 positionSizeToBeLiquidated
     ) internal view returns (int256, int256) {
-        int256 maxLiquidatablePositionSize =
-            IAccountBalance(_accountBalance).getLiquidatablePositionSize(trader, baseToken, accountValue);
+        int256 maxLiquidatablePositionSize = IAccountBalance(_accountBalance).getLiquidatablePositionSize(
+            trader,
+            baseToken,
+            accountValue
+        );
 
         if (positionSizeToBeLiquidated.abs() > maxLiquidatablePositionSize.abs() || positionSizeToBeLiquidated == 0) {
             positionSizeToBeLiquidated = maxLiquidatablePositionSize;
         }
 
         int256 liquidatedPositionSize = positionSizeToBeLiquidated.neg256();
-        int256 liquidatedPositionNotional =
-            positionSizeToBeLiquidated.mulDiv(_getIndexPrice(baseToken).toInt256(), 1e18);
+        int256 liquidatedPositionNotional = positionSizeToBeLiquidated.mulDiv(
+            _getIndexPrice(baseToken).toInt256(),
+            1e18
+        );
 
         return (liquidatedPositionSize, liquidatedPositionNotional);
     }

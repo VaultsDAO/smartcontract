@@ -54,7 +54,6 @@ interface IOrderBook {
     struct ReplaySwapResponse {
         int24 tick;
         uint256 fee;
-        uint256 insuranceFundFee;
     }
 
     struct MintCallbackData {

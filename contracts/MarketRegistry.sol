@@ -85,31 +85,28 @@ contract MarketRegistry is IMarketRegistry, ClearingHouseCallee, MarketRegistryS
         _poolMap[baseToken] = pool;
         _uniswapFeeRatioMap[baseToken] = feeRatio;
         _exchangeFeeRatioMap[baseToken] = feeRatio;
+        _insuranceFundFeeRatioMap[baseToken] = 333333;
+        _fundingFundFeeRatioMap[baseToken] = 333333;
+        _platformFundFeeRatioMap[baseToken] = 333334;
 
         emit PoolAdded(baseToken, feeRatio, pool);
         return pool;
     }
 
     /// @inheritdoc IMarketRegistry
-    function setFeeRatio(address baseToken, uint24 feeRatio)
-        external
-        override
-        checkPool(baseToken)
-        checkRatio(feeRatio)
-        onlyOwner
-    {
+    function setFeeRatio(
+        address baseToken,
+        uint24 feeRatio
+    ) external override checkPool(baseToken) checkRatio(feeRatio) onlyOwner {
         _exchangeFeeRatioMap[baseToken] = feeRatio;
         emit FeeRatioChanged(baseToken, feeRatio);
     }
 
     /// @inheritdoc IMarketRegistry
-    function setInsuranceFundFeeRatio(address baseToken, uint24 insuranceFundFeeRatioArg)
-        external
-        override
-        checkPool(baseToken)
-        checkRatio(insuranceFundFeeRatioArg)
-        onlyOwner
-    {
+    function setInsuranceFundFeeRatio(
+        address baseToken,
+        uint24 insuranceFundFeeRatioArg
+    ) external override checkPool(baseToken) checkRatio(insuranceFundFeeRatioArg) onlyOwner {
         _insuranceFundFeeRatioMap[baseToken] = insuranceFundFeeRatioArg;
         emit InsuranceFundFeeRatioChanged(baseToken, insuranceFundFeeRatioArg);
     }
@@ -154,6 +151,14 @@ contract MarketRegistry is IMarketRegistry, ClearingHouseCallee, MarketRegistryS
         return _insuranceFundFeeRatioMap[baseToken];
     }
 
+    function getFundingFundFeeRatio(address baseToken) external view override checkPool(baseToken) returns (uint24) {
+        return _fundingFundFeeRatioMap[baseToken];
+    }
+
+    function getPlatformFundFeeRatio(address baseToken) external view override checkPool(baseToken) returns (uint24) {
+        return _platformFundFeeRatioMap[baseToken];
+    }
+
     /// @inheritdoc IMarketRegistry
     function getMarketInfo(address baseToken) external view override checkPool(baseToken) returns (MarketInfo memory) {
         return
@@ -161,7 +166,9 @@ contract MarketRegistry is IMarketRegistry, ClearingHouseCallee, MarketRegistryS
                 pool: _poolMap[baseToken],
                 exchangeFeeRatio: _exchangeFeeRatioMap[baseToken],
                 uniswapFeeRatio: _uniswapFeeRatioMap[baseToken],
-                insuranceFundFeeRatio: _insuranceFundFeeRatioMap[baseToken]
+                insuranceFundFeeRatio: _insuranceFundFeeRatioMap[baseToken],
+                fundingFundFeeRatio: _fundingFundFeeRatioMap[baseToken],
+                platformFundFeeRatio: _platformFundFeeRatioMap[baseToken]
             });
     }
 

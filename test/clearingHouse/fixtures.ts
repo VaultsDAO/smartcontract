@@ -1,6 +1,6 @@
 import { MockContract, smockit } from "@eth-optimism/smock"
 import { parseEther, parseUnits } from "ethers/lib/utils"
-import { ethers } from "hardhat"
+import { ethers, waffle } from "hardhat"
 import {
     AccountBalance,
     BaseToken,
@@ -77,6 +77,7 @@ export enum BaseQuoteOrdering {
 //    but keeping this param and the comment here for notifying this issue; can see time.ts for more info
 export function createClearingHouseFixture(
     canMockTime: boolean = true,
+    // uniFeeTier = 10000, // 1%
     uniFeeTier = 10000, // 1%
 ): () => Promise<ClearingHouseFixture> {
     return async (): Promise<ClearingHouseFixture> => {
@@ -215,6 +216,9 @@ export function createClearingHouseFixture(
         await baseToken2.addWhitelist(pool2.address)
         await quoteToken.addWhitelist(pool2.address)
 
+
+        const [admin, maker, taker, alice, a1, a2, a3, fundingFund, platformFund] = waffle.provider.getWallets()
+
         // deploy clearingHouse
         let clearingHouse: ClearingHouse | TestClearingHouse
         if (canMockTime) {
@@ -227,7 +231,10 @@ export function createClearingHouseFixture(
                 uniV3Factory.address,
                 exchange.address,
                 accountBalance.address,
+                marketRegistry.address,
                 insuranceFund.address,
+                fundingFund.address,
+                platformFund.address,
             )
             clearingHouse = testClearingHouse
         } else {
@@ -240,7 +247,10 @@ export function createClearingHouseFixture(
                 uniV3Factory.address,
                 exchange.address,
                 accountBalance.address,
+                marketRegistry.address,
                 insuranceFund.address,
+                fundingFund.address,
+                platformFund.address,
             )
         }
 
@@ -394,6 +404,8 @@ export async function mockedClearingHouseFixture(): Promise<MockedClearingHouseF
 
     mockedExchange.smocked.getOrderBook.will.return.with(mockedOrderBook.address)
 
+    const [admin, maker, taker, alice, a1, a2, a3, fundingFund, platformFund] = waffle.provider.getWallets()
+
     // deploy clearingHouse
     const clearingHouseFactory = await ethers.getContractFactory("ClearingHouse")
     const clearingHouse = (await clearingHouseFactory.deploy()) as ClearingHouse
@@ -404,7 +416,10 @@ export async function mockedClearingHouseFixture(): Promise<MockedClearingHouseF
         mockedUniV3Factory.address,
         mockedExchange.address,
         mockedAccountBalance.address,
+        marketRegistry.address,
         insuranceFund.address,
+        fundingFund.address,
+        platformFund.address,
     )
     return {
         clearingHouse,

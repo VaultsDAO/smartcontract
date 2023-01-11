@@ -8,6 +8,8 @@ interface IMarketRegistry {
         uint24 exchangeFeeRatio;
         uint24 uniswapFeeRatio;
         uint24 insuranceFundFeeRatio;
+        uint24 fundingFundFeeRatio;
+        uint24 platformFundFeeRatio;
     }
 
     /// @notice Emitted when a new market is created.
@@ -66,6 +68,18 @@ interface IMarketRegistry {
     /// @param baseToken The address of the base token
     /// @return feeRatio The fee ratio of the market, it is a decimal in `1e6`
     function getInsuranceFundFeeRatio(address baseToken) external view returns (uint24 feeRatio);
+
+    /// @notice Get the insurance fund fee ratio of a given market
+    /// @dev The ratio is in `1e6` format, that means `1% = 1e4`
+    /// @param baseToken The address of the base token
+    /// @return feeRatio The fee ratio of the market, it is a decimal in `1e6`
+    function getFundingFundFeeRatio(address baseToken) external view returns (uint24);
+
+    /// @notice Get the insurance fund fee ratio of a given market
+    /// @dev The ratio is in `1e6` format, that means `1% = 1e4`
+    /// @param baseToken The address of the base token
+    /// @return feeRatio The fee ratio of the market, it is a decimal in `1e6`
+    function getPlatformFundFeeRatio(address baseToken) external view returns (uint24);
 
     /// @notice Get the market info by given base token address
     /// @param baseToken The address of the base token

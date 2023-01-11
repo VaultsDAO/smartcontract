@@ -26,6 +26,10 @@ library Funding {
     struct Growth {
         int256 twPremiumX96;
         int256 twPremiumDivBySqrtPriceX96;
+        // int256 twLongPremiumX96;
+        // int256 twLongPremiumDivBySqrtPriceX96;
+        // int256 twShortPremiumX96;
+        // int256 twShortLongPremiumDivBySqrtPriceX96;
     }
 
     //
@@ -45,12 +49,11 @@ library Funding {
         Growth memory fundingGrowthGlobal,
         int256 liquidityCoefficientInFundingPayment
     ) internal pure returns (int256) {
-        int256 balanceCoefficientInFundingPayment =
-            PerpMath.mulDiv(
-                baseBalance,
-                fundingGrowthGlobal.twPremiumX96.sub(twPremiumGrowthGlobalX96),
-                uint256(PerpFixedPoint96._IQ96)
-            );
+        int256 balanceCoefficientInFundingPayment = PerpMath.mulDiv(
+            baseBalance,
+            fundingGrowthGlobal.twPremiumX96.sub(twPremiumGrowthGlobalX96),
+            uint256(PerpFixedPoint96._IQ96)
+        );
 
         return
             liquidityCoefficientInFundingPayment.add(balanceCoefficientInFundingPayment).div(_DEFAULT_FUNDING_PERIOD);
@@ -67,27 +70,24 @@ library Funding {
         uint160 sqrtPriceX96AtUpperTick = TickMath.getSqrtRatioAtTick(order.upperTick);
 
         // base amount below the range
-        uint256 baseAmountBelow =
-            LiquidityAmounts.getAmount0ForLiquidity(
-                TickMath.getSqrtRatioAtTick(order.lowerTick),
-                sqrtPriceX96AtUpperTick,
-                order.liquidity
-            );
+        uint256 baseAmountBelow = LiquidityAmounts.getAmount0ForLiquidity(
+            TickMath.getSqrtRatioAtTick(order.lowerTick),
+            sqrtPriceX96AtUpperTick,
+            order.liquidity
+        );
         // funding below the range
-        int256 fundingBelowX96 =
-            baseAmountBelow.toInt256().mul(
-                fundingGrowthRangeInfo.twPremiumGrowthBelowX96.sub(order.lastTwPremiumGrowthBelowX96)
-            );
+        int256 fundingBelowX96 = baseAmountBelow.toInt256().mul(
+            fundingGrowthRangeInfo.twPremiumGrowthBelowX96.sub(order.lastTwPremiumGrowthBelowX96)
+        );
 
         // funding inside the range =
         // liquidity * (ΔtwPremiumDivBySqrtPriceGrowthInsideX96 - ΔtwPremiumGrowthInsideX96 / sqrtPriceAtUpperTick)
-        int256 fundingInsideX96 =
-            order.liquidity.toInt256().mul(
-                // ΔtwPremiumDivBySqrtPriceGrowthInsideX96
-                fundingGrowthRangeInfo
-                    .twPremiumDivBySqrtPriceGrowthInsideX96
-                    .sub(order.lastTwPremiumDivBySqrtPriceGrowthInsideX96)
-                    .sub(
+        int256 fundingInsideX96 = order.liquidity.toInt256().mul(
+            // ΔtwPremiumDivBySqrtPriceGrowthInsideX96
+            fundingGrowthRangeInfo
+                .twPremiumDivBySqrtPriceGrowthInsideX96
+                .sub(order.lastTwPremiumDivBySqrtPriceGrowthInsideX96)
+                .sub(
                     // ΔtwPremiumGrowthInsideX96
                     PerpMath.mulDiv(
                         fundingGrowthRangeInfo.twPremiumGrowthInsideX96.sub(order.lastTwPremiumGrowthInsideX96),
@@ -95,7 +95,7 @@ library Funding {
                         sqrtPriceX96AtUpperTick
                     )
                 )
-            );
+        );
 
         return fundingBelowX96.add(fundingInsideX96).div(PerpFixedPoint96._IQ96);
     }

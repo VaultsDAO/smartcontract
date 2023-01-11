@@ -14,7 +14,7 @@ import { IBaseToken } from "./interface/IBaseToken.sol";
 import { IIndexPrice } from "./interface/IIndexPrice.sol";
 import { IOrderBook } from "./interface/IOrderBook.sol";
 import { IClearingHouseConfig } from "./interface/IClearingHouseConfig.sol";
-import { AccountBalanceStorageV1, AccountMarket } from "./storage/AccountBalanceStorage.sol";
+import { AccountBalanceStorageV1, AccountMarket, Market } from "./storage/AccountBalanceStorage.sol";
 import { BlockContext } from "./base/BlockContext.sol";
 import { IAccountBalance } from "./interface/IAccountBalance.sol";
 
@@ -29,6 +29,7 @@ contract AccountBalance is IAccountBalance, BlockContext, ClearingHouseCallee, A
     using PerpMath for int256;
     using PerpMath for uint160;
     using AccountMarket for AccountMarket.Info;
+    using Market for Market.Info;
 
     //
     // CONSTANT
@@ -413,6 +414,10 @@ contract AccountBalance is IAccountBalance, BlockContext, ClearingHouseCallee, A
         AccountMarket.Info storage accountInfo = _accountMarketMap[trader][baseToken];
         accountInfo.takerPositionSize = accountInfo.takerPositionSize.add(base);
         accountInfo.takerOpenNotional = accountInfo.takerOpenNotional.add(quote);
+
+        Market.Info storage marketInfo = _marketMap[baseToken];
+        marketInfo.deltaPositionSize = marketInfo.deltaPositionSize.add(base);
+
         return (accountInfo.takerPositionSize, accountInfo.takerOpenNotional);
     }
 

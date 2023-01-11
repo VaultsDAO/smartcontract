@@ -21,7 +21,10 @@ contract TestClearingHouse is ClearingHouse {
         address uniV3FactoryArg,
         address exchangeArg,
         address accountBalanceArg,
-        address insuranceFundArg
+        address marketRegistryArg,
+        address insuranceFundArg,
+        address fundingFundArg,
+        address platformFundArg
     ) external initializer {
         ClearingHouse.initialize(
             configArg,
@@ -30,7 +33,10 @@ contract TestClearingHouse is ClearingHouse {
             uniV3FactoryArg,
             exchangeArg,
             accountBalanceArg,
-            insuranceFundArg
+            marketRegistryArg,
+            insuranceFundArg,
+            fundingFundArg,
+            platformFundArg
         );
         _testBlockTimestamp = block.timestamp;
     }

@@ -262,10 +262,7 @@ contract OrderBook is
 
         address pool = IMarketRegistry(_marketRegistry).getPool(params.baseToken);
         bool isExactInput = params.amount > 0;
-        uint24 insuranceFundFeeRatio =
-            IMarketRegistry(_marketRegistry).getMarketInfo(params.baseToken).insuranceFundFeeRatio;
         uint256 fee;
-        uint256 insuranceFundFee; // insuranceFundFee = fee * insuranceFundFeeRatio
 
         UniswapV3Broker.SwapState memory swapState =
             UniswapV3Broker.getSwapState(pool, params.amount, _feeGrowthGlobalX128Map[params.baseToken]);
@@ -337,12 +334,7 @@ contract OrderBook is
                 if (params.isBaseToQuote) {
                     step.fee = FullMath.mulDivRoundingUp(step.amountOut, params.exchangeFeeRatio, 1e6);
                 }
-
                 fee += step.fee;
-                uint256 stepInsuranceFundFee = FullMath.mulDivRoundingUp(step.fee, insuranceFundFeeRatio, 1e6);
-                insuranceFundFee += stepInsuranceFundFee;
-                uint256 stepMakerFee = step.fee.sub(stepInsuranceFundFee);
-                swapState.feeGrowthGlobalX128 += FullMath.mulDiv(stepMakerFee, FixedPoint128.Q128, swapState.liquidity);
             }
 
             if (swapState.sqrtPriceX96 == step.nextSqrtPriceX96) {
@@ -379,7 +371,7 @@ contract OrderBook is
             _feeGrowthGlobalX128Map[params.baseToken] = swapState.feeGrowthGlobalX128;
         }
 
-        return ReplaySwapResponse({ tick: swapState.tick, fee: fee, insuranceFundFee: insuranceFundFee });
+        return ReplaySwapResponse({ tick: swapState.tick, fee: fee });
     }
 
     //

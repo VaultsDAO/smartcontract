@@ -65,7 +65,6 @@ contract Exchange is
         int256 exchangedPositionSize;
         int256 exchangedPositionNotional;
         uint256 fee;
-        uint256 insuranceFundFee;
         int24 tick;
     }
 
@@ -229,7 +228,6 @@ contract Exchange is
                 exchangedPositionSize: response.exchangedPositionSize,
                 exchangedPositionNotional: response.exchangedPositionNotional,
                 fee: response.fee,
-                insuranceFundFee: response.insuranceFundFee,
                 pnlToBeRealized: pnlToBeRealized,
                 sqrtPriceAfterX96: sqrtPriceX96,
                 tick: response.tick,
@@ -535,7 +533,6 @@ contract Exchange is
                 exchangedPositionSize: exchangedPositionSize,
                 exchangedPositionNotional: exchangedPositionNotional,
                 fee: replayResponse.fee,
-                insuranceFundFee: replayResponse.insuranceFundFee,
                 tick: replayResponse.tick
             });
     }

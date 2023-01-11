@@ -4,6 +4,7 @@ import hre, { ethers } from "hardhat";
 
 import { UniswapV3Pool } from "../typechain/UniswapV3Pool";
 import { parseUnits } from "ethers/lib/utils";
+import { encodePriceSqrt } from "../test/shared/utilities";
 
 
 async function main() {
@@ -89,10 +90,6 @@ async function main() {
     await vBTC.addWhitelist(poolBTC.address)
 
     // deploy clearingHouse
-
-    console.log((await vETH.balanceOf(clearingHouse.address)).toString())
-    console.log((await vBTC.balanceOf(clearingHouse.address)).toString())
-
     await vUSD.addWhitelist(clearingHouse.address)
     await vETH.addWhitelist(clearingHouse.address)
     await vBTC.addWhitelist(clearingHouse.address)
@@ -100,8 +97,36 @@ async function main() {
     await vETH.mintMaximumTo(clearingHouse.address)
     await vBTC.mintMaximumTo(clearingHouse.address)
 
-    console.log((await vETH.balanceOf(clearingHouse.address)).toString())
-    console.log((await vBTC.balanceOf(clearingHouse.address)).toString())
+    // initMarket
+    var exFeeRatio = 10000 // 1%
+    var ifFeeRatio = 100000 // 10%
+    var maxTickCrossedWithinBlock = 0
+    // vETH
+    {
+        const poolAddr = await uniswapV3Factory.getPool(vETH.address, vUSD.address, uniFeeTier)
+        const uniPool = uniswapV3Factory.attach(poolAddr)
+        await uniPool.initialize(encodePriceSqrt('1200', "1"))
+        const uniFeeRatio = await uniPool.fee()
+        await marketRegistry.addPool(vETH.address, uniFeeRatio)
+        await marketRegistry.setFeeRatio(vETH.address, exFeeRatio)
+        await marketRegistry.setInsuranceFundFeeRatio(vETH.address, ifFeeRatio)
+        if (maxTickCrossedWithinBlock != 0) {
+            await exchange.setMaxTickCrossedWithinBlock(vETH.address, maxTickCrossedWithinBlock)
+        }
+    }
+    // vBTC
+    {
+        const poolAddr = await uniswapV3Factory.getPool(vBTC.address, vUSD.address, uniFeeTier)
+        const uniPool = uniswapV3Factory.attach(poolAddr)
+        await uniPool.initialize(encodePriceSqrt('16000', "1"))
+        const uniFeeRatio = await uniPool.fee()
+        await marketRegistry.addPool(vBTC.address, uniFeeRatio)
+        await marketRegistry.setFeeRatio(vBTC.address, exFeeRatio)
+        await marketRegistry.setInsuranceFundFeeRatio(vBTC.address, ifFeeRatio)
+        if (maxTickCrossedWithinBlock != 0) {
+            await exchange.setMaxTickCrossedWithinBlock(vBTC.address, maxTickCrossedWithinBlock)
+        }
+    }
 }
 
 // We recommend this pattern to be able to use async/await everywhere

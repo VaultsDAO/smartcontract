@@ -28,7 +28,7 @@ export async function initMarket(
     const marketRegistry = fixture.marketRegistry
     await marketRegistry.addPool(baseToken, uniFeeRatio)
     await marketRegistry.setFeeRatio(baseToken, exFeeRatio)
-    await marketRegistry.setInsuranceFundFeeRatio(baseToken, ifFeeRatio)
+    // await marketRegistry.setInsuranceFundFeeRatio(baseToken, ifFeeRatio)
 
     if (maxTickCrossedWithinBlock != 0) {
         await fixture.exchange.setMaxTickCrossedWithinBlock(baseToken, maxTickCrossedWithinBlock)

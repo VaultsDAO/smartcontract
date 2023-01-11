@@ -23,7 +23,6 @@ interface IExchange {
         int256 exchangedPositionSize;
         int256 exchangedPositionNotional;
         uint256 fee;
-        uint256 insuranceFundFee;
         int256 pnlToBeRealized;
         uint256 sqrtPriceAfterX96;
         int24 tick;
