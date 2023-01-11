@@ -80,11 +80,7 @@ contract AccountBalance is IAccountBalance, BlockContext, ClearingHouseCallee, A
     }
 
     /// @inheritdoc IAccountBalance
-    function settleQuoteToOwedRealizedPnl(
-        address trader,
-        address baseToken,
-        int256 amount
-    ) external override {
+    function settleQuoteToOwedRealizedPnl(address trader, address baseToken, int256 amount) external override {
         _requireOnlyClearingHouse();
         _settleQuoteToOwedRealizedPnl(trader, baseToken, amount);
     }
@@ -150,15 +146,13 @@ contract AccountBalance is IAccountBalance, BlockContext, ClearingHouseCallee, A
     /// @inheritdoc IAccountBalance
     /// @dev we don't do swap to get position notional here.
     ///      we define the position notional in a closed market is `closed price * position size`
-    function settlePositionInClosedMarket(address trader, address baseToken)
+    function settlePositionInClosedMarket(
+        address trader,
+        address baseToken
+    )
         external
         override
-        returns (
-            int256 positionNotional,
-            int256 openNotional,
-            int256 realizedPnl,
-            uint256 closedPrice
-        )
+        returns (int256 positionNotional, int256 openNotional, int256 realizedPnl, uint256 closedPrice)
     {
         _requireOnlyClearingHouse();
 
@@ -200,12 +194,10 @@ contract AccountBalance is IAccountBalance, BlockContext, ClearingHouseCallee, A
     }
 
     /// @inheritdoc IAccountBalance
-    function getAccountInfo(address trader, address baseToken)
-        external
-        view
-        override
-        returns (AccountMarket.Info memory)
-    {
+    function getAccountInfo(
+        address trader,
+        address baseToken
+    ) external view override returns (AccountMarket.Info memory) {
         return _accountMarketMap[trader][baseToken];
     }
 
@@ -217,8 +209,11 @@ contract AccountBalance is IAccountBalance, BlockContext, ClearingHouseCallee, A
     // @inheritdoc IAccountBalance
     function getTotalOpenNotional(address trader, address baseToken) external view override returns (int256) {
         // quote.pool[baseToken] + quoteBalance[baseToken]
-        (uint256 quoteInPool, ) =
-            IOrderBook(_orderBook).getTotalTokenAmountInPoolAndPendingFee(trader, baseToken, false);
+        (uint256 quoteInPool, ) = IOrderBook(_orderBook).getTotalTokenAmountInPoolAndPendingFee(
+            trader,
+            baseToken,
+            false
+        );
         int256 quoteBalance = getQuote(trader, baseToken);
         return quoteInPool.toInt256().add(quoteBalance);
     }
@@ -249,16 +244,7 @@ contract AccountBalance is IAccountBalance, BlockContext, ClearingHouseCallee, A
     }
 
     /// @inheritdoc IAccountBalance
-    function getPnlAndPendingFee(address trader)
-        external
-        view
-        override
-        returns (
-            int256,
-            int256,
-            uint256
-        )
-    {
+    function getPnlAndPendingFee(address trader) external view override returns (int256, int256, uint256) {
         int256 totalPositionValue;
         uint256 tokenLen = _baseTokensMap[trader].length;
         for (uint256 i = 0; i < tokenLen; i++) {
@@ -364,8 +350,11 @@ contract AccountBalance is IAccountBalance, BlockContext, ClearingHouseCallee, A
         // the actual base amount in pool would be 1999999999999999999
 
         // makerBalance = totalTokenAmountInPool - totalOrderDebt
-        (uint256 totalBaseBalanceFromOrders, ) =
-            IOrderBook(_orderBook).getTotalTokenAmountInPoolAndPendingFee(trader, baseToken, true);
+        (uint256 totalBaseBalanceFromOrders, ) = IOrderBook(_orderBook).getTotalTokenAmountInPoolAndPendingFee(
+            trader,
+            baseToken,
+            true
+        );
         uint256 totalBaseDebtFromOrder = IOrderBook(_orderBook).getTotalOrderDebt(trader, baseToken, true);
         int256 makerBaseBalance = totalBaseBalanceFromOrders.toInt256().sub(totalBaseDebtFromOrder.toInt256());
 
@@ -402,6 +391,11 @@ contract AccountBalance is IAccountBalance, BlockContext, ClearingHouseCallee, A
                 .toInt256();
     }
 
+    /// @inheritdoc IAccountBalance
+    function getMarketPositionSize(address baseToken) public view override returns (uint256, uint256) {
+        return (_marketMap[baseToken].longPositionSize, _marketMap[baseToken].shortPositionSize);
+    }
+
     //
     // INTERNAL NON-VIEW
     //
@@ -414,10 +408,6 @@ contract AccountBalance is IAccountBalance, BlockContext, ClearingHouseCallee, A
         AccountMarket.Info storage accountInfo = _accountMarketMap[trader][baseToken];
         accountInfo.takerPositionSize = accountInfo.takerPositionSize.add(base);
         accountInfo.takerOpenNotional = accountInfo.takerOpenNotional.add(quote);
-
-        Market.Info storage marketInfo = _marketMap[baseToken];
-        marketInfo.deltaPositionSize = marketInfo.deltaPositionSize.add(base);
-
         return (accountInfo.takerPositionSize, accountInfo.takerOpenNotional);
     }
 
@@ -428,11 +418,7 @@ contract AccountBalance is IAccountBalance, BlockContext, ClearingHouseCallee, A
         }
     }
 
-    function _settleQuoteToOwedRealizedPnl(
-        address trader,
-        address baseToken,
-        int256 amount
-    ) internal {
+    function _settleQuoteToOwedRealizedPnl(address trader, address baseToken, int256 amount) internal {
         if (amount != 0) {
             AccountMarket.Info storage accountInfo = _accountMarketMap[trader][baseToken];
             accountInfo.takerOpenNotional = accountInfo.takerOpenNotional.sub(amount);
@@ -494,11 +480,9 @@ contract AccountBalance is IAccountBalance, BlockContext, ClearingHouseCallee, A
     }
 
     /// @return netQuoteBalance = quote.balance + totalQuoteInPools
-    function _getNetQuoteBalanceAndPendingFee(address trader)
-        internal
-        view
-        returns (int256 netQuoteBalance, uint256 pendingFee)
-    {
+    function _getNetQuoteBalanceAndPendingFee(
+        address trader
+    ) internal view returns (int256 netQuoteBalance, uint256 pendingFee) {
         int256 totalTakerQuoteBalance;
         uint256 tokenLen = _baseTokensMap[trader].length;
         for (uint256 i = 0; i < tokenLen; i++) {

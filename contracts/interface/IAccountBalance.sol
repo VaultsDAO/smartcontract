@@ -45,11 +45,7 @@ interface IAccountBalance {
     /// @param trader The address of the trader
     /// @param baseToken The address of the baseToken
     /// @param amount Settled quote amount
-    function settleQuoteToOwedRealizedPnl(
-        address trader,
-        address baseToken,
-        int256 amount
-    ) external;
+    function settleQuoteToOwedRealizedPnl(address trader, address baseToken, int256 amount) external;
 
     /// @notice Settle account balance and deregister base token
     /// @dev Only used by `ClearingHouse` contract
@@ -100,14 +96,10 @@ interface IAccountBalance {
     /// @return openNotional Taker's open notional
     /// @return realizedPnl Settled realized pnl
     /// @return closedPrice The closed price of the closed market
-    function settlePositionInClosedMarket(address trader, address baseToken)
-        external
-        returns (
-            int256 positionNotional,
-            int256 openNotional,
-            int256 realizedPnl,
-            uint256 closedPrice
-        );
+    function settlePositionInClosedMarket(
+        address trader,
+        address baseToken
+    ) external returns (int256 positionNotional, int256 openNotional, int256 realizedPnl, uint256 closedPrice);
 
     /// @notice Get `ClearingHouseConfig` address
     /// @return clearingHouseConfig The address of ClearingHouseConfig
@@ -130,10 +122,10 @@ interface IAccountBalance {
     /// @param trader The address of trader
     /// @param baseToken The address of baseToken
     /// @return traderAccountInfo The baseToken account info of trader
-    function getAccountInfo(address trader, address baseToken)
-        external
-        view
-        returns (AccountMarket.Info memory traderAccountInfo);
+    function getAccountInfo(
+        address trader,
+        address baseToken
+    ) external view returns (AccountMarket.Info memory traderAccountInfo);
 
     /// @notice Get taker cost of trader's baseToken
     /// @param trader The address of trader
@@ -157,24 +149,18 @@ interface IAccountBalance {
     /// @dev This is different from `Vault._getTotalMarginRequirement()`, which is for freeCollateral calculation
     /// @param trader The address of trader
     /// @return marginRequirementForLiquidation It is compared with `ClearingHouse.getAccountValue` which is also an int
-    function getMarginRequirementForLiquidation(address trader)
-        external
-        view
-        returns (int256 marginRequirementForLiquidation);
+    function getMarginRequirementForLiquidation(
+        address trader
+    ) external view returns (int256 marginRequirementForLiquidation);
 
     /// @notice Get owedRealizedPnl, unrealizedPnl and pending fee
     /// @param trader The address of trader
     /// @return owedRealizedPnl the pnl realized already but stored temporarily in AccountBalance
     /// @return unrealizedPnl the pnl not yet realized
     /// @return pendingFee the pending fee of maker earned
-    function getPnlAndPendingFee(address trader)
-        external
-        view
-        returns (
-            int256 owedRealizedPnl,
-            int256 unrealizedPnl,
-            uint256 pendingFee
-        );
+    function getPnlAndPendingFee(
+        address trader
+    ) external view returns (int256 owedRealizedPnl, int256 unrealizedPnl, uint256 pendingFee);
 
     /// @notice Check trader has open order in open/closed market.
     /// @param trader The address of trader
@@ -232,4 +218,6 @@ interface IAccountBalance {
         address baseToken,
         int256 accountValue
     ) external view returns (int256);
+
+    function getMarketPositionSize(address baseToken) external view returns (uint256, uint256);
 }
