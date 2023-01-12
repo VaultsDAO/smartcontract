@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 pragma solidity 0.7.6;
 
-import { Funding } from "../lib/Funding.sol";
+import { DataTypes } from "../types/DataTypes.sol";
 
 /// @notice For future upgrades, do not change ExchangeStorageV1. Create a new
 /// contract which implements ExchangeStorageV1 and following the naming convention
@@ -14,7 +14,7 @@ abstract contract ExchangeStorageV1 {
     mapping(address => int24) internal _lastUpdatedTickMap;
     mapping(address => uint256) internal _firstTradedTimestampMap;
     mapping(address => uint256) internal _lastSettledTimestampMap;
-    mapping(address => Funding.Growth) internal _globalFundingGrowthX96Map;
+    mapping(address => DataTypes.Growth) internal _globalFundingGrowthX96Map;
 
     // key: base token
     // value: a threshold to limit the price impact per block when reducing or closing the position

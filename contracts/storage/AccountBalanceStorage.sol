@@ -2,7 +2,7 @@
 pragma solidity 0.7.6;
 
 import { Market } from "../lib/Market.sol";
-import { AccountMarket } from "../lib/AccountMarket.sol";
+import { DataTypes } from "../types/DataTypes.sol";
 
 /// @notice For future upgrades, do not change AccountBalanceStorageV1. Create a new
 /// contract which implements AccountBalanceStorageV1 and following the naming convention
@@ -22,5 +22,5 @@ abstract contract AccountBalanceStorageV1 {
     mapping(address => Market.Info) internal _marketMap;
 
     // first key: trader, second key: baseToken
-    mapping(address => mapping(address => AccountMarket.Info)) internal _accountMarketMap;
+    mapping(address => mapping(address => DataTypes.AccountMarketInfo)) internal _accountMarketMap;
 }

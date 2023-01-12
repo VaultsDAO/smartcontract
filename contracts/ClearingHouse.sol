@@ -27,13 +27,14 @@ import { IBaseToken } from "./interface/IBaseToken.sol";
 import { IIndexPrice } from "./interface/IIndexPrice.sol";
 import { IDelegateApproval } from "./interface/IDelegateApproval.sol";
 import { BaseRelayRecipient } from "./gsn/BaseRelayRecipient.sol";
-import { ClearingHouseStorageV2 } from "./storage/ClearingHouseStorage.sol";
+import { ClearingHouseStorage } from "./storage/ClearingHouseStorage.sol";
 import { BlockContext } from "./base/BlockContext.sol";
 import { IClearingHouse } from "./interface/IClearingHouse.sol";
 import { AccountMarket } from "./lib/AccountMarket.sol";
 import { OpenOrder } from "./lib/OpenOrder.sol";
+import { GenericLogic } from "./lib/GenericLogic.sol";
 import { IMarketRegistry } from "./interface/IMarketRegistry.sol";
-
+import { DataTypes } from "./types/DataTypes.sol";
 import "hardhat/console.sol";
 
 // never inherit any new stateful contract. never change the orders of parent stateful contracts
@@ -45,7 +46,7 @@ contract ClearingHouse is
     ReentrancyGuardUpgradeable,
     OwnerPausable,
     BaseRelayRecipient,
-    ClearingHouseStorageV2
+    ClearingHouseStorage
 {
     using AddressUpgradeable for address;
     using SafeMathUpgradeable for uint256;
@@ -182,8 +183,162 @@ contract ClearingHouse is
     }
 
     /// @inheritdoc IClearingHouse
+    // function addLiquidity(
+    //     AddLiquidityParams calldata params
+    // )
+    //     external
+    //     override
+    //     whenNotPaused
+    //     nonReentrant
+    //     checkDeadline(params.deadline)
+    //     onlyMaker
+    //     returns (
+    //         // check onlyLiquidityAdmin
+    //         AddLiquidityResponse memory
+    //     )
+    // {
+    //     // input requirement checks:
+    //     //   baseToken: in Exchange.settleFunding()
+    //     //   base & quote: in LiquidityAmounts.getLiquidityForAmounts() -> FullMath.mulDiv()
+    //     //   lowerTick & upperTick: in UniswapV3Pool._modifyPosition()
+    //     //   minBase, minQuote & deadline: here
+
+    //     _checkMarketOpen(params.baseToken);
+
+    //     // This condition is to prevent the intentional bad debt attack through price manipulation.
+    //     // CH_OMPS: Over the maximum price spread
+    //     require(!IExchange(_exchange).isOverPriceSpread(params.baseToken), "CH_OMPS");
+
+    //     // CH_DUTB: Disable useTakerBalance
+    //     require(!params.useTakerBalance, "CH_DUTB");
+
+    //     address trader = _msgSender();
+    //     // register token if it's the first time
+    //     _registerBaseToken(trader, params.baseToken);
+
+    //     // must settle funding first
+    //     DataTypes.Growth memory fundingGrowthGlobal = _settleFunding(trader, params.baseToken);
+
+    //     // note that we no longer check available tokens here because CH will always auto-mint in UniswapV3MintCallback
+    //     IOrderBook.AddLiquidityResponse memory response = IOrderBook(_orderBook).addLiquidity(
+    //         IOrderBook.AddLiquidityParams({
+    //             trader: trader,
+    //             baseToken: params.baseToken,
+    //             base: params.base,
+    //             quote: params.quote,
+    //             lowerTick: params.lowerTick,
+    //             upperTick: params.upperTick,
+    //             fundingGrowthGlobal: fundingGrowthGlobal
+    //         })
+    //     );
+
+    //     _checkSlippageAfterLiquidityChange(response.base, params.minBase, response.quote, params.minQuote);
+
+    //     // if !useTakerBalance, takerBalance won't change, only need to collects fee to oweRealizedPnl
+    //     if (params.useTakerBalance) {
+    //         bool isBaseAdded = response.base != 0;
+
+    //         // can't add liquidity within range from take position
+    //         require(isBaseAdded != (response.quote != 0), "CH_CALWRFTP");
+
+    //         DataTypes.AccountMarketInfo memory accountMarketInfo = IAccountBalance(_accountBalance).getAccountInfo(
+    //             trader,
+    //             params.baseToken
+    //         );
+
+    //         // the signs of removedPositionSize and removedOpenNotional are always the opposite.
+    //         int256 removedPositionSize;
+    //         int256 removedOpenNotional;
+    //         if (isBaseAdded) {
+    //             // taker base not enough
+    //             require(accountMarketInfo.takerPositionSize >= response.base.toInt256(), "CH_TBNE");
+
+    //             removedPositionSize = response.base.neg256();
+
+    //             // move quote debt from taker to maker:
+    //             // takerOpenNotional(-) * removedPositionSize(-) / takerPositionSize(+)
+
+    //             // overflow inspection:
+    //             // Assume collateral is 2.406159692E28 and index price is 1e-18
+    //             // takerOpenNotional ~= 10 * 2.406159692E28 = 2.406159692E29 --> x
+    //             // takerPositionSize ~= takerOpenNotional/index price = x * 1e18 = 2.4061597E38
+    //             // max of removedPositionSize = takerPositionSize = 2.4061597E38
+    //             // (takerOpenNotional * removedPositionSize) < 2^255
+    //             // 2.406159692E29 ^2 * 1e18 < 2^255
+    //             removedOpenNotional = accountMarketInfo.takerOpenNotional.mul(removedPositionSize).div(
+    //                 accountMarketInfo.takerPositionSize
+    //             );
+    //         } else {
+    //             // taker quote not enough
+    //             require(accountMarketInfo.takerOpenNotional >= response.quote.toInt256(), "CH_TQNE");
+
+    //             removedOpenNotional = response.quote.neg256();
+
+    //             // move base debt from taker to maker:
+    //             // takerPositionSize(-) * removedOpenNotional(-) / takerOpenNotional(+)
+    //             // overflow inspection: same as above
+    //             removedPositionSize = accountMarketInfo.takerPositionSize.mul(removedOpenNotional).div(
+    //                 accountMarketInfo.takerOpenNotional
+    //             );
+    //         }
+
+    //         // update orderDebt to record the cost of this order
+    //         IOrderBook(_orderBook).updateOrderDebt(
+    //             OpenOrder.calcOrderKey(trader, params.baseToken, params.lowerTick, params.upperTick),
+    //             removedPositionSize,
+    //             removedOpenNotional
+    //         );
+
+    //         // update takerBalances as we're using takerBalances to provide liquidity
+    //         (, int256 takerOpenNotional) = IAccountBalance(_accountBalance).modifyTakerBalance(
+    //             trader,
+    //             params.baseToken,
+    //             removedPositionSize,
+    //             removedOpenNotional
+    //         );
+
+    //         uint256 sqrtPrice = _getSqrtMarkX96(params.baseToken);
+    //         _emitPositionChanged(
+    //             trader,
+    //             params.baseToken,
+    //             removedPositionSize, // exchangedPositionSize
+    //             removedOpenNotional, // exchangedPositionNotional
+    //             0, // fee
+    //             takerOpenNotional, // openNotional
+    //             0, // realizedPnl
+    //             sqrtPrice // sqrtPriceAfterX96
+    //         );
+    //     }
+
+    //     // fees always have to be collected to owedRealizedPnl, as long as there is a change in liquidity
+    //     _modifyOwedRealizedPnl(trader, response.fee.toInt256());
+
+    //     // after token balances are updated, we can check if there is enough free collateral
+    //     _requireEnoughFreeCollateral(trader);
+
+    //     _emitLiquidityChanged(
+    //         trader,
+    //         params.baseToken,
+    //         _quoteToken,
+    //         params.lowerTick,
+    //         params.upperTick,
+    //         response.base.toInt256(),
+    //         response.quote.toInt256(),
+    //         response.liquidity.toInt128(),
+    //         response.fee
+    //     );
+
+    //     return
+    //         AddLiquidityResponse({
+    //             base: response.base,
+    //             quote: response.quote,
+    //             fee: response.fee,
+    //             liquidity: response.liquidity
+    //         });
+    // }
+
     function addLiquidity(
-        AddLiquidityParams calldata params
+        DataTypes.AddLiquidityParams calldata params
     )
         external
         override
@@ -193,147 +348,10 @@ contract ClearingHouse is
         onlyMaker
         returns (
             // check onlyLiquidityAdmin
-            AddLiquidityResponse memory
+            DataTypes.AddLiquidityResponse memory
         )
     {
-        // input requirement checks:
-        //   baseToken: in Exchange.settleFunding()
-        //   base & quote: in LiquidityAmounts.getLiquidityForAmounts() -> FullMath.mulDiv()
-        //   lowerTick & upperTick: in UniswapV3Pool._modifyPosition()
-        //   minBase, minQuote & deadline: here
-
-        _checkMarketOpen(params.baseToken);
-
-        // This condition is to prevent the intentional bad debt attack through price manipulation.
-        // CH_OMPS: Over the maximum price spread
-        require(!IExchange(_exchange).isOverPriceSpread(params.baseToken), "CH_OMPS");
-
-        // CH_DUTB: Disable useTakerBalance
-        require(!params.useTakerBalance, "CH_DUTB");
-
-        address trader = _msgSender();
-        // register token if it's the first time
-        _registerBaseToken(trader, params.baseToken);
-
-        // must settle funding first
-        Funding.Growth memory fundingGrowthGlobal = _settleFunding(trader, params.baseToken);
-
-        // note that we no longer check available tokens here because CH will always auto-mint in UniswapV3MintCallback
-        IOrderBook.AddLiquidityResponse memory response = IOrderBook(_orderBook).addLiquidity(
-            IOrderBook.AddLiquidityParams({
-                trader: trader,
-                baseToken: params.baseToken,
-                base: params.base,
-                quote: params.quote,
-                lowerTick: params.lowerTick,
-                upperTick: params.upperTick,
-                fundingGrowthGlobal: fundingGrowthGlobal
-            })
-        );
-
-        _checkSlippageAfterLiquidityChange(response.base, params.minBase, response.quote, params.minQuote);
-
-        // if !useTakerBalance, takerBalance won't change, only need to collects fee to oweRealizedPnl
-        if (params.useTakerBalance) {
-            bool isBaseAdded = response.base != 0;
-
-            // can't add liquidity within range from take position
-            require(isBaseAdded != (response.quote != 0), "CH_CALWRFTP");
-
-            AccountMarket.Info memory accountMarketInfo = IAccountBalance(_accountBalance).getAccountInfo(
-                trader,
-                params.baseToken
-            );
-
-            // the signs of removedPositionSize and removedOpenNotional are always the opposite.
-            int256 removedPositionSize;
-            int256 removedOpenNotional;
-            if (isBaseAdded) {
-                // taker base not enough
-                require(accountMarketInfo.takerPositionSize >= response.base.toInt256(), "CH_TBNE");
-
-                removedPositionSize = response.base.neg256();
-
-                // move quote debt from taker to maker:
-                // takerOpenNotional(-) * removedPositionSize(-) / takerPositionSize(+)
-
-                // overflow inspection:
-                // Assume collateral is 2.406159692E28 and index price is 1e-18
-                // takerOpenNotional ~= 10 * 2.406159692E28 = 2.406159692E29 --> x
-                // takerPositionSize ~= takerOpenNotional/index price = x * 1e18 = 2.4061597E38
-                // max of removedPositionSize = takerPositionSize = 2.4061597E38
-                // (takerOpenNotional * removedPositionSize) < 2^255
-                // 2.406159692E29 ^2 * 1e18 < 2^255
-                removedOpenNotional = accountMarketInfo.takerOpenNotional.mul(removedPositionSize).div(
-                    accountMarketInfo.takerPositionSize
-                );
-            } else {
-                // taker quote not enough
-                require(accountMarketInfo.takerOpenNotional >= response.quote.toInt256(), "CH_TQNE");
-
-                removedOpenNotional = response.quote.neg256();
-
-                // move base debt from taker to maker:
-                // takerPositionSize(-) * removedOpenNotional(-) / takerOpenNotional(+)
-                // overflow inspection: same as above
-                removedPositionSize = accountMarketInfo.takerPositionSize.mul(removedOpenNotional).div(
-                    accountMarketInfo.takerOpenNotional
-                );
-            }
-
-            // update orderDebt to record the cost of this order
-            IOrderBook(_orderBook).updateOrderDebt(
-                OpenOrder.calcOrderKey(trader, params.baseToken, params.lowerTick, params.upperTick),
-                removedPositionSize,
-                removedOpenNotional
-            );
-
-            // update takerBalances as we're using takerBalances to provide liquidity
-            (, int256 takerOpenNotional) = IAccountBalance(_accountBalance).modifyTakerBalance(
-                trader,
-                params.baseToken,
-                removedPositionSize,
-                removedOpenNotional
-            );
-
-            uint256 sqrtPrice = _getSqrtMarkX96(params.baseToken);
-            _emitPositionChanged(
-                trader,
-                params.baseToken,
-                removedPositionSize, // exchangedPositionSize
-                removedOpenNotional, // exchangedPositionNotional
-                0, // fee
-                takerOpenNotional, // openNotional
-                0, // realizedPnl
-                sqrtPrice // sqrtPriceAfterX96
-            );
-        }
-
-        // fees always have to be collected to owedRealizedPnl, as long as there is a change in liquidity
-        _modifyOwedRealizedPnl(trader, response.fee.toInt256());
-
-        // after token balances are updated, we can check if there is enough free collateral
-        _requireEnoughFreeCollateral(trader);
-
-        _emitLiquidityChanged(
-            trader,
-            params.baseToken,
-            _quoteToken,
-            params.lowerTick,
-            params.upperTick,
-            response.base.toInt256(),
-            response.quote.toInt256(),
-            response.liquidity.toInt128(),
-            response.fee
-        );
-
-        return
-            AddLiquidityResponse({
-                base: response.base,
-                quote: response.quote,
-                fee: response.fee,
-                liquidity: response.liquidity
-            });
+        return GenericLogic.addLiquidity(address(this), _msgSender(), params);
     }
 
     /// @inheritdoc IClearingHouse
@@ -676,6 +694,10 @@ contract ClearingHouse is
     /// @inheritdoc IClearingHouse
     function getDelegateApproval() external view override returns (address) {
         return _delegateApproval;
+    }
+
+    function getMaker() external view override returns (address) {
+        return _maker;
     }
 
     /// @inheritdoc IClearingHouse
@@ -1076,7 +1098,7 @@ contract ClearingHouse is
     function _settleFunding(
         address trader,
         address baseToken
-    ) internal returns (Funding.Growth memory fundingGrowthGlobal) {
+    ) internal returns (DataTypes.Growth memory fundingGrowthGlobal) {
         int256 fundingPayment;
         (fundingPayment, fundingGrowthGlobal) = IExchange(_exchange).settleFunding(trader, baseToken);
 
@@ -1100,24 +1122,6 @@ contract ClearingHouse is
 
     function _modifyOwedRealizedPnl(address trader, int256 amount) internal {
         IAccountBalance(_accountBalance).modifyOwedRealizedPnl(trader, amount);
-    }
-
-    function _settleBalanceAndDeregister(
-        address trader,
-        address baseToken,
-        int256 takerBase,
-        int256 takerQuote,
-        int256 realizedPnl,
-        int256 makerFee
-    ) internal {
-        IAccountBalance(_accountBalance).settleBalanceAndDeregister(
-            trader,
-            baseToken,
-            takerBase,
-            takerQuote,
-            realizedPnl,
-            makerFee
-        );
     }
 
     function _emitPositionChanged(
@@ -1207,9 +1211,9 @@ contract ClearingHouse is
         return IAccountBalance(_accountBalance).getMarginRequirementForLiquidation(trader);
     }
 
-    function _getIndexPrice(address baseToken) internal view returns (uint256) {
-        return IIndexPrice(baseToken).getIndexPrice(IClearingHouseConfig(_clearingHouseConfig).getTwapInterval());
-    }
+    // function _getIndexPrice(address baseToken) internal view returns (uint256) {
+    //     return IIndexPrice(baseToken).getIndexPrice(IClearingHouseConfig(_clearingHouseConfig).getTwapInterval());
+    // }
 
     function _getLiquidationPenaltyRatio() internal view returns (uint24) {
         return IClearingHouseConfig(_clearingHouseConfig).getLiquidationPenaltyRatio();
@@ -1253,6 +1257,28 @@ contract ClearingHouse is
         );
 
         return (liquidatedPositionSize, liquidatedPositionNotional);
+    }
+
+    function _getIndexPrice(address baseToken) internal view returns (uint256) {
+        return IIndexPrice(baseToken).getIndexPrice(IClearingHouseConfig(_clearingHouseConfig).getTwapInterval());
+    }
+
+    function _settleBalanceAndDeregister(
+        address trader,
+        address baseToken,
+        int256 takerBase,
+        int256 takerQuote,
+        int256 realizedPnl,
+        int256 makerFee
+    ) internal {
+        IAccountBalance(_accountBalance).settleBalanceAndDeregister(
+            trader,
+            baseToken,
+            takerBase,
+            takerQuote,
+            realizedPnl,
+            makerFee
+        );
     }
 
     function _requireEnoughFreeCollateral(address trader) internal view {

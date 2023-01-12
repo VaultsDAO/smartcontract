@@ -27,7 +27,7 @@ import { IBaseToken } from "./interface/IBaseToken.sol";
 import { ExchangeStorageV1 } from "./storage/ExchangeStorage.sol";
 import { IExchange } from "./interface/IExchange.sol";
 import { OpenOrder } from "./lib/OpenOrder.sol";
-
+import { DataTypes } from "./types/DataTypes.sol";
 import "hardhat/console.sol";
 
 // never inherit any new stateful contract. never change the orders of parent stateful contracts
@@ -246,7 +246,7 @@ contract Exchange is
     function settleFunding(
         address trader,
         address baseToken
-    ) external override returns (int256 fundingPayment, Funding.Growth memory fundingGrowthGlobal) {
+    ) external override returns (int256 fundingPayment, DataTypes.Growth memory fundingGrowthGlobal) {
         _requireOnlyClearingHouse();
         // EX_BTNE: base token does not exists
         require(IMarketRegistry(_marketRegistry).hasPool(baseToken), "EX_BTNE");
@@ -274,7 +274,7 @@ contract Exchange is
         // update states before further actions in this block; once per block
         if (timestamp != _lastSettledTimestampMap[baseToken]) {
             // update fundingGrowthGlobal and _lastSettledTimestamp
-            Funding.Growth storage lastFundingGrowthGlobal = _globalFundingGrowthX96Map[baseToken];
+            DataTypes.Growth storage lastFundingGrowthGlobal = _globalFundingGrowthX96Map[baseToken];
             (
                 _lastSettledTimestampMap[baseToken],
                 lastFundingGrowthGlobal.twLongPremiumX96,
@@ -324,7 +324,7 @@ contract Exchange is
 
     /// @inheritdoc IExchange
     function getPnlToBeRealized(RealizePnlParams memory params) external view override returns (int256) {
-        AccountMarket.Info memory info = IAccountBalance(_accountBalance).getAccountInfo(
+        DataTypes.AccountMarketInfo memory info = IAccountBalance(_accountBalance).getAccountInfo(
             params.trader,
             params.baseToken
         );
@@ -376,7 +376,7 @@ contract Exchange is
 
     /// @inheritdoc IExchange
     function getPendingFundingPayment(address trader, address baseToken) public view override returns (int256) {
-        (Funding.Growth memory fundingGrowthGlobal, , ) = _getFundingGrowthGlobalAndTwaps(baseToken);
+        (DataTypes.Growth memory fundingGrowthGlobal, , ) = _getFundingGrowthGlobalAndTwaps(baseToken);
         return
             Funding.calcPendingFundingPaymentWithLiquidityCoefficient(
                 IAccountBalance(_accountBalance).getBase(trader, baseToken),
@@ -441,7 +441,7 @@ contract Exchange is
                 exchangeFeeRatio: exchangeFeeRatio,
                 uniswapFeeRatio: uniswapFeeRatio,
                 shouldUpdateState: false,
-                globalFundingGrowth: Funding.Growth({
+                globalFundingGrowth: DataTypes.Growth({
                     twLongPremiumX96: 0,
                     twLongPremiumDivBySqrtPriceX96: 0,
                     twShortPremiumX96: 0,
@@ -465,7 +465,7 @@ contract Exchange is
                 marketInfo.uniswapFeeRatio
             );
 
-        (Funding.Growth memory fundingGrowthGlobal, , ) = _getFundingGrowthGlobalAndTwaps(params.baseToken);
+        (DataTypes.Growth memory fundingGrowthGlobal, , ) = _getFundingGrowthGlobalAndTwaps(params.baseToken);
         // simulate the swap to calculate the fees charged in exchange
         IOrderBook.ReplaySwapResponse memory replayResponse = IOrderBook(_orderBook).replaySwap(
             IOrderBook.ReplaySwapParams({
@@ -562,7 +562,7 @@ contract Exchange is
         int256 baseBalance,
         int256 twLongPremiumGrowthGlobalX96,
         int256 twShortPremiumGrowthGlobalX96,
-        Funding.Growth memory fundingGrowthGlobal
+        DataTypes.Growth memory fundingGrowthGlobal
     ) internal returns (int256 pendingFundingPayment) {
         return
             Funding.calcPendingFundingPaymentWithLiquidityCoefficient(
@@ -602,7 +602,7 @@ contract Exchange is
     /// @return indexTwap only for settleFunding()
     function _getFundingGrowthGlobalAndTwaps(
         address baseToken
-    ) internal view returns (Funding.Growth memory fundingGrowthGlobal, uint256 markTwap, uint256 indexTwap) {
+    ) internal view returns (DataTypes.Growth memory fundingGrowthGlobal, uint256 markTwap, uint256 indexTwap) {
         bool marketOpen = IBaseToken(baseToken).isOpen();
         uint256 timestamp = marketOpen ? _blockTimestamp() : IBaseToken(baseToken).getPausedTimestamp();
 
@@ -636,7 +636,7 @@ contract Exchange is
         markTwap = markTwapX96.formatX96ToX10_18();
 
         uint256 lastSettledTimestamp = _lastSettledTimestampMap[baseToken];
-        Funding.Growth storage lastFundingGrowthGlobal = _globalFundingGrowthX96Map[baseToken];
+        DataTypes.Growth storage lastFundingGrowthGlobal = _globalFundingGrowthX96Map[baseToken];
         if (timestamp == lastSettledTimestamp || lastSettledTimestamp == 0) {
             // if this is the latest updated timestamp, values in _globalFundingGrowthX96Map are up-to-date already
             fundingGrowthGlobal = lastFundingGrowthGlobal;

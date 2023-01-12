@@ -60,9 +60,9 @@ describe("ClearingHouse realizedPnl", () => {
         })
 
         // prepare collateral for maker
-        const makerCollateralAmount = parseUnits("1000000", collateralDecimals)
-        await collateral.mint(maker.address, makerCollateralAmount)
-        await deposit(maker, vault, 1000000, collateral)
+        // const makerCollateralAmount = parseUnits("1000000", collateralDecimals)
+        // await collateral.mint(maker.address, makerCollateralAmount)
+        // await deposit(maker, vault, 1000000, collateral)
 
         // prepare collateral for taker
         takerUsdcBalanceBefore = parseUnits("1000", collateralDecimals)

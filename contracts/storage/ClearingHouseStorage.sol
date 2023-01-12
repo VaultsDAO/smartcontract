@@ -4,7 +4,7 @@ pragma solidity 0.7.6;
 /// @notice For future upgrades, do not change ClearingHouseStorageV1. Create a new
 /// contract which implements ClearingHouseStorageV1 and following the naming convention
 /// ClearingHouseStorageVX.
-abstract contract ClearingHouseStorageV1 {
+abstract contract ClearingHouseStorage {
     // --------- IMMUTABLE ---------
     address internal _quoteToken;
     address internal _uniswapV3Factory;
@@ -22,8 +22,6 @@ abstract contract ClearingHouseStorageV1 {
     address internal _insuranceFund;
     address internal _platformFund;
     address internal _maker;
-}
 
-abstract contract ClearingHouseStorageV2 is ClearingHouseStorageV1 {
     address internal _delegateApproval;
 }
