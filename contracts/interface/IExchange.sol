@@ -129,9 +129,4 @@ interface IExchange {
     /// @return clearingHouse `ClearingHouseConfig` contract address
     function getClearingHouseConfig() external view returns (address clearingHouse);
 
-    function getDetalTawpInsuranceFundFee(
-        address baseToken,
-        int256 exchangedPositionNotional,
-        uint256 fee
-    ) external view returns (uint256);
 }
