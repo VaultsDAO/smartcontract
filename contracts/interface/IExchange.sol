@@ -2,7 +2,7 @@
 pragma solidity 0.7.6;
 pragma abicoder v2;
 
-import { Funding } from "../lib/Funding.sol";
+import { DataTypes } from "../types/DataTypes.sol";
 
 interface IExchange {
     /// @param amount when closing position, amount(uint256) == takerPositionSize(int256),
@@ -73,9 +73,10 @@ interface IExchange {
     ///      the global funding growth update only happens once per unique timestamp (not blockNumber, due to Arbitrum)
     /// @return fundingPayment the funding payment of a trader in one market should be settled into owned realized Pnl
     /// @return fundingGrowthGlobal the up-to-date globalFundingGrowth, usually used for later calculations
-    function settleFunding(address trader, address baseToken)
-        external
-        returns (int256 fundingPayment, Funding.Growth memory fundingGrowthGlobal);
+    function settleFunding(
+        address trader,
+        address baseToken
+    ) external returns (int256 fundingPayment, DataTypes.Growth memory fundingGrowthGlobal);
 
     /// @notice Get the max ticks allowed to be crossed within a block when reducing position
     /// @param baseToken Address of the base token
@@ -97,10 +98,10 @@ interface IExchange {
     /// @return pendingFundingPayment The pending funding payment of a trader in one market,
     /// including liquidity & balance coefficients. Positive value means the trader pays funding,
     /// negative value means the trader receives funding.
-    function getPendingFundingPayment(address trader, address baseToken)
-        external
-        view
-        returns (int256 pendingFundingPayment);
+    function getPendingFundingPayment(
+        address trader,
+        address baseToken
+    ) external view returns (int256 pendingFundingPayment);
 
     /// @notice Get the square root of the market twap price with the given time interval
     /// @dev The return value is a X96 number

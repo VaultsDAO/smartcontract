@@ -23,6 +23,7 @@ import { IMarketRegistry } from "./interface/IMarketRegistry.sol";
 import { OrderBookStorageV1 } from "./storage/OrderBookStorage.sol";
 import { IOrderBook } from "./interface/IOrderBook.sol";
 import { OpenOrder } from "./lib/OpenOrder.sol";
+import { DataTypes } from "./types/DataTypes.sol";
 
 // never inherit any new stateful contract. never change the orders of parent stateful contracts
 contract OrderBook is
@@ -56,7 +57,7 @@ contract OrderBook is
         uint128 liquidity;
         uint256 base;
         uint256 quote;
-        Funding.Growth globalFundingGrowth;
+        DataTypes.Growth globalFundingGrowth;
     }
 
     struct InternalRemoveLiquidityParams {
@@ -561,7 +562,6 @@ contract OrderBook is
                 }
             }
             tokenAmount = tokenAmount.add(amount);
-
         }
         return (tokenAmount, pendingFee);
     }

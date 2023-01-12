@@ -34,7 +34,7 @@ import { AccountMarket } from "./lib/AccountMarket.sol";
 import { OpenOrder } from "./lib/OpenOrder.sol";
 import { GenericLogic } from "./lib/GenericLogic.sol";
 import { IMarketRegistry } from "./interface/IMarketRegistry.sol";
-
+import { DataTypes } from "./types/DataTypes.sol";
 import "hardhat/console.sol";
 
 // never inherit any new stateful contract. never change the orders of parent stateful contracts
@@ -217,7 +217,7 @@ contract ClearingHouse is
         _registerBaseToken(trader, params.baseToken);
 
         // must settle funding first
-        Funding.Growth memory fundingGrowthGlobal = _settleFunding(trader, params.baseToken);
+        DataTypes.Growth memory fundingGrowthGlobal = _settleFunding(trader, params.baseToken);
 
         // note that we no longer check available tokens here because CH will always auto-mint in UniswapV3MintCallback
         IOrderBook.AddLiquidityResponse memory response = IOrderBook(_orderBook).addLiquidity(
@@ -720,14 +720,12 @@ contract ClearingHouse is
         int256 accountValue = getAccountValue(trader);
 
         // trader's position is closed at index price and pnl realized
-        (int256 liquidatedPositionSize, int256 liquidatedPositionNotional) = GenericLogic
-            .getLiquidatedPositionSizeAndNotional(
-                address(this),
-                trader,
-                baseToken,
-                accountValue,
-                positionSizeToBeLiquidated
-            );
+        (int256 liquidatedPositionSize, int256 liquidatedPositionNotional) = _getLiquidatedPositionSizeAndNotional(
+            trader,
+            baseToken,
+            accountValue,
+            positionSizeToBeLiquidated
+        );
         _modifyPositionAndRealizePnl(trader, baseToken, liquidatedPositionSize, liquidatedPositionNotional, 0, 0);
 
         // trader pays liquidation penalty
@@ -817,8 +815,7 @@ contract ClearingHouse is
 
         // realizedPnl is realized here
         // will deregister baseToken if there is no position
-        GenericLogic.settleBalanceAndDeregister(
-            address(this),
+        _settleBalanceAndDeregister(
             trader,
             baseToken,
             exchangedPositionSize, // takerBase
@@ -947,8 +944,7 @@ contract ClearingHouse is
 
         // examples:
         // https://www.figma.com/file/xuue5qGH4RalX7uAbbzgP3/swap-accounting-and-events?node-id=0%3A1
-        GenericLogic.settleBalanceAndDeregister(
-            address(this),
+        _settleBalanceAndDeregister(
             params.trader,
             params.baseToken,
             response.exchangedPositionSize,
@@ -1052,7 +1048,7 @@ contract ClearingHouse is
     function _settleFunding(
         address trader,
         address baseToken
-    ) internal returns (Funding.Growth memory fundingGrowthGlobal) {
+    ) internal returns (DataTypes.Growth memory fundingGrowthGlobal) {
         int256 fundingPayment;
         (fundingPayment, fundingGrowthGlobal) = IExchange(_exchange).settleFunding(trader, baseToken);
 
@@ -1187,31 +1183,53 @@ contract ClearingHouse is
         return getAccountValue(trader) < _getMarginRequirementForLiquidation(trader);
     }
 
-    // /// @param positionSizeToBeLiquidated its direction should be the same as taker's existing position
-    // function _getLiquidatedPositionSizeAndNotional(
-    //     address trader,
-    //     address baseToken,
-    //     int256 accountValue,
-    //     int256 positionSizeToBeLiquidated
-    // ) internal view returns (int256, int256) {
-    //     int256 maxLiquidatablePositionSize = IAccountBalance(_accountBalance).getLiquidatablePositionSize(
-    //         trader,
-    //         baseToken,
-    //         accountValue
-    //     );
+    /// @param positionSizeToBeLiquidated its direction should be the same as taker's existing position
+    function _getLiquidatedPositionSizeAndNotional(
+        address trader,
+        address baseToken,
+        int256 accountValue,
+        int256 positionSizeToBeLiquidated
+    ) internal view returns (int256, int256) {
+        int256 maxLiquidatablePositionSize = IAccountBalance(_accountBalance).getLiquidatablePositionSize(
+            trader,
+            baseToken,
+            accountValue
+        );
 
-    //     if (positionSizeToBeLiquidated.abs() > maxLiquidatablePositionSize.abs() || positionSizeToBeLiquidated == 0) {
-    //         positionSizeToBeLiquidated = maxLiquidatablePositionSize;
-    //     }
+        if (positionSizeToBeLiquidated.abs() > maxLiquidatablePositionSize.abs() || positionSizeToBeLiquidated == 0) {
+            positionSizeToBeLiquidated = maxLiquidatablePositionSize;
+        }
 
-    //     int256 liquidatedPositionSize = positionSizeToBeLiquidated.neg256();
-    //     int256 liquidatedPositionNotional = positionSizeToBeLiquidated.mulDiv(
-    //         _getIndexPrice(baseToken).toInt256(),
-    //         1e18
-    //     );
+        int256 liquidatedPositionSize = positionSizeToBeLiquidated.neg256();
+        int256 liquidatedPositionNotional = positionSizeToBeLiquidated.mulDiv(
+            _getIndexPrice(baseToken).toInt256(),
+            1e18
+        );
 
-    //     return (liquidatedPositionSize, liquidatedPositionNotional);
-    // }
+        return (liquidatedPositionSize, liquidatedPositionNotional);
+    }
+
+    function _getIndexPrice(address baseToken) internal view returns (uint256) {
+        return IIndexPrice(baseToken).getIndexPrice(IClearingHouseConfig(_clearingHouseConfig).getTwapInterval());
+    }
+
+    function _settleBalanceAndDeregister(
+        address trader,
+        address baseToken,
+        int256 takerBase,
+        int256 takerQuote,
+        int256 realizedPnl,
+        int256 makerFee
+    ) internal {
+        IAccountBalance(_accountBalance).settleBalanceAndDeregister(
+            trader,
+            baseToken,
+            takerBase,
+            takerQuote,
+            realizedPnl,
+            makerFee
+        );
+    }
 
     function _requireEnoughFreeCollateral(address trader) internal view {
         if (trader == _maker) return;

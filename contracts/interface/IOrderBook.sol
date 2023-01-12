@@ -2,7 +2,7 @@
 pragma solidity 0.7.6;
 pragma abicoder v2;
 
-import { Funding } from "../lib/Funding.sol";
+import { DataTypes } from "../types/DataTypes.sol";
 import { OpenOrder } from "../lib/OpenOrder.sol";
 
 interface IOrderBook {
@@ -13,7 +13,7 @@ interface IOrderBook {
         uint256 quote;
         int24 lowerTick;
         int24 upperTick;
-        Funding.Growth fundingGrowthGlobal;
+        DataTypes.Growth fundingGrowthGlobal;
     }
 
     struct RemoveLiquidityParams {
@@ -47,7 +47,7 @@ interface IOrderBook {
         uint160 sqrtPriceLimitX96;
         uint24 exchangeFeeRatio;
         uint24 uniswapFeeRatio;
-        Funding.Growth globalFundingGrowth;
+        DataTypes.Growth globalFundingGrowth;
     }
 
     /// @param insuranceFundFee = fee * insuranceFundFeeRatio
@@ -74,9 +74,9 @@ interface IOrderBook {
     /// @notice Remove liquidity logic, only used by `ClearingHouse` contract
     /// @param params Remove liquidity params, detail on `IOrderBook.RemoveLiquidityParams`
     /// @return response Remove liquidity response, detail on `IOrderBook.RemoveLiquidityResponse`
-    function removeLiquidity(RemoveLiquidityParams calldata params)
-        external
-        returns (RemoveLiquidityResponse memory response);
+    function removeLiquidity(
+        RemoveLiquidityParams calldata params
+    ) external returns (RemoveLiquidityResponse memory response);
 
     /// @notice Replay the swap and get the swap result (price impact and swap fee),
     /// only can be called by `ClearingHouse` contract;
@@ -85,11 +85,7 @@ interface IOrderBook {
     /// @return response The swap result encoded in `ReplaySwapResponse`
     function replaySwap(ReplaySwapParams memory params) external returns (ReplaySwapResponse memory response);
 
-    function updateOrderDebt(
-        bytes32 orderId,
-        int256 base,
-        int256 quote
-    ) external;
+    function updateOrderDebt(bytes32 orderId, int256 base, int256 quote) external;
 
     /// @notice Get open order ids of a trader in the given market
     /// @param trader The trader address
@@ -126,10 +122,10 @@ interface IOrderBook {
     /// @param baseTokens The base token addresses
     /// @return totalQuoteAmountInPools The total quote token amount
     /// @return totalPendingFee The total pending fees in the orders
-    function getTotalQuoteBalanceAndPendingFee(address trader, address[] calldata baseTokens)
-        external
-        view
-        returns (int256 totalQuoteAmountInPools, uint256 totalPendingFee);
+    function getTotalQuoteBalanceAndPendingFee(
+        address trader,
+        address[] calldata baseTokens
+    ) external view returns (int256 totalQuoteAmountInPools, uint256 totalPendingFee);
 
     /// @notice Get the total token amount (quote or base) and pending fees of all orders in the given market
     /// @param trader The trader address
