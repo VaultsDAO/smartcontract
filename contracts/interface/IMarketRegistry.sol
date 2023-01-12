@@ -10,6 +10,7 @@ interface IMarketRegistry {
         uint24 insuranceFundFeeRatio;
         uint24 platformFundFeeRatio;
         uint24 optimalDeltaTwapRatio;
+        uint24 unhealthyDeltaTwapRatio;
         uint24 optimalFundingRatio;
     }
 

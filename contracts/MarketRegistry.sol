@@ -88,6 +88,7 @@ contract MarketRegistry is IMarketRegistry, ClearingHouseCallee, MarketRegistryS
         _insuranceFundFeeRatioMap[baseToken] = 500000; // 50%
         _platformFundFeeRatioMap[baseToken] = 500000; // 50%
         _optimalDeltaTwapRatioMap[baseToken] = 25000; // 2.5%
+        _unhealthyDeltaTwapRatioMap[baseToken] = 50000; // 5%
         _optimalFundingRatioMap[baseToken] = 250000; // 25%
 
         emit PoolAdded(baseToken, feeRatio, pool);
@@ -174,6 +175,7 @@ contract MarketRegistry is IMarketRegistry, ClearingHouseCallee, MarketRegistryS
                 insuranceFundFeeRatio: _insuranceFundFeeRatioMap[baseToken],
                 platformFundFeeRatio: _platformFundFeeRatioMap[baseToken],
                 optimalDeltaTwapRatio: _optimalDeltaTwapRatioMap[baseToken],
+                unhealthyDeltaTwapRatio: _unhealthyDeltaTwapRatioMap[baseToken],
                 optimalFundingRatio: _optimalFundingRatioMap[baseToken]
             });
     }

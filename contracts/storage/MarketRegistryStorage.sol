@@ -27,4 +27,6 @@ abstract contract MarketRegistryStorageV1 {
     mapping(address => uint24) internal _optimalDeltaTwapRatioMap;
 
     mapping(address => uint24) internal _optimalFundingRatioMap;
+
+    mapping(address => uint24) internal _unhealthyDeltaTwapRatioMap;
 }

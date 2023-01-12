@@ -715,7 +715,7 @@ contract Exchange is
         uint256 indexTwapX96
     ) internal view returns (int256) {
         IMarketRegistry.MarketInfo memory marketInfo = IMarketRegistry(_marketRegistry).getMarketInfo(baseToken);
-        if ((deltaTwapX96.abs() * 1e6) <= (indexTwapX96 * marketInfo.optimalDeltaTwapRatio)) {
+        if ((deltaTwapX96.abs().mul(1e6)) <= (indexTwapX96.mul(marketInfo.optimalDeltaTwapRatio))) {
             return deltaTwapX96 = PerpMath.mulDiv(deltaTwapX96, marketInfo.optimalFundingRatio, 1e6); // 25%;
         }
         return deltaTwapX96;
@@ -806,5 +806,37 @@ contract Exchange is
     // @dev use virtual for testing
     function _getMaxTickCrossedWithinBlockCap() internal pure virtual returns (uint24) {
         return _MAX_TICK_CROSSED_WITHIN_BLOCK_CAP;
+    }
+
+    function getDetalTawpInsuranceFundFee(
+        address baseToken,
+        int256 exchangedPositionNotional,
+        uint256 fee
+    ) public view returns (uint256) {
+        (, uint256 markTwap, uint256 indexTwap) = _getFundingGrowthGlobalAndTwaps(baseToken);
+        int256 deltaTwapRatio = (markTwap.toInt256().sub(indexTwap.toInt256())).mulDiv(1e6, indexTwap);
+        IMarketRegistry.MarketInfo memory marketInfo = IMarketRegistry(_marketRegistry).getMarketInfo(baseToken);
+        // delta <= 2.5%
+        if ((deltaTwapRatio.abs().mul(1e6)) <= (indexTwap.mul(marketInfo.optimalDeltaTwapRatio))) {
+            return fee;
+        }
+        if (exchangedPositionNotional.mul(deltaTwapRatio) > 0) {
+            return 0;
+        }
+        // 2.5% < delta <= 5%
+        if (
+            (indexTwap.mul(marketInfo.optimalDeltaTwapRatio)) < (deltaTwapRatio.abs().mul(1e6)) &&
+            (deltaTwapRatio.abs().mul(1e6)) <= (indexTwap.mul(marketInfo.unhealthyDeltaTwapRatio))
+        ) {
+            return
+                exchangedPositionNotional
+                    .abs()
+                    .mul(deltaTwapRatio.abs())
+                    .div(1e6)
+                    .mul(marketInfo.optimalFundingRatio)
+                    .div(1e6);
+        }
+        // 5% < delta
+        return exchangedPositionNotional.abs().mul(deltaTwapRatio.abs()).div(1e6);
     }
 }
