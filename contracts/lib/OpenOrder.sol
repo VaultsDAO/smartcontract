@@ -8,7 +8,6 @@ library OpenOrder {
         uint128 liquidity;
         int24 lowerTick;
         int24 upperTick;
-        uint256 lastFeeGrowthInsideX128;
         uint256 baseDebt;
         uint256 quoteDebt;
     }

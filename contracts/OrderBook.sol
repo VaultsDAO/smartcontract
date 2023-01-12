@@ -42,7 +42,6 @@ contract OrderBook is
     using PerpSafeCast for uint256;
     using PerpSafeCast for uint128;
     using PerpSafeCast for int256;
-    using Tick for mapping(int24 => Tick.GrowthInfo);
 
     //
     // STRUCT
@@ -54,7 +53,6 @@ contract OrderBook is
         address pool;
         int24 lowerTick;
         int24 upperTick;
-        uint256 feeGrowthGlobalX128;
         uint128 liquidity;
         uint256 base;
         uint256 quote;
@@ -99,14 +97,10 @@ contract OrderBook is
     function addLiquidity(AddLiquidityParams calldata params) external override returns (AddLiquidityResponse memory) {
         _requireOnlyClearingHouse();
         address pool = IMarketRegistry(_marketRegistry).getPool(params.baseToken);
-        uint256 feeGrowthGlobalX128 = _feeGrowthGlobalX128Map[params.baseToken];
-        mapping(int24 => Tick.GrowthInfo) storage tickMap = _growthOutsideTickMap[params.baseToken];
         UniswapV3Broker.AddLiquidityResponse memory response;
-
         {
             bool initializedBeforeLower = UniswapV3Broker.getIsTickInitialized(pool, params.lowerTick);
             bool initializedBeforeUpper = UniswapV3Broker.getIsTickInitialized(pool, params.upperTick);
-
             // add liquidity to pool
             response = UniswapV3Broker.addLiquidity(
                 UniswapV3Broker.AddLiquidityParams(
@@ -118,45 +112,26 @@ contract OrderBook is
                     abi.encode(MintCallbackData(params.trader, pool))
                 )
             );
-
             (, int24 currentTick, , , , , ) = UniswapV3Broker.getSlot0(pool);
             // initialize tick info
-            if (!initializedBeforeLower && UniswapV3Broker.getIsTickInitialized(pool, params.lowerTick)) {
-                tickMap.initialize(
-                    params.lowerTick,
-                    currentTick,
-                    Tick.GrowthInfo(
-                        feeGrowthGlobalX128
-                    )
-                );
-            }
-            if (!initializedBeforeUpper && UniswapV3Broker.getIsTickInitialized(pool, params.upperTick)) {
-                tickMap.initialize(
-                    params.upperTick,
-                    currentTick,
-                    Tick.GrowthInfo(
-                        feeGrowthGlobalX128
-                    )
-                );
-            }
+            if (!initializedBeforeLower && UniswapV3Broker.getIsTickInitialized(pool, params.lowerTick)) {}
+            if (!initializedBeforeUpper && UniswapV3Broker.getIsTickInitialized(pool, params.upperTick)) {}
         }
 
         // state changes; if adding liquidity to an existing order, get fees accrued
-        uint256 fee =
-            _addLiquidityToOrder(
-                InternalAddLiquidityToOrderParams({
-                    maker: params.trader,
-                    baseToken: params.baseToken,
-                    pool: pool,
-                    lowerTick: params.lowerTick,
-                    upperTick: params.upperTick,
-                    feeGrowthGlobalX128: feeGrowthGlobalX128,
-                    liquidity: response.liquidity,
-                    base: response.base,
-                    quote: response.quote,
-                    globalFundingGrowth: params.fundingGrowthGlobal
-                })
-            );
+        uint256 fee = _addLiquidityToOrder(
+            InternalAddLiquidityToOrderParams({
+                maker: params.trader,
+                baseToken: params.baseToken,
+                pool: pool,
+                lowerTick: params.lowerTick,
+                upperTick: params.upperTick,
+                liquidity: response.liquidity,
+                base: response.base,
+                quote: response.quote,
+                globalFundingGrowth: params.fundingGrowthGlobal
+            })
+        );
 
         return
             AddLiquidityResponse({
@@ -168,11 +143,9 @@ contract OrderBook is
     }
 
     /// @inheritdoc IOrderBook
-    function removeLiquidity(RemoveLiquidityParams calldata params)
-        external
-        override
-        returns (RemoveLiquidityResponse memory)
-    {
+    function removeLiquidity(
+        RemoveLiquidityParams calldata params
+    ) external override returns (RemoveLiquidityResponse memory) {
         _requireOnlyClearingHouse();
         address pool = IMarketRegistry(_marketRegistry).getPool(params.baseToken);
         bytes32 orderId = OpenOrder.calcOrderKey(params.maker, params.baseToken, params.lowerTick, params.upperTick);
@@ -191,11 +164,7 @@ contract OrderBook is
     }
 
     /// @inheritdoc IOrderBook
-    function updateOrderDebt(
-        bytes32 orderId,
-        int256 base,
-        int256 quote
-    ) external override {
+    function updateOrderDebt(bytes32 orderId, int256 base, int256 quote) external override {
         _requireOnlyClearingHouse();
         OpenOrder.Info storage openOrder = _openOrderMap[orderId];
         openOrder.baseDebt = openOrder.baseDebt.toInt256().add(base).toUint256();
@@ -219,8 +188,7 @@ contract OrderBook is
         bool isExactInput = params.amount > 0;
         uint256 fee;
 
-        UniswapV3Broker.SwapState memory swapState =
-            UniswapV3Broker.getSwapState(pool, params.amount, _feeGrowthGlobalX128Map[params.baseToken]);
+        UniswapV3Broker.SwapState memory swapState = UniswapV3Broker.getSwapState(pool, params.amount);
 
         params.sqrtPriceLimitX96 = params.sqrtPriceLimitX96 == 0
             ? (params.isBaseToQuote ? TickMath.MIN_SQRT_RATIO + 1 : TickMath.MAX_SQRT_RATIO - 1)
@@ -295,19 +263,7 @@ contract OrderBook is
             if (swapState.sqrtPriceX96 == step.nextSqrtPriceX96) {
                 // we have reached the tick's boundary
                 if (step.isNextTickInitialized) {
-                    if (params.shouldUpdateState) {
-                        // update the tick if it has been initialized
-                        mapping(int24 => Tick.GrowthInfo) storage tickMap = _growthOutsideTickMap[params.baseToken];
-                        // according to the above updating logic,
-                        // if isBaseToQuote, state.feeGrowthGlobalX128 will be updated; else, will never be updated
-                        tickMap.cross(
-                            step.nextTick,
-                            Tick.GrowthInfo({
-                                feeX128: swapState.feeGrowthGlobalX128
-                            })
-                        );
-                    }
-
+                    if (params.shouldUpdateState) {}
                     int128 liquidityNet = UniswapV3Broker.getTickLiquidityNet(pool, step.nextTick);
                     if (params.isBaseToQuote) liquidityNet = liquidityNet.neg128();
                     swapState.liquidity = LiquidityMath.addDelta(swapState.liquidity, liquidityNet);
@@ -318,10 +274,6 @@ contract OrderBook is
                 // update state.tick corresponding to the current price if the price has changed in this step
                 swapState.tick = TickMath.getTickAtSqrtRatio(swapState.sqrtPriceX96);
             }
-        }
-        if (params.shouldUpdateState) {
-            // update global states since swap state transitions are all done
-            _feeGrowthGlobalX128Map[params.baseToken] = swapState.feeGrowthGlobalX128;
         }
 
         return ReplaySwapResponse({ tick: swapState.tick, fee: fee });
@@ -367,16 +319,17 @@ contract OrderBook is
     }
 
     /// @inheritdoc IOrderBook
-    function getTotalQuoteBalanceAndPendingFee(address trader, address[] calldata baseTokens)
-        external
-        view
-        override
-        returns (int256 totalQuoteAmountInPools, uint256 totalPendingFee)
-    {
+    function getTotalQuoteBalanceAndPendingFee(
+        address trader,
+        address[] calldata baseTokens
+    ) external view override returns (int256 totalQuoteAmountInPools, uint256 totalPendingFee) {
         for (uint256 i = 0; i < baseTokens.length; i++) {
             address baseToken = baseTokens[i];
-            (int256 makerQuoteBalance, uint256 pendingFee) =
-                _getMakerQuoteBalanceAndPendingFee(trader, baseToken, false);
+            (int256 makerQuoteBalance, uint256 pendingFee) = _getMakerQuoteBalanceAndPendingFee(
+                trader,
+                baseToken,
+                false
+            );
             totalQuoteAmountInPools = totalQuoteAmountInPools.add(makerQuoteBalance);
             totalPendingFee = totalPendingFee.add(pendingFee);
         }
@@ -399,11 +352,12 @@ contract OrderBook is
         int24 lowerTick,
         int24 upperTick
     ) external view override returns (uint256) {
-        (uint256 pendingFee, ) =
-            _getPendingFeeAndFeeGrowthInsideX128ByOrder(
-                baseToken,
-                _openOrderMap[OpenOrder.calcOrderKey(trader, baseToken, lowerTick, upperTick)]
-            );
+        // (uint256 pendingFee, ) = _getPendingFeeAndFeeGrowthInsideX128ByOrder(
+        //     baseToken,
+        //     _openOrderMap[OpenOrder.calcOrderKey(trader, baseToken, lowerTick, upperTick)]
+        // );
+        // return pendingFee;
+        uint256 pendingFee;
         return pendingFee;
     }
 
@@ -432,20 +386,18 @@ contract OrderBook is
     // INTERNAL NON-VIEW
     //
 
-    function _removeLiquidity(InternalRemoveLiquidityParams memory params)
-        internal
-        returns (RemoveLiquidityResponse memory)
-    {
-        UniswapV3Broker.RemoveLiquidityResponse memory response =
-            UniswapV3Broker.removeLiquidity(
-                UniswapV3Broker.RemoveLiquidityParams(
-                    params.pool,
-                    _clearingHouse,
-                    params.lowerTick,
-                    params.upperTick,
-                    params.liquidity
-                )
-            );
+    function _removeLiquidity(
+        InternalRemoveLiquidityParams memory params
+    ) internal returns (RemoveLiquidityResponse memory) {
+        UniswapV3Broker.RemoveLiquidityResponse memory response = UniswapV3Broker.removeLiquidity(
+            UniswapV3Broker.RemoveLiquidityParams(
+                params.pool,
+                _clearingHouse,
+                params.lowerTick,
+                params.upperTick,
+                params.liquidity
+            )
+        );
 
         // update token info based on existing open order
         (uint256 fee, uint256 baseDebt, uint256 quoteDebt) = _removeLiquidityFromOrder(params);
@@ -454,12 +406,8 @@ contract OrderBook is
         int256 takerQuote = response.quote.toInt256().sub(quoteDebt.toInt256());
 
         // if flipped from initialized to uninitialized, clear the tick info
-        if (!UniswapV3Broker.getIsTickInitialized(params.pool, params.lowerTick)) {
-            _growthOutsideTickMap[params.baseToken].clear(params.lowerTick);
-        }
-        if (!UniswapV3Broker.getIsTickInitialized(params.pool, params.upperTick)) {
-            _growthOutsideTickMap[params.baseToken].clear(params.upperTick);
-        }
+        if (!UniswapV3Broker.getIsTickInitialized(params.pool, params.lowerTick)) {}
+        if (!UniswapV3Broker.getIsTickInitialized(params.pool, params.upperTick)) {}
 
         return
             RemoveLiquidityResponse({
@@ -471,20 +419,13 @@ contract OrderBook is
             });
     }
 
-    function _removeLiquidityFromOrder(InternalRemoveLiquidityParams memory params)
-        internal
-        returns (
-            uint256 fee,
-            uint256 baseDebt,
-            uint256 quoteDebt
-        )
-    {
+    function _removeLiquidityFromOrder(
+        InternalRemoveLiquidityParams memory params
+    ) internal returns (uint256 fee, uint256 baseDebt, uint256 quoteDebt) {
         // update token info based on existing open order
         OpenOrder.Info storage openOrder = _openOrderMap[params.orderId];
 
         // as in _addLiquidityToOrder(), fee should be calculated before the states are updated
-        uint256 feeGrowthInsideX128;
-        (fee, feeGrowthInsideX128) = _getPendingFeeAndFeeGrowthInsideX128ByOrder(params.baseToken, openOrder);
 
         if (params.liquidity != 0) {
             if (openOrder.baseDebt != 0) {
@@ -501,18 +442,12 @@ contract OrderBook is
         // after the fee is calculated, lastFeeGrowthInsideX128 can be updated if liquidity != 0 after removing
         if (openOrder.liquidity == 0) {
             _removeOrder(params.maker, params.baseToken, params.orderId);
-        } else {
-            openOrder.lastFeeGrowthInsideX128 = feeGrowthInsideX128;
         }
 
-        return (fee, baseDebt, quoteDebt);
+        return (0, baseDebt, quoteDebt);
     }
 
-    function _removeOrder(
-        address maker,
-        address baseToken,
-        bytes32 orderId
-    ) internal {
+    function _removeOrder(address maker, address baseToken, bytes32 orderId) internal {
         bytes32[] storage orderIds = _openOrderIdsMap[maker][baseToken];
         uint256 orderLen = orderIds.length;
         for (uint256 idx = 0; idx < orderLen; idx++) {
@@ -540,29 +475,18 @@ contract OrderBook is
             bytes32[] storage orderIds = _openOrderIdsMap[params.maker][params.baseToken];
             // OB_ONE: orders number exceeds
             require(orderIds.length < IMarketRegistry(_marketRegistry).getMaxOrdersPerMarket(), "OB_ONE");
-
             // state changes
             orderIds.push(orderId);
             openOrder.lowerTick = params.lowerTick;
             openOrder.upperTick = params.upperTick;
-
-            (, int24 tick, , , , , ) = UniswapV3Broker.getSlot0(params.pool);
-            mapping(int24 => Tick.GrowthInfo) storage tickMap = _growthOutsideTickMap[params.baseToken];
         }
-
-        // fee should be calculated before the states are updated, as for
-        // - a new order, there is no fee accrued yet
-        // - an existing order, fees accrued have to be settled before more liquidity is added
-        (uint256 fee, uint256 feeGrowthInsideX128) =
-            _getPendingFeeAndFeeGrowthInsideX128ByOrder(params.baseToken, openOrder);
 
         // after the fee is calculated, liquidity & lastFeeGrowthInsideX128 can be updated
         openOrder.liquidity = openOrder.liquidity.add(params.liquidity).toUint128();
-        openOrder.lastFeeGrowthInsideX128 = feeGrowthInsideX128;
         openOrder.baseDebt = openOrder.baseDebt.add(params.base);
         openOrder.quoteDebt = openOrder.quoteDebt.add(params.quote);
 
-        return fee;
+        return 0;
     }
 
     //
@@ -610,8 +534,9 @@ contract OrderBook is
         // if current price > lower tick, maker has quote
         // case 2 : current price > upper tick
         //  --> maker only has quote token
-        (uint160 sqrtMarkPriceX96, , , , , , ) =
-            UniswapV3Broker.getSlot0(IMarketRegistry(_marketRegistry).getPool(baseToken));
+        (uint160 sqrtMarkPriceX96, , , , , , ) = UniswapV3Broker.getSlot0(
+            IMarketRegistry(_marketRegistry).getPool(baseToken)
+        );
         uint256 orderIdLength = orderIds.length;
 
         for (uint256 i = 0; i < orderIdLength; i++) {
@@ -637,37 +562,8 @@ contract OrderBook is
             }
             tokenAmount = tokenAmount.add(amount);
 
-            // get uncollected fee (only quote)
-            if (!fetchBase) {
-                (uint256 pendingFeeInOrder, ) = _getPendingFeeAndFeeGrowthInsideX128ByOrder(baseToken, order);
-                pendingFee = pendingFee.add(pendingFeeInOrder);
-            }
         }
         return (tokenAmount, pendingFee);
-    }
-
-    /// @dev CANNOT use safeMath for feeGrowthInside calculation, as it can be extremely large and overflow
-    ///      the difference between two feeGrowthInside, however, is correct and won't be affected by overflow or not
-    function _getPendingFeeAndFeeGrowthInsideX128ByOrder(address baseToken, OpenOrder.Info memory order)
-        internal
-        view
-        returns (uint256 pendingFee, uint256 feeGrowthInsideX128)
-    {
-        (, int24 tick, , , , , ) = UniswapV3Broker.getSlot0(IMarketRegistry(_marketRegistry).getPool(baseToken));
-        mapping(int24 => Tick.GrowthInfo) storage tickMap = _growthOutsideTickMap[baseToken];
-        feeGrowthInsideX128 = tickMap.getFeeGrowthInsideX128(
-            order.lowerTick,
-            order.upperTick,
-            tick,
-            _feeGrowthGlobalX128Map[baseToken]
-        );
-        pendingFee = FullMath.mulDiv(
-            feeGrowthInsideX128 - order.lastFeeGrowthInsideX128,
-            order.liquidity,
-            FixedPoint128.Q128
-        );
-
-        return (pendingFee, feeGrowthInsideX128);
     }
 
     function _requireOnlyExchange() internal view {
