@@ -45,7 +45,6 @@ interface IOrderBook {
         bool shouldUpdateState;
         int256 amount;
         uint160 sqrtPriceLimitX96;
-        uint24 exchangeFeeRatio;
         uint24 uniswapFeeRatio;
         DataTypes.Growth globalFundingGrowth;
     }

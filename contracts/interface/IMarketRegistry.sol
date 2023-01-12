@@ -5,7 +5,6 @@ pragma abicoder v2;
 interface IMarketRegistry {
     struct MarketInfo {
         address pool;
-        uint24 exchangeFeeRatio;
         uint24 uniswapFeeRatio;
         uint24 insuranceFundFeeRatio;
         uint24 platformFundFeeRatio;
@@ -23,7 +22,7 @@ interface IMarketRegistry {
     /// @notice Emitted when the fee ratio of a market is updated.
     /// @param baseToken The address of the base token
     /// @param feeRatio Fee ratio of the market
-    event FeeRatioChanged(address baseToken, uint24 feeRatio);
+    event PlatformFundFeeRatioChanged(address baseToken, uint24 feeRatio);
 
     /// @notice Emitted when the insurance fund fee ratio is updated.
     /// @param baseToken The address of the base token
@@ -43,7 +42,7 @@ interface IMarketRegistry {
     /// @dev Set the fee ratio for a pool
     /// @param baseToken The token address of the pool.
     /// @param feeRatio The fee ratio for the pool.
-    function setFeeRatio(address baseToken, uint24 feeRatio) external;
+    function setPlatformFundFeeRatio(address baseToken, uint24 feeRatio) external;
 
     /// @dev Set insurance fund fee ratio for a pool
     /// @param baseToken The token address of the pool.
@@ -58,12 +57,6 @@ interface IMarketRegistry {
     /// @param baseToken The address of the base token
     /// @return pool The address of the pool
     function getPool(address baseToken) external view returns (address pool);
-
-    /// @notice Get the fee ratio of a given market
-    /// @dev The ratio is in `1e6` format, that means `1% = 1e4`
-    /// @param baseToken The address of the base token
-    /// @return feeRatio The fee ratio of the market, it is a decimal in `1e6`
-    function getFeeRatio(address baseToken) external view returns (uint24 feeRatio);
 
     /// @notice Get the insurance fund fee ratio of a given market
     /// @dev The ratio is in `1e6` format, that means `1% = 1e4`

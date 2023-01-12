@@ -79,7 +79,7 @@ describe("ClearingHouse realizedPnl2", () => {
     })
 
     it("has balanced realized PnL", async () => {
-        await marketRegistry.setFeeRatio(baseToken.address, 30000)
+        // await marketRegistry.setFeeRatio(baseToken.address, 30000)
         // await marketRegistry.setFeeRatio(baseToken.address, 5000)
         // await marketRegistry.setInsuranceFundFeeRatio(baseToken.address, 1000000)
 

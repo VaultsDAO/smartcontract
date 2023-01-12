@@ -238,7 +238,7 @@ contract OrderBook is
                 swapState.amountSpecifiedRemaining,
                 // isBaseToQuote: fee is charged in base token in uniswap pool; thus, use uniswapFeeRatio to replay
                 // !isBaseToQuote: fee is charged in quote token in clearing house; thus, use exchangeFeeRatioRatio
-                params.isBaseToQuote ? params.uniswapFeeRatio : params.exchangeFeeRatio
+                params.isBaseToQuote ? params.uniswapFeeRatio : 0
             );
 
             // user input 1 quote:
@@ -256,7 +256,7 @@ contract OrderBook is
             // note CH only collects quote fee when swapping base -> quote
             if (swapState.liquidity > 0) {
                 if (params.isBaseToQuote) {
-                    step.fee = FullMath.mulDivRoundingUp(step.amountOut, params.exchangeFeeRatio, 1e6);
+                    step.fee = FullMath.mulDivRoundingUp(step.amountOut, 0, 1e6);
                 }
                 fee += step.fee;
             }

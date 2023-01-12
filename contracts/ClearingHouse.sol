@@ -976,29 +976,19 @@ contract ClearingHouse is
             })
         );
 
-        //
-        IMarketRegistry.MarketInfo memory marketInfo = IMarketRegistry(_marketRegistry).getMarketInfo(params.baseToken);
-
-        _modifyOwedRealizedPnl(
-            _insuranceFund,
-            FullMath.mulDivRoundingUp(response.fee, marketInfo.insuranceFundFeeRatio, 1e6).toInt256()
-        );
-
-        _modifyOwedRealizedPnl(
-            _platformFund,
-            FullMath.mulDivRoundingUp(response.fee, marketInfo.platformFundFeeRatio, 1e6).toInt256()
-        );
-
-        // CH_IF: invalid fee
-        require((marketInfo.insuranceFundFeeRatio + marketInfo.platformFundFeeRatio) == 1e6, "CH_IF");
-
+        // insuranceFundFee
+        _modifyOwedRealizedPnl(_insuranceFund, response.insuranceFundFee.toInt256());
+        // platformFundFee
+        _modifyOwedRealizedPnl(_platformFund, response.platformFundFee.toInt256());
+        // sum fee
+        uint256 fee = response.insuranceFundFee.add(response.platformFundFee);
         // examples:
         // https://www.figma.com/file/xuue5qGH4RalX7uAbbzgP3/swap-accounting-and-events?node-id=0%3A1
         _settleBalanceAndDeregister(
             params.trader,
             params.baseToken,
             response.exchangedPositionSize,
-            response.exchangedPositionNotional.sub(response.fee.toInt256()),
+            response.exchangedPositionNotional.sub(fee.toInt256()),
             response.pnlToBeRealized,
             0
         );
@@ -1030,7 +1020,7 @@ contract ClearingHouse is
             params.baseToken,
             response.exchangedPositionSize,
             response.exchangedPositionNotional,
-            response.fee,
+            fee,
             openNotional,
             response.pnlToBeRealized, // realizedPnl
             response.sqrtPriceAfterX96
@@ -1084,7 +1074,7 @@ contract ClearingHouse is
 
         _referredPositionChanged(params.referralCode);
 
-        return (response.base, response.quote, response.fee);
+        return (response.base, response.quote, response.insuranceFundFee.add(response.platformFundFee));
     }
 
     /// @dev Remove maker's liquidity.

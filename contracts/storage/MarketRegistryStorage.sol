@@ -16,10 +16,8 @@ abstract contract MarketRegistryStorageV1 {
     // key: baseToken, what insurance fund get = exchangeFee * insuranceFundFeeRatio
     mapping(address => uint24) internal _insuranceFundFeeRatioMap;
 
-    mapping(address => uint24) internal _platformFundFeeRatioMap;
-
     // key: baseToken , uniswap fee will be ignored and use the exchangeFeeRatio instead
-    mapping(address => uint24) internal _exchangeFeeRatioMap;
+    mapping(address => uint24) internal _platformFundFeeRatioMap;
 
     // key: baseToken, _uniswapFeeRatioMap cache only
     mapping(address => uint24) internal _uniswapFeeRatioMap;

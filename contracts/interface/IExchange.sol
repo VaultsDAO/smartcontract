@@ -22,7 +22,8 @@ interface IExchange {
         uint256 quote;
         int256 exchangedPositionSize;
         int256 exchangedPositionNotional;
-        uint256 fee;
+        uint256 insuranceFundFee;
+        uint256 platformFundFee;
         int256 pnlToBeRealized;
         uint256 sqrtPriceAfterX96;
         int24 tick;
@@ -127,4 +128,10 @@ interface IExchange {
     /// @notice Get `ClearingHouseConfig` contract address
     /// @return clearingHouse `ClearingHouseConfig` contract address
     function getClearingHouseConfig() external view returns (address clearingHouse);
+
+    function getDetalTawpInsuranceFundFee(
+        address baseToken,
+        int256 exchangedPositionNotional,
+        uint256 fee
+    ) external view returns (uint256);
 }

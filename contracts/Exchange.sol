@@ -228,13 +228,26 @@ contract Exchange is
         (uint256 sqrtPriceX96, , , , , , ) = UniswapV3Broker.getSlot0(
             IMarketRegistry(_marketRegistry).getPool(params.baseToken)
         );
+
+        // calculate fee
+        IMarketRegistry.MarketInfo memory marketInfo = IMarketRegistry(_marketRegistry).getMarketInfo(params.baseToken);
+        // platformFundFee
+        uint256 platformFundFee = FullMath.mulDivRoundingUp(response.exchangedPositionNotional.abs(), marketInfo.platformFundFeeRatio, 1e6);
+        // insuranceFundFee
+        uint256 insuranceFundFee = getDetalTawpInsuranceFundFee(
+            params.baseToken,
+            response.exchangedPositionNotional,
+            FullMath.mulDivRoundingUp(response.exchangedPositionNotional.abs(), marketInfo.insuranceFundFeeRatio, 1e6)
+        );
+
         return
             SwapResponse({
                 base: response.base.abs(),
                 quote: response.quote.abs(),
                 exchangedPositionSize: response.exchangedPositionSize,
                 exchangedPositionNotional: response.exchangedPositionNotional,
-                fee: response.fee,
+                insuranceFundFee: insuranceFundFee,
+                platformFundFee: platformFundFee,
                 pnlToBeRealized: pnlToBeRealized,
                 sqrtPriceAfterX96: sqrtPriceX96,
                 tick: response.tick,
@@ -421,13 +434,11 @@ contract Exchange is
     /// @return tick the resulting tick (derived from price) after replaying the swap
     function _replaySwap(InternalReplaySwapParams memory params) internal returns (int24 tick) {
         IMarketRegistry.MarketInfo memory marketInfo = IMarketRegistry(_marketRegistry).getMarketInfo(params.baseToken);
-        uint24 exchangeFeeRatio = marketInfo.exchangeFeeRatio;
         uint24 uniswapFeeRatio = marketInfo.uniswapFeeRatio;
         (, int256 signedScaledAmountForReplaySwap) = SwapMath.calcScaledAmountForSwaps(
             params.isBaseToQuote,
             params.isExactInput,
             params.amount,
-            exchangeFeeRatio,
             uniswapFeeRatio
         );
 
@@ -438,7 +449,6 @@ contract Exchange is
                 isBaseToQuote: params.isBaseToQuote,
                 amount: signedScaledAmountForReplaySwap,
                 sqrtPriceLimitX96: params.sqrtPriceLimitX96,
-                exchangeFeeRatio: exchangeFeeRatio,
                 uniswapFeeRatio: uniswapFeeRatio,
                 shouldUpdateState: false,
                 globalFundingGrowth: DataTypes.Growth({
@@ -461,7 +471,6 @@ contract Exchange is
                 params.isBaseToQuote,
                 params.isExactInput,
                 params.amount,
-                marketInfo.exchangeFeeRatio,
                 marketInfo.uniswapFeeRatio
             );
 
@@ -474,7 +483,6 @@ contract Exchange is
                 shouldUpdateState: true,
                 amount: signedScaledAmountForReplaySwap,
                 sqrtPriceLimitX96: params.sqrtPriceLimitX96,
-                exchangeFeeRatio: marketInfo.exchangeFeeRatio,
                 uniswapFeeRatio: marketInfo.uniswapFeeRatio,
                 globalFundingGrowth: fundingGrowthGlobal
             })
@@ -812,7 +820,7 @@ contract Exchange is
         address baseToken,
         int256 exchangedPositionNotional,
         uint256 fee
-    ) public view returns (uint256) {
+    ) public view override returns (uint256) {
         (, uint256 markTwap, uint256 indexTwap) = _getFundingGrowthGlobalAndTwaps(baseToken);
         int256 deltaTwapRatio = (markTwap.toInt256().sub(indexTwap.toInt256())).mulDiv(1e6, indexTwap);
         IMarketRegistry.MarketInfo memory marketInfo = IMarketRegistry(_marketRegistry).getMarketInfo(baseToken);

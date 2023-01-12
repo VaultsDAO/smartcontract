@@ -3,6 +3,7 @@ pragma solidity 0.7.6;
 pragma abicoder v2;
 
 import { PerpSafeCast } from "../lib/PerpSafeCast.sol";
+import { SafeMathUpgradeable } from "@openzeppelin/contracts-upgradeable/math/SafeMathUpgradeable.sol";
 import { SignedSafeMathUpgradeable } from "@openzeppelin/contracts-upgradeable/math/SignedSafeMathUpgradeable.sol";
 import "../ClearingHouse.sol";
 import "./TestAccountBalance.sol";
@@ -10,6 +11,7 @@ import "./TestExchange.sol";
 
 contract TestClearingHouse is ClearingHouse {
     using PerpSafeCast for uint256;
+    using SafeMathUpgradeable for uint256;
     using SignedSafeMathUpgradeable for int256;
 
     uint256 private _testBlockTimestamp;
@@ -92,7 +94,7 @@ contract TestClearingHouse is ClearingHouse {
             _msgSender(),
             params.baseToken,
             response.exchangedPositionSize,
-            response.exchangedPositionNotional.sub(response.fee.toInt256())
+            response.exchangedPositionNotional.sub(response.insuranceFundFee.add(response.platformFundFee).toInt256())
         );
 
         if (response.pnlToBeRealized != 0) {

@@ -84,9 +84,8 @@ contract MarketRegistry is IMarketRegistry, ClearingHouseCallee, MarketRegistryS
 
         _poolMap[baseToken] = pool;
         _uniswapFeeRatioMap[baseToken] = feeRatio;
-        _exchangeFeeRatioMap[baseToken] = feeRatio;
-        _insuranceFundFeeRatioMap[baseToken] = 500000; // 50%
-        _platformFundFeeRatioMap[baseToken] = 500000; // 50%
+        _insuranceFundFeeRatioMap[baseToken] = 1000; // 0.1%
+        _platformFundFeeRatioMap[baseToken] = 1000; // 0.1%
         _optimalDeltaTwapRatioMap[baseToken] = 25000; // 2.5%
         _unhealthyDeltaTwapRatioMap[baseToken] = 50000; // 5%
         _optimalFundingRatioMap[baseToken] = 250000; // 25%
@@ -96,21 +95,21 @@ contract MarketRegistry is IMarketRegistry, ClearingHouseCallee, MarketRegistryS
     }
 
     /// @inheritdoc IMarketRegistry
-    function setFeeRatio(
+    function setPlatformFundFeeRatio(
         address baseToken,
         uint24 feeRatio
     ) external override checkPool(baseToken) checkRatio(feeRatio) onlyOwner {
-        _exchangeFeeRatioMap[baseToken] = feeRatio;
-        emit FeeRatioChanged(baseToken, feeRatio);
+        _platformFundFeeRatioMap[baseToken] = feeRatio;
+        emit PlatformFundFeeRatioChanged(baseToken, feeRatio);
     }
 
     /// @inheritdoc IMarketRegistry
     function setInsuranceFundFeeRatio(
         address baseToken,
-        uint24 insuranceFundFeeRatioArg
-    ) external override checkPool(baseToken) checkRatio(insuranceFundFeeRatioArg) onlyOwner {
-        _insuranceFundFeeRatioMap[baseToken] = insuranceFundFeeRatioArg;
-        emit InsuranceFundFeeRatioChanged(baseToken, insuranceFundFeeRatioArg);
+        uint24 feeRatio
+    ) external override checkPool(baseToken) checkRatio(feeRatio) onlyOwner {
+        _insuranceFundFeeRatioMap[baseToken] = feeRatio;
+        emit InsuranceFundFeeRatioChanged(baseToken, feeRatio);
     }
 
     /// @inheritdoc IMarketRegistry
@@ -144,11 +143,6 @@ contract MarketRegistry is IMarketRegistry, ClearingHouseCallee, MarketRegistryS
     }
 
     /// @inheritdoc IMarketRegistry
-    function getFeeRatio(address baseToken) external view override checkPool(baseToken) returns (uint24) {
-        return _exchangeFeeRatioMap[baseToken];
-    }
-
-    /// @inheritdoc IMarketRegistry
     function getInsuranceFundFeeRatio(address baseToken) external view override checkPool(baseToken) returns (uint24) {
         return _insuranceFundFeeRatioMap[baseToken];
     }
@@ -170,7 +164,6 @@ contract MarketRegistry is IMarketRegistry, ClearingHouseCallee, MarketRegistryS
         return
             MarketInfo({
                 pool: _poolMap[baseToken],
-                exchangeFeeRatio: _exchangeFeeRatioMap[baseToken],
                 uniswapFeeRatio: _uniswapFeeRatioMap[baseToken],
                 insuranceFundFeeRatio: _insuranceFundFeeRatioMap[baseToken],
                 platformFundFeeRatio: _platformFundFeeRatioMap[baseToken],

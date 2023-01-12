@@ -43,16 +43,15 @@ library SwapMath {
         bool isBaseToQuote,
         bool isExactInput,
         uint256 amount,
-        uint24 exchangeFeeRatio,
         uint24 uniswapFeeRatio
     ) internal pure returns (uint256 scaledAmountForUniswapV3PoolSwap, int256 signedScaledAmountForReplaySwap) {
         if (isBaseToQuote) {
             scaledAmountForUniswapV3PoolSwap = isExactInput
                 ? calcAmountScaledByFeeRatio(amount, uniswapFeeRatio, true)
-                : calcAmountScaledByFeeRatio(amount, exchangeFeeRatio, true);
+                : calcAmountScaledByFeeRatio(amount, 0, true);
         } else {
             scaledAmountForUniswapV3PoolSwap = isExactInput
-                ? calcAmountWithFeeRatioReplaced(amount, uniswapFeeRatio, exchangeFeeRatio, true)
+                ? calcAmountWithFeeRatioReplaced(amount, uniswapFeeRatio, 0, true)
                 : amount;
         }
 
