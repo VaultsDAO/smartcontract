@@ -15,13 +15,15 @@ library DataTypes {
         int256 twShortPremiumDivBySqrtPriceX96;
     }
     struct AddLiquidityParams {
-        address trader;
         address baseToken;
         uint256 base;
         uint256 quote;
         int24 lowerTick;
         int24 upperTick;
-        Growth fundingGrowthGlobal;
+        uint256 minBase;
+        uint256 minQuote;
+        bool useTakerBalance;
+        uint256 deadline;
     }
 
     struct AddLiquidityResponse {
@@ -29,5 +31,12 @@ library DataTypes {
         uint256 quote;
         uint256 fee;
         uint128 liquidity;
+    }
+
+    struct AccountMarketInfo {
+        int256 takerPositionSize;
+        int256 takerOpenNotional;
+        int256 lastLongTwPremiumGrowthGlobalX96;
+        int256 lastShortTwPremiumGrowthGlobalX96;
     }
 }

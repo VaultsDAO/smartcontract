@@ -2,7 +2,7 @@
 pragma solidity 0.7.6;
 pragma abicoder v2;
 
-import { AccountMarket } from "../lib/AccountMarket.sol";
+import { DataTypes } from "../types/DataTypes.sol";
 
 interface IAccountBalance {
     struct ModifyTotalPositionParams {
@@ -134,7 +134,7 @@ interface IAccountBalance {
     function getAccountInfo(
         address trader,
         address baseToken
-    ) external view returns (AccountMarket.Info memory traderAccountInfo);
+    ) external view returns (DataTypes.AccountMarketInfo memory traderAccountInfo);
 
     /// @notice Get taker cost of trader's baseToken
     /// @param trader The address of trader

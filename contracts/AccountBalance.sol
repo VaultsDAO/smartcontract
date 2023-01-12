@@ -14,10 +14,10 @@ import { IBaseToken } from "./interface/IBaseToken.sol";
 import { IIndexPrice } from "./interface/IIndexPrice.sol";
 import { IOrderBook } from "./interface/IOrderBook.sol";
 import { IClearingHouseConfig } from "./interface/IClearingHouseConfig.sol";
-import { AccountBalanceStorageV1, AccountMarket, Market } from "./storage/AccountBalanceStorage.sol";
+import { AccountBalanceStorageV1, Market } from "./storage/AccountBalanceStorage.sol";
 import { BlockContext } from "./base/BlockContext.sol";
 import { IAccountBalance } from "./interface/IAccountBalance.sol";
-
+import { DataTypes } from "./types/DataTypes.sol";
 import "hardhat/console.sol";
 
 // never inherit any new stateful contract. never change the orders of parent stateful contracts
@@ -30,7 +30,6 @@ contract AccountBalance is IAccountBalance, BlockContext, ClearingHouseCallee, A
     using PerpMath for uint256;
     using PerpMath for int256;
     using PerpMath for uint160;
-    using AccountMarket for AccountMarket.Info;
     using Market for Market.Info;
 
     //
@@ -201,7 +200,7 @@ contract AccountBalance is IAccountBalance, BlockContext, ClearingHouseCallee, A
     function getAccountInfo(
         address trader,
         address baseToken
-    ) external view override returns (AccountMarket.Info memory) {
+    ) external view override returns (DataTypes.AccountMarketInfo memory) {
         return _accountMarketMap[trader][baseToken];
     }
 
@@ -220,7 +219,7 @@ contract AccountBalance is IAccountBalance, BlockContext, ClearingHouseCallee, A
         // );
         // int256 quoteBalance = getQuote(trader, baseToken);
         // return quoteInPool.toInt256().add(quoteBalance);
-        
+
         return getQuote(trader, baseToken);
     }
 
@@ -239,7 +238,7 @@ contract AccountBalance is IAccountBalance, BlockContext, ClearingHouseCallee, A
                 baseDebtValue = baseBalance.mulDiv(_getReferencePrice(baseToken).toInt256(), 1e18);
             }
             totalBaseDebtValue = totalBaseDebtValue.add(baseDebtValue);
-            
+
             // we can't calculate totalQuoteDebtValue until we have totalQuoteBalance
             totalQuoteBalance = totalQuoteBalance.add(getQuote(trader, baseToken));
         }
@@ -416,7 +415,7 @@ contract AccountBalance is IAccountBalance, BlockContext, ClearingHouseCallee, A
         int256 base,
         int256 quote
     ) internal returns (int256, int256) {
-        AccountMarket.Info storage accountInfo = _accountMarketMap[trader][baseToken];
+        DataTypes.AccountMarketInfo storage accountInfo = _accountMarketMap[trader][baseToken];
         int256 oldPos = accountInfo.takerPositionSize;
         accountInfo.takerPositionSize = accountInfo.takerPositionSize.add(base);
         accountInfo.takerOpenNotional = accountInfo.takerOpenNotional.add(quote);
@@ -461,7 +460,7 @@ contract AccountBalance is IAccountBalance, BlockContext, ClearingHouseCallee, A
 
     function _settleQuoteToOwedRealizedPnl(address trader, address baseToken, int256 amount) internal {
         if (amount != 0) {
-            AccountMarket.Info storage accountInfo = _accountMarketMap[trader][baseToken];
+            DataTypes.AccountMarketInfo storage accountInfo = _accountMarketMap[trader][baseToken];
             accountInfo.takerOpenNotional = accountInfo.takerOpenNotional.sub(amount);
             _modifyOwedRealizedPnl(trader, amount);
         }
@@ -469,7 +468,7 @@ contract AccountBalance is IAccountBalance, BlockContext, ClearingHouseCallee, A
 
     /// @dev this function is expensive
     function _deregisterBaseToken(address trader, address baseToken) internal {
-        AccountMarket.Info memory info = _accountMarketMap[trader][baseToken];
+        DataTypes.AccountMarketInfo memory info = _accountMarketMap[trader][baseToken];
         if (info.takerPositionSize.abs() >= _DUST || info.takerOpenNotional.abs() >= _DUST) {
             return;
         }

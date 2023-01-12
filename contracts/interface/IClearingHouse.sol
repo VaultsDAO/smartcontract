@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 pragma solidity 0.7.6;
 pragma abicoder v2;
+import { DataTypes } from "../types/DataTypes.sol";
 
 interface IClearingHouse {
     /// @param useTakerBalance only accept false now
@@ -179,7 +180,9 @@ interface IClearingHouse {
     /// @dev - `AddLiquidityParams.useTakerBalance` is only accept `false` now
     /// @param params AddLiquidityParams struct
     /// @return response AddLiquidityResponse struct
-    function addLiquidity(AddLiquidityParams calldata params) external returns (AddLiquidityResponse memory response);
+    function addLiquidity(
+        DataTypes.AddLiquidityParams calldata params
+    ) external returns (DataTypes.AddLiquidityResponse memory response);
 
     /// @notice Maker can call `removeLiquidity` to remove liquidity
     /// @dev remove liquidity will transfer maker impermanent position to taker position,
@@ -187,9 +190,9 @@ interface IClearingHouse {
     /// pool to maker
     /// @param params RemoveLiquidityParams struct
     /// @return response RemoveLiquidityResponse struct
-    function removeLiquidity(RemoveLiquidityParams calldata params)
-        external
-        returns (RemoveLiquidityResponse memory response);
+    function removeLiquidity(
+        RemoveLiquidityParams calldata params
+    ) external returns (RemoveLiquidityResponse memory response);
 
     /// @notice Settle all markets fundingPayment to owedRealized Pnl
     /// @param trader The address of trader
@@ -219,13 +222,10 @@ interface IClearingHouse {
     /// @return base The amount of baseToken the taker got or spent
     /// @return quote The amount of quoteToken the taker got or spent
     /// @return fee The trading fee
-    function openPositionFor(address trader, OpenPositionParams memory params)
-        external
-        returns (
-            uint256 base,
-            uint256 quote,
-            uint256 fee
-        );
+    function openPositionFor(
+        address trader,
+        OpenPositionParams memory params
+    ) external returns (uint256 base, uint256 quote, uint256 fee);
 
     /// @notice Close trader's position
     /// @param params ClosePositionParams struct
@@ -244,11 +244,7 @@ interface IClearingHouse {
     /// @param baseToken The address of baseToken
     /// @param positionSize the position size to be liquidated by liquidator
     //    and MUST be the same direction as trader's position size
-    function liquidate(
-        address trader,
-        address baseToken,
-        int256 positionSize
-    ) external;
+    function liquidate(address trader, address baseToken, int256 positionSize) external;
 
     /// @notice liquidate trader's position and will liquidate the max possible position size
     /// @dev If margin ratio >= 0.5 * mmRatio,
@@ -264,11 +260,7 @@ interface IClearingHouse {
     /// @param maker The address of Maker
     /// @param baseToken The address of baseToken
     /// @param orderIds The id of the order
-    function cancelExcessOrders(
-        address maker,
-        address baseToken,
-        bytes32[] calldata orderIds
-    ) external;
+    function cancelExcessOrders(address maker, address baseToken, bytes32[] calldata orderIds) external;
 
     /// @notice Cancel all excess orders of a maker if the maker is underwater
     /// @dev This function won't fail if the maker has no order but fails when maker is not underwater
@@ -324,4 +316,6 @@ interface IClearingHouse {
     /// @notice Get `DelegateApproval` address
     /// @return delegateApproval `DelegateApproval` address
     function getDelegateApproval() external view returns (address delegateApproval);
+
+    function getMaker() external view returns (address maker);
 }

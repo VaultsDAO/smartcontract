@@ -324,7 +324,7 @@ contract Exchange is
 
     /// @inheritdoc IExchange
     function getPnlToBeRealized(RealizePnlParams memory params) external view override returns (int256) {
-        AccountMarket.Info memory info = IAccountBalance(_accountBalance).getAccountInfo(
+        DataTypes.AccountMarketInfo memory info = IAccountBalance(_accountBalance).getAccountInfo(
             params.trader,
             params.baseToken
         );
