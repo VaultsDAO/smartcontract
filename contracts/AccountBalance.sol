@@ -329,16 +329,18 @@ contract AccountBalance is IAccountBalance, BlockContext, ClearingHouseCallee, A
 
     /// @inheritdoc IAccountBalance
     function getBase(address trader, address baseToken) public view override returns (int256) {
-        uint256 orderDebt = IOrderBook(_orderBook).getTotalOrderDebt(trader, baseToken, true);
-        // base = takerPositionSize - orderBaseDebt
-        return _accountMarketMap[trader][baseToken].takerPositionSize.sub(orderDebt.toInt256());
+        // uint256 orderDebt = IOrderBook(_orderBook).getTotalOrderDebt(trader, baseToken, true);
+        // // base = takerPositionSize - orderBaseDebt
+        // return _accountMarketMap[trader][baseToken].takerPositionSize.sub(orderDebt.toInt256());
+        return _accountMarketMap[trader][baseToken].takerPositionSize;
     }
 
     /// @inheritdoc IAccountBalance
     function getQuote(address trader, address baseToken) public view override returns (int256) {
-        uint256 orderDebt = IOrderBook(_orderBook).getTotalOrderDebt(trader, baseToken, false);
-        // quote = takerOpenNotional - orderQuoteDebt
-        return _accountMarketMap[trader][baseToken].takerOpenNotional.sub(orderDebt.toInt256());
+        // uint256 orderDebt = IOrderBook(_orderBook).getTotalOrderDebt(trader, baseToken, false);
+        // // quote = takerOpenNotional - orderQuoteDebt
+        // return _accountMarketMap[trader][baseToken].takerOpenNotional.sub(orderDebt.toInt256());
+        return _accountMarketMap[trader][baseToken].takerOpenNotional;
     }
 
     /// @inheritdoc IAccountBalance

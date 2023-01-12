@@ -28,6 +28,8 @@ import { ExchangeStorageV1 } from "./storage/ExchangeStorage.sol";
 import { IExchange } from "./interface/IExchange.sol";
 import { OpenOrder } from "./lib/OpenOrder.sol";
 
+import "hardhat/console.sol";
+
 // never inherit any new stateful contract. never change the orders of parent stateful contracts
 contract Exchange is
     IUniswapV3SwapCallback,
@@ -655,7 +657,7 @@ contract Exchange is
 
             (uint256 longPositionSize, uint256 shortPositionSize) = IAccountBalance(_accountBalance)
                 .getMarketPositionSize(baseToken);
-            if (longPositionSize != 0 && shortPositionSize != 0) {
+            if (longPositionSize > 0 && shortPositionSize > 0) {
                 uint256 sqrtMarkTwapX96 = getSqrtMarkTwapX96(baseToken, 0);
                 int256 deltaTwapX96 = _getDeltaTwapX96AfterOptimal(
                     baseToken,
@@ -700,6 +702,8 @@ contract Exchange is
                         .twShortPremiumDivBySqrtPriceX96
                         .add(PerpMath.mulDiv(deltaTwPremiumX96, PerpFixedPoint96._IQ96, sqrtMarkTwapX96));
                 }
+            } else {
+                fundingGrowthGlobal = lastFundingGrowthGlobal;
             }
         }
         return (fundingGrowthGlobal, markTwap, indexTwap);

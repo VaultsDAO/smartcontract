@@ -196,6 +196,14 @@ export function findLiquidityChangedEvents(
     return receipt.logs.filter(log => log.topics[0] === topic).map(log => fixture.clearingHouse.interface.parseLog(log))
 }
 
+export function findPositionChangedEvents(
+    fixture: ClearingHouseFixture,
+    receipt: TransactionReceipt,
+): LogDescription[] {
+    const topic = fixture.clearingHouse.interface.getEventTopic("PositionChanged")
+    return receipt.logs.filter(log => log.topics[0] === topic).map(log => fixture.clearingHouse.interface.parseLog(log))
+}
+
 export async function syncIndexToMarketPrice(aggregator: MockContract, pool: UniswapV3Pool) {
     const slot0 = await pool.slot0()
     const sqrtPrice = slot0.sqrtPriceX96
