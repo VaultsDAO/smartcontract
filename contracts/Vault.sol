@@ -7,10 +7,7 @@ import { ReentrancyGuardUpgradeable } from "@openzeppelin/contracts-upgradeable/
 import { SafeMathUpgradeable } from "@openzeppelin/contracts-upgradeable/math/SafeMathUpgradeable.sol";
 import { SignedSafeMathUpgradeable } from "@openzeppelin/contracts-upgradeable/math/SignedSafeMathUpgradeable.sol";
 import { MathUpgradeable } from "@openzeppelin/contracts-upgradeable/math/MathUpgradeable.sol";
-import {
-    SafeERC20Upgradeable,
-    IERC20Upgradeable
-} from "@openzeppelin/contracts-upgradeable/token/ERC20/SafeERC20Upgradeable.sol";
+import { SafeERC20Upgradeable, IERC20Upgradeable } from "@openzeppelin/contracts-upgradeable/token/ERC20/SafeERC20Upgradeable.sol";
 import { FullMath } from "@uniswap/v3-core/contracts/libraries/FullMath.sol";
 import { TransferHelper } from "@uniswap/v3-periphery/contracts/libraries/TransferHelper.sol";
 import { PerpSafeCast } from "./lib/PerpSafeCast.sol";
@@ -56,6 +53,16 @@ contract Vault is IVault, ReentrancyGuardUpgradeable, OwnerPausable, BaseRelayRe
         _;
     }
 
+    function _requireNotMaker(address maker) internal view {
+        // only Maker
+        require(maker != _maker, "CHD_NM");
+    }
+
+    function _requireOnlyMaker(address maker) internal view {
+        // only Maker
+        require(maker == _maker, "CHD_OM");
+    }
+
     //
     // EXTERNAL NON-VIEW
     //
@@ -70,7 +77,8 @@ contract Vault is IVault, ReentrancyGuardUpgradeable, OwnerPausable, BaseRelayRe
         address insuranceFundArg,
         address clearingHouseConfigArg,
         address accountBalanceArg,
-        address exchangeArg
+        address exchangeArg,
+        address makerArg
     ) external initializer {
         address settlementTokenArg = IInsuranceFund(insuranceFundArg).getToken();
         uint8 decimalsArg = IERC20Metadata(settlementTokenArg).decimals();
@@ -94,6 +102,7 @@ contract Vault is IVault, ReentrancyGuardUpgradeable, OwnerPausable, BaseRelayRe
         _clearingHouseConfig = clearingHouseConfigArg;
         _accountBalance = accountBalanceArg;
         _exchange = exchangeArg;
+        _maker = makerArg;
     }
 
     function setTrustedForwarder(address trustedForwarderArg) external onlyOwner {
@@ -110,6 +119,14 @@ contract Vault is IVault, ReentrancyGuardUpgradeable, OwnerPausable, BaseRelayRe
 
         _clearingHouse = clearingHouseArg;
         emit ClearingHouseChanged(clearingHouseArg);
+    }
+
+    function setMaker(address makerArg) external onlyOwner {
+        // V_CHNC: Maker is not contract
+        // require(makerArg.isContract(), "V_CHNC");
+
+        _maker = makerArg;
+        emit MakerChanged(makerArg);
     }
 
     function setCollateralManager(address collateralManagerArg) external onlyOwner {
@@ -129,13 +146,10 @@ contract Vault is IVault, ReentrancyGuardUpgradeable, OwnerPausable, BaseRelayRe
     }
 
     /// @inheritdoc IVault
-    function deposit(address token, uint256 amount)
-        external
-        override
-        whenNotPaused
-        nonReentrant
-        onlySettlementOrCollateralToken(token)
-    {
+    function deposit(
+        address token,
+        uint256 amount
+    ) external override whenNotPaused nonReentrant onlySettlementOrCollateralToken(token) {
         // input requirement checks:
         //   token: here
         //   amount: _deposit
@@ -184,13 +198,10 @@ contract Vault is IVault, ReentrancyGuardUpgradeable, OwnerPausable, BaseRelayRe
     // 3. call Vault.withdraw(token, amount)
     // 4. settle pnl to trader balance in Vault
     // 5. transfer the amount to trader
-    function withdraw(address token, uint256 amount)
-        external
-        override
-        whenNotPaused
-        nonReentrant
-        onlySettlementOrCollateralToken(token)
-    {
+    function withdraw(
+        address token,
+        uint256 amount
+    ) external override whenNotPaused nonReentrant onlySettlementOrCollateralToken(token) {
         // input requirement checks:
         //   token: here
         //   amount: in _settleAndDecreaseBalance()
@@ -212,14 +223,9 @@ contract Vault is IVault, ReentrancyGuardUpgradeable, OwnerPausable, BaseRelayRe
     }
 
     /// @inheritdoc IVault
-    function withdrawAll(address token)
-        external
-        override
-        whenNotPaused
-        nonReentrant
-        onlySettlementOrCollateralToken(token)
-        returns (uint256 amount)
-    {
+    function withdrawAll(
+        address token
+    ) external override whenNotPaused nonReentrant onlySettlementOrCollateralToken(token) returns (uint256 amount) {
         // input requirement checks:
         //   token: here
 
@@ -257,8 +263,10 @@ contract Vault is IVault, ReentrancyGuardUpgradeable, OwnerPausable, BaseRelayRe
         // V_NL: Not liquidatable
         require(isLiquidatable(trader), "V_NL");
 
-        (uint256 maxRepaidSettlementX10_S, uint256 maxLiquidatableCollateral) =
-            getMaxRepaidSettlementAndLiquidatableCollateral(trader, token);
+        (
+            uint256 maxRepaidSettlementX10_S,
+            uint256 maxLiquidatableCollateral
+        ) = getMaxRepaidSettlementAndLiquidatableCollateral(trader, token);
 
         uint256 collateral;
         uint256 settlementX10_S;
@@ -432,8 +440,9 @@ contract Vault is IVault, ReentrancyGuardUpgradeable, OwnerPausable, BaseRelayRe
         }
 
         int256 settlementTokenValueX10_18 = _getSettlementTokenValue(trader);
-        uint256 settlementTokenDebtX10_18 =
-            settlementTokenValueX10_18 < 0 ? settlementTokenValueX10_18.neg256().toUint256() : 0;
+        uint256 settlementTokenDebtX10_18 = settlementTokenValueX10_18 < 0
+            ? settlementTokenValueX10_18.neg256().toUint256()
+            : 0;
 
         if (
             settlementTokenDebtX10_18 >
@@ -465,20 +474,17 @@ contract Vault is IVault, ReentrancyGuardUpgradeable, OwnerPausable, BaseRelayRe
 
     /// @inheritdoc IVault
     function getCollateralMmRatio() public view override returns (uint24) {
-        uint24 collateralMmRatio =
-            ICollateralManager(_collateralManager).requireValidCollateralMmRatio(
-                ICollateralManager(_collateralManager).getMmRatioBuffer()
-            );
+        uint24 collateralMmRatio = ICollateralManager(_collateralManager).requireValidCollateralMmRatio(
+            ICollateralManager(_collateralManager).getMmRatioBuffer()
+        );
         return collateralMmRatio;
     }
 
     /// @inheritdoc IVault
-    function getRepaidSettlementByCollateral(address token, uint256 collateral)
-        public
-        view
-        override
-        returns (uint256 settlementX10_S)
-    {
+    function getRepaidSettlementByCollateral(
+        address token,
+        uint256 collateral
+    ) public view override returns (uint256 settlementX10_S) {
         uint24 discountRatio = ICollateralManager(_collateralManager).getCollateralConfig(token).discountRatio;
         (uint256 indexTwap, uint8 priceFeedDecimals) = _getIndexPriceAndDecimals(token);
 
@@ -488,17 +494,14 @@ contract Vault is IVault, ReentrancyGuardUpgradeable, OwnerPausable, BaseRelayRe
                 collateral,
                 indexTwap.mulRatio(_ONE_HUNDRED_PERCENT_RATIO.subRatio(discountRatio)),
                 priceFeedDecimals
-            )
-                .formatSettlementToken(_decimals);
+            ).formatSettlementToken(_decimals);
     }
 
     /// @inheritdoc IVault
-    function getLiquidatableCollateralBySettlement(address token, uint256 settlementX10_S)
-        public
-        view
-        override
-        returns (uint256 collateral)
-    {
+    function getLiquidatableCollateralBySettlement(
+        address token,
+        uint256 settlementX10_S
+    ) public view override returns (uint256 collateral) {
         uint24 discountRatio = ICollateralManager(_collateralManager).getCollateralConfig(token).discountRatio;
         (uint256 indexTwap, uint8 priceFeedDecimals) = _getIndexPriceAndDecimals(token);
 
@@ -516,12 +519,10 @@ contract Vault is IVault, ReentrancyGuardUpgradeable, OwnerPausable, BaseRelayRe
     /// maxRepaidSettlement = maxLiquidatableCollateral * (indexTwap * (1 - discountRatio))
     /// maxLiquidatableCollateral =
     ///     min(maxRepaidSettlement / (indexTwap * (1 - discountRatio)), getBalanceByToken(trader, token))
-    function getMaxRepaidSettlementAndLiquidatableCollateral(address trader, address token)
-        public
-        view
-        override
-        returns (uint256 maxRepaidSettlementX10_S, uint256 maxLiquidatableCollateral)
-    {
+    function getMaxRepaidSettlementAndLiquidatableCollateral(
+        address trader,
+        address token
+    ) public view override returns (uint256 maxRepaidSettlementX10_S, uint256 maxLiquidatableCollateral) {
         // V_TINAC: token is not a collateral
         require(_isCollateral(token), "V_TINAC");
 
@@ -597,11 +598,7 @@ contract Vault is IVault, ReentrancyGuardUpgradeable, OwnerPausable, BaseRelayRe
     /// @param token the collateral token needs to be transferred into vault
     /// @param from the address of account who owns the collateral token
     /// @param amount the amount of collateral token needs to be transferred
-    function _transferTokenIn(
-        address token,
-        address from,
-        uint256 amount
-    ) internal {
+    function _transferTokenIn(address token, address from, uint256 amount) internal {
         // check for deflationary tokens by assuring balances before and after transferring to be the same
         uint256 balanceBefore = IERC20Metadata(token).balanceOf(address(this));
         SafeERC20Upgradeable.safeTransferFrom(IERC20Upgradeable(token), from, address(this), amount);
@@ -613,12 +610,9 @@ contract Vault is IVault, ReentrancyGuardUpgradeable, OwnerPausable, BaseRelayRe
     /// @param to deposit token to this address
     /// @param token the collateral token wish to deposit
     /// @param amount the amount of token to deposit
-    function _deposit(
-        address from,
-        address to,
-        address token,
-        uint256 amount
-    ) internal {
+    function _deposit(address from, address to, address token, uint256 amount) internal {
+        _requireNotMaker(from);
+        _requireNotMaker(to);
         // V_ZA: Zero amount
         require(amount > 0, "V_ZA");
         _transferTokenIn(token, from, amount);
@@ -627,6 +621,7 @@ contract Vault is IVault, ReentrancyGuardUpgradeable, OwnerPausable, BaseRelayRe
 
     /// @param to deposit ETH to this address
     function _depositEther(address to) internal {
+        _requireNotMaker(to);
         uint256 amount = msg.value;
         // V_ZA: Zero amount
         require(amount > 0, "V_ZA");
@@ -642,14 +637,10 @@ contract Vault is IVault, ReentrancyGuardUpgradeable, OwnerPausable, BaseRelayRe
     /// @param token the collateral token needs to be transferred out of vault
     /// @param to the address of account that the collateral token deposit to
     /// @param amount the amount of collateral token to be deposited
-    function _checkDepositCapAndRegister(
-        address token,
-        address to,
-        uint256 amount
-    ) internal {
+    function _checkDepositCapAndRegister(address token, address to, uint256 amount) internal {
         if (token == _settlementToken) {
-            uint256 settlementTokenBalanceCap =
-                IClearingHouseConfig(_clearingHouseConfig).getSettlementTokenBalanceCap();
+            uint256 settlementTokenBalanceCap = IClearingHouseConfig(_clearingHouseConfig)
+                .getSettlementTokenBalanceCap();
             // V_GTSTBC: greater than settlement token balance cap
             require(IERC20Metadata(token).balanceOf(address(this)) <= settlementTokenBalanceCap, "V_GTSTBC");
         } else {
@@ -662,11 +653,7 @@ contract Vault is IVault, ReentrancyGuardUpgradeable, OwnerPausable, BaseRelayRe
         emit Deposited(token, to, amount);
     }
 
-    function _settleAndDecreaseBalance(
-        address to,
-        address token,
-        uint256 amount
-    ) internal {
+    function _settleAndDecreaseBalance(address to, address token, uint256 amount) internal {
         // settle all funding payments owedRealizedPnl
         // pending fee can be withdraw but won't be settled
         IClearingHouse(_clearingHouse).settleAllFunding(to);
@@ -686,17 +673,17 @@ contract Vault is IVault, ReentrancyGuardUpgradeable, OwnerPausable, BaseRelayRe
         _modifyBalance(to, token, deltaBalance);
     }
 
-    function _withdraw(
-        address to,
-        address token,
-        uint256 amount
-    ) internal {
+    function _withdraw(address to, address token, uint256 amount) internal {
+        _requireNotMaker(to);
+
         _settleAndDecreaseBalance(to, token, amount);
         SafeERC20Upgradeable.safeTransfer(IERC20Upgradeable(token), to, amount);
         emit Withdrawn(token, to, amount);
     }
 
     function _withdrawEther(address to, uint256 amount) internal {
+        _requireNotMaker(to);
+        
         // SLOAD for gas saving
         address WETH9 = _WETH9;
 
@@ -708,11 +695,7 @@ contract Vault is IVault, ReentrancyGuardUpgradeable, OwnerPausable, BaseRelayRe
     }
 
     /// @param amount can be 0; do not require this
-    function _modifyBalance(
-        address trader,
-        address token,
-        int256 amount
-    ) internal {
+    function _modifyBalance(address trader, address token, int256 amount) internal {
         if (amount == 0) {
             return;
         }
@@ -755,12 +738,9 @@ contract Vault is IVault, ReentrancyGuardUpgradeable, OwnerPausable, BaseRelayRe
     /// @dev liquidate trader's collateral token by repaying the trader's settlement token debt
     ///      the amount of collateral token and settlement token should be calculated by using
     ///      getLiquidatableCollateralBySettlement() and getRepaidSettlementByCollateral()
-    function _liquidateCollateral(
-        address trader,
-        address token,
-        uint256 settlementX10_S,
-        uint256 collateral
-    ) internal {
+    function _liquidateCollateral(address trader, address token, uint256 settlementX10_S, uint256 collateral) internal {
+        _requireNotMaker(trader);
+
         address liquidator = _msgSender();
         address settlementToken = _settlementToken; // SLOAD gas saving
 
@@ -811,14 +791,14 @@ contract Vault is IVault, ReentrancyGuardUpgradeable, OwnerPausable, BaseRelayRe
                 .toUint256();
     }
 
-    function _getFreeCollateralByRatio(address trader, uint24 ratio)
-        internal
-        view
-        returns (int256 freeCollateralX10_18)
-    {
+    function _getFreeCollateralByRatio(
+        address trader,
+        uint24 ratio
+    ) internal view returns (int256 freeCollateralX10_18) {
         // conservative config: freeCollateral = min(totalCollateralValue, accountValue) - openOrderMarginReq
-        (int256 accountValueX10_18, int256 totalCollateralValueX10_18) =
-            _getAccountValueAndTotalCollateralValue(trader);
+        (int256 accountValueX10_18, int256 totalCollateralValueX10_18) = _getAccountValueAndTotalCollateralValue(
+            trader
+        );
         uint256 totalMarginRequirementX10_18 = _getTotalMarginRequirement(trader, ratio);
 
         return
@@ -838,11 +818,9 @@ contract Vault is IVault, ReentrancyGuardUpgradeable, OwnerPausable, BaseRelayRe
         // return accountValueX10_18.sub(totalMarginRequirementX10_18.toInt256());
     }
 
-    function _getTotalCollateralValueAndUnrealizedPnl(address trader)
-        internal
-        view
-        returns (int256 totalCollateralValueX10_18, int256 unrealizedPnlX10_18)
-    {
+    function _getTotalCollateralValueAndUnrealizedPnl(
+        address trader
+    ) internal view returns (int256 totalCollateralValueX10_18, int256 unrealizedPnlX10_18) {
         int256 settlementTokenBalanceX10_18;
         (settlementTokenBalanceX10_18, unrealizedPnlX10_18) = _getSettlementTokenBalanceAndUnrealizedPnl(trader);
         uint256 nonSettlementTokenValueX10_18 = _getNonSettlementTokenValue(trader);
@@ -857,11 +835,9 @@ contract Vault is IVault, ReentrancyGuardUpgradeable, OwnerPausable, BaseRelayRe
     ///      The second one is the first one plus unrealized PnL.
     /// @return settlementTokenBalanceX10_18 Settlement amount in 18 decimals
     /// @return unrealizedPnlX10_18 Unrealized PnL in 18 decimals
-    function _getSettlementTokenBalanceAndUnrealizedPnl(address trader)
-        internal
-        view
-        returns (int256 settlementTokenBalanceX10_18, int256 unrealizedPnlX10_18)
-    {
+    function _getSettlementTokenBalanceAndUnrealizedPnl(
+        address trader
+    ) internal view returns (int256 settlementTokenBalanceX10_18, int256 unrealizedPnlX10_18) {
         int256 fundingPaymentX10_18 = IExchange(_exchange).getAllPendingFundingPayment(trader);
 
         int256 owedRealizedPnlX10_18;
@@ -878,8 +854,9 @@ contract Vault is IVault, ReentrancyGuardUpgradeable, OwnerPausable, BaseRelayRe
 
     /// @return settlementTokenValueX10_18 settlementTokenBalance + totalUnrealizedPnl, in 18 decimals
     function _getSettlementTokenValue(address trader) internal view returns (int256 settlementTokenValueX10_18) {
-        (int256 settlementBalanceX10_18, int256 unrealizedPnlX10_18) =
-            _getSettlementTokenBalanceAndUnrealizedPnl(trader);
+        (int256 settlementBalanceX10_18, int256 unrealizedPnlX10_18) = _getSettlementTokenBalanceAndUnrealizedPnl(
+            trader
+        );
         return settlementBalanceX10_18.add(unrealizedPnlX10_18);
     }
 
@@ -929,8 +906,8 @@ contract Vault is IVault, ReentrancyGuardUpgradeable, OwnerPausable, BaseRelayRe
         // Convert token decimals with as much precision as possible
         return
             collateralTokenDecimals > 18
-                ? collateral.mulDiv(price, 10**priceFeedDecimals).convertTokenDecimals(collateralTokenDecimals, 18)
-                : collateral.convertTokenDecimals(collateralTokenDecimals, 18).mulDiv(price, 10**priceFeedDecimals);
+                ? collateral.mulDiv(price, 10 ** priceFeedDecimals).convertTokenDecimals(collateralTokenDecimals, 18)
+                : collateral.convertTokenDecimals(collateralTokenDecimals, 18).mulDiv(price, 10 ** priceFeedDecimals);
     }
 
     /// @return collateral collateral amount
@@ -946,20 +923,18 @@ contract Vault is IVault, ReentrancyGuardUpgradeable, OwnerPausable, BaseRelayRe
         return
             collateralTokenDecimals > 18
                 ? settlementX10_18.convertTokenDecimals(18, collateralTokenDecimals).mulDivRoundingUp(
-                    10**priceFeedDecimals,
+                    10 ** priceFeedDecimals,
                     price
                 )
-                : settlementX10_18.mulDivRoundingUp(10**priceFeedDecimals, price).convertTokenDecimals(
+                : settlementX10_18.mulDivRoundingUp(10 ** priceFeedDecimals, price).convertTokenDecimals(
                     18,
                     collateralTokenDecimals
                 );
     }
 
-    function _getAccountValueAndTotalCollateralValue(address trader)
-        internal
-        view
-        returns (int256 accountValueX10_18, int256 totalCollateralValueX10_18)
-    {
+    function _getAccountValueAndTotalCollateralValue(
+        address trader
+    ) internal view returns (int256 accountValueX10_18, int256 totalCollateralValueX10_18) {
         int256 unrealizedPnlX10_18;
 
         (totalCollateralValueX10_18, unrealizedPnlX10_18) = _getTotalCollateralValueAndUnrealizedPnl(trader);
@@ -980,19 +955,22 @@ contract Vault is IVault, ReentrancyGuardUpgradeable, OwnerPausable, BaseRelayRe
     function _getMaxRepaidSettlement(address trader) internal view returns (uint256 maxRepaidSettlementX10_18) {
         // max(max(-settlementTokenValue, 0), totalMarginReq) * liquidationRatio
         int256 settlementTokenValueX10_18 = _getSettlementTokenValue(trader);
-        uint256 settlementTokenDebtX10_18 =
-            settlementTokenValueX10_18 < 0 ? settlementTokenValueX10_18.neg256().toUint256() : 0;
+        uint256 settlementTokenDebtX10_18 = settlementTokenValueX10_18 < 0
+            ? settlementTokenValueX10_18.neg256().toUint256()
+            : 0;
 
-        uint256 totalMarginRequirementX10_18 =
-            _getTotalMarginRequirement(trader, IClearingHouseConfig(_clearingHouseConfig).getImRatio());
+        uint256 totalMarginRequirementX10_18 = _getTotalMarginRequirement(
+            trader,
+            IClearingHouseConfig(_clearingHouseConfig).getImRatio()
+        );
 
         uint256 maxDebtX10_18 = MathUpgradeable.max(settlementTokenDebtX10_18, totalMarginRequirementX10_18);
-        uint256 collateralValueDustX10_18 =
-            ICollateralManager(_collateralManager).getCollateralValueDust().parseSettlementToken(_decimals);
-        uint256 maxRepaidSettlementWithoutInsuranceFundFeeX10_18 =
-            maxDebtX10_18 > collateralValueDustX10_18
-                ? maxDebtX10_18.mulRatio(ICollateralManager(_collateralManager).getLiquidationRatio())
-                : maxDebtX10_18;
+        uint256 collateralValueDustX10_18 = ICollateralManager(_collateralManager)
+            .getCollateralValueDust()
+            .parseSettlementToken(_decimals);
+        uint256 maxRepaidSettlementWithoutInsuranceFundFeeX10_18 = maxDebtX10_18 > collateralValueDustX10_18
+            ? maxDebtX10_18.mulRatio(ICollateralManager(_collateralManager).getLiquidationRatio())
+            : maxDebtX10_18;
 
         return
             maxRepaidSettlementWithoutInsuranceFundFeeX10_18.divRatio(
@@ -1001,11 +979,10 @@ contract Vault is IVault, ReentrancyGuardUpgradeable, OwnerPausable, BaseRelayRe
     }
 
     /// @return totalMarginRequirementX10_18 total margin requirement in 18 decimals
-    function _getTotalMarginRequirement(address trader, uint24 ratio)
-        internal
-        view
-        returns (uint256 totalMarginRequirementX10_18)
-    {
+    function _getTotalMarginRequirement(
+        address trader,
+        uint24 ratio
+    ) internal view returns (uint256 totalMarginRequirementX10_18) {
         uint256 totalDebtValueX10_18 = IAccountBalance(_accountBalance).getTotalDebtValue(trader);
         return totalDebtValueX10_18.mulRatio(ratio);
     }

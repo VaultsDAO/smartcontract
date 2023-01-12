@@ -47,6 +47,8 @@ interface IVault {
     /// @param collateralManager The address of collateralManager
     event CollateralManagerChanged(address indexed collateralManager);
 
+    event MakerChanged(address indexed maker);
+
     /// @notice Emitted when WETH9 is changed
     /// @param WETH9 The address of WETH9
     event WETH9Changed(address indexed WETH9);

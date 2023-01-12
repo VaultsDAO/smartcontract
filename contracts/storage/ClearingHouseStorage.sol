@@ -21,6 +21,7 @@ abstract contract ClearingHouseStorageV1 {
     address internal _marketRegistry;
     address internal _insuranceFund;
     address internal _platformFund;
+    address internal _maker;
 }
 
 abstract contract ClearingHouseStorageV2 is ClearingHouseStorageV1 {

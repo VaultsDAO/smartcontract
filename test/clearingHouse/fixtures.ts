@@ -159,6 +159,8 @@ export function createClearingHouseFixture(
 
         await accountBalance.initialize(clearingHouseConfig.address, orderBook.address)
 
+        const [admin, maker, taker, alice, a1, a2, a3, fundingFund, platformFund] = waffle.provider.getWallets()
+
         // deploy vault
         const vaultFactory = await ethers.getContractFactory("TestVault")
         const vault = (await vaultFactory.deploy()) as Vault
@@ -167,6 +169,7 @@ export function createClearingHouseFixture(
             clearingHouseConfig.address,
             accountBalance.address,
             exchange.address,
+            maker.address,
         )
 
         const collateralManagerFactory = await ethers.getContractFactory("CollateralManager")
@@ -217,8 +220,6 @@ export function createClearingHouseFixture(
         await quoteToken.addWhitelist(pool2.address)
 
 
-        const [admin, maker, taker, alice, a1, a2, a3, fundingFund, platformFund] = waffle.provider.getWallets()
-
         // deploy clearingHouse
         let clearingHouse: ClearingHouse | TestClearingHouse
         if (canMockTime) {
@@ -234,6 +235,7 @@ export function createClearingHouseFixture(
                 marketRegistry.address,
                 insuranceFund.address,
                 platformFund.address,
+                maker.address,
             )
             clearingHouse = testClearingHouse
         } else {
@@ -249,6 +251,7 @@ export function createClearingHouseFixture(
                 marketRegistry.address,
                 insuranceFund.address,
                 platformFund.address,
+                maker.address,
             )
         }
 
@@ -417,6 +420,7 @@ export async function mockedClearingHouseFixture(): Promise<MockedClearingHouseF
         marketRegistry.address,
         insuranceFund.address,
         platformFund.address,
+        maker.address,
     )
     return {
         clearingHouse,

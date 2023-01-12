@@ -92,6 +92,22 @@ contract ClearingHouse is
         _;
     }
 
+    modifier onlyMaker() {
+        // only maker
+        require(_msgSender() == _maker, "CHD_OM");
+        _;
+    }
+
+    function _requireMaker(address maker) internal view {
+        // only Maker
+        require(maker == _maker, "CHD_OM");
+    }
+
+    function _requireNotMaker(address maker) internal view {
+        // not Maker
+        require(maker != _maker, "CHD_NM");
+    }
+
     //
     // EXTERNAL NON-VIEW
     //
@@ -107,7 +123,8 @@ contract ClearingHouse is
         address accountBalanceArg,
         address marketRegistryArg,
         address insuranceFundArg,
-        address platformFundArg
+        address platformFundArg,
+        address makerArg
     ) public initializer {
         // CH_VANC: Vault address is not contract
         _isContract(vaultArg, "CH_VANC");
@@ -143,6 +160,7 @@ contract ClearingHouse is
         _marketRegistry = marketRegistryArg;
         _insuranceFund = insuranceFundArg;
         _platformFund = platformFundArg;
+        _maker = makerArg;
 
         _settlementTokenDecimals = IVault(_vault).decimals();
     }
@@ -172,6 +190,7 @@ contract ClearingHouse is
         whenNotPaused
         nonReentrant
         checkDeadline(params.deadline)
+        onlyMaker
         returns (
             // check onlyLiquidityAdmin
             AddLiquidityResponse memory
@@ -326,6 +345,7 @@ contract ClearingHouse is
         whenNotPaused
         nonReentrant
         checkDeadline(params.deadline)
+        onlyMaker
         returns (RemoveLiquidityResponse memory)
     {
         // input requirement checks:
@@ -503,7 +523,7 @@ contract ClearingHouse is
         address maker,
         address baseToken,
         bytes32[] calldata orderIds
-    ) external override whenNotPaused nonReentrant {
+    ) external override onlyMaker whenNotPaused nonReentrant {
         // input requirement checks:
         //   maker: in _cancelExcessOrders()
         //   baseToken: in Exchange.settleFunding()
@@ -513,7 +533,10 @@ contract ClearingHouse is
     }
 
     /// @inheritdoc IClearingHouse
-    function cancelAllExcessOrders(address maker, address baseToken) external override whenNotPaused nonReentrant {
+    function cancelAllExcessOrders(
+        address maker,
+        address baseToken
+    ) external override onlyMaker whenNotPaused nonReentrant {
         // input requirement checks:
         //   maker: in _cancelExcessOrders()
         //   baseToken: in Exchange.settleFunding()
@@ -671,6 +694,8 @@ contract ClearingHouse is
 
     function _liquidate(address trader, address baseToken, int256 positionSizeToBeLiquidated) internal {
         _checkMarketOpen(baseToken);
+
+        _requireNotMaker(trader);
 
         // CH_CLWTISO: cannot liquidate when there is still order
         require(!IAccountBalance(_accountBalance).hasOrder(trader), "CH_CLWTISO");
@@ -1202,6 +1227,7 @@ contract ClearingHouse is
     }
 
     function _requireEnoughFreeCollateral(address trader) internal view {
+        if (trader == _maker) return;
         // CH_NEFCI: not enough free collateral by imRatio
         require(
             _getFreeCollateralByRatio(trader, IClearingHouseConfig(_clearingHouseConfig).getImRatio()) >= 0,
