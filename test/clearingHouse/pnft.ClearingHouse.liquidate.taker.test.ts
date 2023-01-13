@@ -27,8 +27,8 @@ import { IGNORABLE_DUST } from "../helper/number"
 import { deposit } from "../helper/token"
 import { ClearingHouseFixture, createClearingHouseFixture } from "./fixtures"
 
-describe("ClearingHouse liquidate taker", () => {
-    const [admin, maker, taker, liquidator] = waffle.provider.getWallets()
+describe("ClearingHouse liquidate trader", () => {
+    const [admin, maker, trader, liquidator] = waffle.provider.getWallets()
     const loadFixture: ReturnType<typeof waffle.createFixtureLoader> = waffle.createFixtureLoader([admin])
     let fixture: ClearingHouseFixture
     let clearingHouse: TestClearingHouse
@@ -40,7 +40,7 @@ describe("ClearingHouse liquidate taker", () => {
     let baseToken: BaseToken
     let mockedNFTPriceFeed: MockContract
     let collateralDecimals: number
-    let takerUsdcBalanceBefore: BigNumber
+    let traderUsdcBalanceBefore: BigNumber
     const lowerTick: number = 45800
     const upperTick: number = 46400
     const initPrice = "100"
@@ -62,9 +62,9 @@ describe("ClearingHouse liquidate taker", () => {
             return parseUnits(initPrice, 18)
         })
 
-        // prepare collateral for taker
-        await collateral.mint(taker.address, parseUnits("10", collateralDecimals))
-        await deposit(taker, vault, 10, collateral)
+        // prepare collateral for trader
+        await collateral.mint(trader.address, parseUnits("10", collateralDecimals))
+        await deposit(trader, vault, 10, collateral)
 
         await collateral.mint(liquidator.address, parseUnits("1000", collateralDecimals))
         await deposit(liquidator, vault, 1000, collateral)
@@ -83,8 +83,8 @@ describe("ClearingHouse liquidate taker", () => {
             useTakerBalance: false,
             deadline: ethers.constants.MaxUint256,
         })
-        // taker long 0.5 ETH
-        await clearingHouse.connect(taker).openPosition({
+        // trader long 0.5 ETH
+        await clearingHouse.connect(trader).openPosition({
             baseToken: baseToken.address,
             isBaseToQuote: false,
             isExactInput: false,
@@ -100,29 +100,53 @@ describe("ClearingHouse liquidate taker", () => {
         })
 
         {
-            const [, takerUnrealizedPnl] = await accountBalance.getPnlAndPendingFee(taker.address)
-            console.log(formatEther(takerUnrealizedPnl.toString()))
+            const [, traderUnrealizedPnl] = await accountBalance.getPnlAndPendingFee(trader.address)
+            console.log(formatEther(traderUnrealizedPnl.toString()))
 
-            const freeRatio = await vault.getFreeCollateralByRatio(taker.address, 0.0625e6)
+            const freeRatio = await vault.getFreeCollateralByRatio(trader.address, 0.0625e6)
             console.log(formatUnits(freeRatio.toString(), 18))
 
-            const takerTotalPositionSize = await accountBalance.getTotalPositionSize(taker.address, baseToken.address)
-            console.log('takerTotalPositionSize', formatEther(takerTotalPositionSize.toString()))
+            const traderTotalPositionSize = await accountBalance.getTotalPositionSize(trader.address, baseToken.address)
+            console.log('traderTotalPositionSize', formatEther(traderTotalPositionSize.toString()))
         }
 
-        await clearingHouse.connect(liquidator)["liquidate(address,address)"](taker.address, baseToken.address)
+        await clearingHouse.connect(liquidator)["liquidate(address,address)"](trader.address, baseToken.address)
 
         {
-            // const [, takerUnrealizedPnl] = await accountBalance.getPnlAndPendingFee(taker.address)
-            // console.log(formatEther(takerUnrealizedPnl.toString()))
+            // const [, traderUnrealizedPnl] = await accountBalance.getPnlAndPendingFee(trader.address)
+            // console.log(formatEther(traderUnrealizedPnl.toString()))
 
-            // const freeRatio = await vault.getFreeCollateralByRatio(taker.address, 0.0625e6)
+            // const freeRatio = await vault.getFreeCollateralByRatio(trader.address, 0.0625e6)
             // console.log(formatUnits(freeRatio.toString(), 18))
 
-            const takerTotalPositionSize = await accountBalance.getTotalPositionSize(taker.address, baseToken.address)
-            console.log('takerTotalPositionSize', formatEther(takerTotalPositionSize.toString()))
+            const traderTotalPositionSize = await accountBalance.getTotalPositionSize(trader.address, baseToken.address)
+            console.log('traderTotalPositionSize', formatEther(traderTotalPositionSize.toString()))
 
-            const [liquidatorOwedRealizedPnl, , ] = await accountBalance.getPnlAndPendingFee(liquidator.address)
+            const [traderOwedRealizedPnl, ,] = await accountBalance.getPnlAndPendingFee(trader.address)
+            console.log('traderOwedRealizedPnl', formatEther(traderOwedRealizedPnl.toString()))
+
+            const liquidatorTotalPositionSize = await accountBalance.getTotalPositionSize(liquidator.address, baseToken.address)
+            console.log('liquidatorTotalPositionSize', formatEther(liquidatorTotalPositionSize.toString()))
+
+            const [liquidatorOwedRealizedPnl, ,] = await accountBalance.getPnlAndPendingFee(liquidator.address)
+            console.log('liquidatorOwedRealizedPnl', formatEther(liquidatorOwedRealizedPnl.toString()))
+
+        }
+        await clearingHouse.connect(liquidator).openPosition({
+            baseToken: baseToken.address,
+            isBaseToQuote: true,
+            isExactInput: true,
+            oppositeAmountBound: 0,
+            amount: parseEther("0.5"),
+            sqrtPriceLimitX96: 0,
+            deadline: ethers.constants.MaxUint256,
+            referralCode: ethers.constants.HashZero,
+        })
+        {
+            const liquidatorTotalPositionSize = await accountBalance.getTotalPositionSize(liquidator.address, baseToken.address)
+            console.log('liquidatorTotalPositionSize', formatEther(liquidatorTotalPositionSize.toString()))
+
+            const [liquidatorOwedRealizedPnl, ,] = await accountBalance.getPnlAndPendingFee(liquidator.address)
             console.log('liquidatorOwedRealizedPnl', formatEther(liquidatorOwedRealizedPnl.toString()))
         }
     })
@@ -140,8 +164,8 @@ describe("ClearingHouse liquidate taker", () => {
     //         useTakerBalance: false,
     //         deadline: ethers.constants.MaxUint256,
     //     })
-    //     // taker short 0.5 ETH
-    //     await clearingHouse.connect(taker).openPosition({
+    //     // trader short 0.5 ETH
+    //     await clearingHouse.connect(trader).openPosition({
     //         baseToken: baseToken.address,
     //         isBaseToQuote: true,
     //         isExactInput: true,
@@ -157,26 +181,26 @@ describe("ClearingHouse liquidate taker", () => {
     //     })
 
     //     {
-    //         const [, takerUnrealizedPnl] = await accountBalance.getPnlAndPendingFee(taker.address)
-    //         console.log(formatEther(takerUnrealizedPnl.toString()))
+    //         const [, traderUnrealizedPnl] = await accountBalance.getPnlAndPendingFee(trader.address)
+    //         console.log(formatEther(traderUnrealizedPnl.toString()))
 
-    //         const freeRatio = await vault.getFreeCollateralByRatio(taker.address, 0.0625e6)
+    //         const freeRatio = await vault.getFreeCollateralByRatio(trader.address, 0.0625e6)
     //         console.log(formatUnits(freeRatio.toString(), 18))
 
-    //         const totalPositionSize = await accountBalance.getTotalPositionSize(taker.address, baseToken.address)
+    //         const totalPositionSize = await accountBalance.getTotalPositionSize(trader.address, baseToken.address)
     //         console.log(formatEther(totalPositionSize.toString()))
     //     }
 
-    //     await clearingHouse.connect(liquidator)["liquidate(address,address)"](taker.address, baseToken.address)
+    //     await clearingHouse.connect(liquidator)["liquidate(address,address)"](trader.address, baseToken.address)
 
     //     {
-    //         // const [, takerUnrealizedPnl] = await accountBalance.getPnlAndPendingFee(taker.address)
-    //         // console.log(formatEther(takerUnrealizedPnl.toString()))
+    //         // const [, traderUnrealizedPnl] = await accountBalance.getPnlAndPendingFee(trader.address)
+    //         // console.log(formatEther(traderUnrealizedPnl.toString()))
 
-    //         // const freeRatio = await vault.getFreeCollateralByRatio(taker.address, 0.0625e6)
+    //         // const freeRatio = await vault.getFreeCollateralByRatio(trader.address, 0.0625e6)
     //         // console.log(formatUnits(freeRatio.toString(), 18))
 
-    //         const totalPositionSize = await accountBalance.getTotalPositionSize(taker.address, baseToken.address)
+    //         const totalPositionSize = await accountBalance.getTotalPositionSize(trader.address, baseToken.address)
     //         console.log(formatEther(totalPositionSize.toString()))
     //     }
     // })
