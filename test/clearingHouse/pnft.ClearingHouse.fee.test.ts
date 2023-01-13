@@ -29,7 +29,7 @@ import { deposit } from "../helper/token"
 import { ClearingHouseFixture, createClearingHouseFixture } from "./fixtures"
 
 describe("ClearingHouse fee updated", () => {
-    const [admin, maker, taker, liquidator] = waffle.provider.getWallets()
+    const [admin, maker, trader, liquidator, priceAdmin] = waffle.provider.getWallets()
     const loadFixture: ReturnType<typeof waffle.createFixtureLoader> = waffle.createFixtureLoader([admin])
     let fixture: ClearingHouseFixture
     let clearingHouse: TestClearingHouse
@@ -66,9 +66,9 @@ describe("ClearingHouse fee updated", () => {
             return parseUnits(initPrice, 18)
         })
 
-        // prepare collateral for taker
-        await collateral.mint(taker.address, parseUnits("1000", collateralDecimals))
-        await deposit(taker, vault, 1000, collateral)
+        // prepare collateral for trader
+        await collateral.mint(trader.address, parseUnits("1000", collateralDecimals))
+        await deposit(trader, vault, 1000, collateral)
 
         await collateral.mint(liquidator.address, parseUnits("1000", collateralDecimals))
         await deposit(liquidator, vault, 1000, collateral)
@@ -88,7 +88,7 @@ describe("ClearingHouse fee updated", () => {
             deadline: ethers.constants.MaxUint256,
         })
         // 
-        await clearingHouse.connect(taker).openPosition({
+        await clearingHouse.connect(trader).openPosition({
             baseToken: baseToken.address,
             isBaseToQuote: true,
             isExactInput: false,
@@ -105,7 +105,7 @@ describe("ClearingHouse fee updated", () => {
         expect((await accountBalance.getPnlAndPendingFee(platformFund.address))[0]).to.eq(
             parseEther("0.1"),
         )
-        await clearingHouse.connect(taker).openPosition({
+        await clearingHouse.connect(trader).openPosition({
             baseToken: baseToken.address,
             isBaseToQuote: true,
             isExactInput: false,
@@ -125,7 +125,7 @@ describe("ClearingHouse fee updated", () => {
             return parseUnits("96", 18)
         })
         // short 100$
-        await clearingHouse.connect(taker).openPosition({
+        await clearingHouse.connect(trader).openPosition({
             baseToken: baseToken.address,
             isBaseToQuote: true,
             isExactInput: false,
@@ -142,7 +142,7 @@ describe("ClearingHouse fee updated", () => {
             parseEther("0.3"),
         )
         // long 100$
-        await clearingHouse.connect(taker).openPosition({
+        await clearingHouse.connect(trader).openPosition({
             baseToken: baseToken.address,
             isBaseToQuote: false,
             isExactInput: true,
@@ -158,10 +158,10 @@ describe("ClearingHouse fee updated", () => {
         expect((await accountBalance.getPnlAndPendingFee(platformFund.address))[0]).to.eq(
             parseEther("0.4"),
         )
-        // console.log(formatEther(await accountBalance.getBase(taker.address, baseToken.address)))
-        // console.log(formatEther(await accountBalance.getQuote(taker.address, baseToken.address)))
-        // const [takerOwedRealizedPnl, takerUnrealizedPnl] = await accountBalance.getPnlAndPendingFee(taker.address)
-        // console.log(formatEther(takerOwedRealizedPnl.toString()))
-        // console.log(formatEther(takerUnrealizedPnl.toString()))
+        // console.log(formatEther(await accountBalance.getBase(trader.address, baseToken.address)))
+        // console.log(formatEther(await accountBalance.getQuote(trader.address, baseToken.address)))
+        // const [traderOwedRealizedPnl, traderUnrealizedPnl] = await accountBalance.getPnlAndPendingFee(trader.address)
+        // console.log(formatEther(traderOwedRealizedPnl.toString()))
+        // console.log(formatEther(traderUnrealizedPnl.toString()))
     })
 })

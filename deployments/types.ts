@@ -41,6 +41,15 @@ type DeployData = {
     insuranceFund: ContractData,
     vault: ContractData,
     collateralManager: ContractData,
+    genericLogic: ContractData,
     liquidityLogic: ContractData,
+    exchangeLogic: ContractData,
     clearingHouse: ContractData,
+    testCheck: {
+        addLiquidity: boolean,
+        deposit: boolean,
+        openPosition: boolean,
+        closePosition: boolean,
+        removeLiquidity: boolean,
+    }
 }

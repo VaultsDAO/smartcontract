@@ -58,12 +58,11 @@ export function createQuoteTokenFixture(name: string, symbol: string): () => Pro
 //     }
 // }
 
-export function createBaseTokenFixture(name: string, symbol: string, priceAdmin: string): () => Promise<BaseTokenFixture> {
+export function createBaseTokenFixture(name: string, symbol: string): () => Promise<BaseTokenFixture> {
     return async (): Promise<BaseTokenFixture> => {
         const NftPriceFeed = await ethers.getContractFactory("NftPriceFeed")
         const nftPriceFeed = (await NftPriceFeed.deploy(
             'XXX_ZZZ',
-            priceAdmin,
         )) as NftPriceFeed
         const mockedNFTPriceFeed = await smockit(nftPriceFeed)
 
@@ -85,16 +84,14 @@ export async function uniswapV3FactoryFixture(): Promise<UniswapV3Factory> {
 }
 
 // assume isAscendingTokensOrder() == true/ token0 < token1
-export async function tokensFixture(priceAdmin: string): Promise<TokensFixture> {
+export async function tokensFixture(): Promise<TokensFixture> {
     const { baseToken: randomToken0, mockedNFTPriceFeed: randomMockedNFTPriceFeed0 } = await createBaseTokenFixture(
         "BAYC",
         "USD",
-        priceAdmin,
     )()
     const { baseToken: randomToken1, mockedNFTPriceFeed: randomMockedNFTPriceFeed1 } = await createBaseTokenFixture(
         "MAYC",
         "USD",
-        priceAdmin,
     )()
 
     let token0: BaseToken
@@ -120,16 +117,16 @@ export async function tokensFixture(priceAdmin: string): Promise<TokensFixture> 
     }
 }
 
-export async function token0Fixture(token1Addr: string, priceAdmin:string): Promise<BaseTokenFixture> {
+export async function token0Fixture(token1Addr: string): Promise<BaseTokenFixture> {
     let token0Fixture: BaseTokenFixture
     while (!token0Fixture || !isAscendingTokenOrder(token0Fixture.baseToken.address, token1Addr)) {
-        token0Fixture = await createBaseTokenFixture("RandomTestToken0", "randomToken0", priceAdmin)()
+        token0Fixture = await createBaseTokenFixture("RandomTestToken0", "randomToken0")()
     }
     return token0Fixture
 }
 
-export async function base0Quote1PoolFixture(priceAdmin:string): Promise<PoolFixture> {
-    const { token0, token1 } = await tokensFixture(priceAdmin)
+export async function base0Quote1PoolFixture(): Promise<PoolFixture> {
+    const { token0, token1 } = await tokensFixture()
     const factory = await uniswapV3FactoryFixture()
 
     const tx = await factory.createPool(token0.address, token1.address, "10000")

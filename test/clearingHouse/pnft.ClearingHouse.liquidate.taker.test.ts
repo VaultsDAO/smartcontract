@@ -45,7 +45,7 @@ describe("ClearingHouse liquidate trader", () => {
     const initPrice = "100"
 
     beforeEach(async () => {
-        fixture = await loadFixture(createClearingHouseFixture(true, 10000, priceAdmin.address))
+        fixture = await loadFixture(createClearingHouseFixture())
         clearingHouse = fixture.clearingHouse as TestClearingHouse
         orderBook = fixture.orderBook
         accountBalance = fixture.accountBalance
@@ -70,11 +70,12 @@ describe("ClearingHouse liquidate trader", () => {
     })
 
     it("long liquidate", async () => {
+
         // maker add liquidity
         await clearingHouse.connect(maker).addLiquidity({
             baseToken: baseToken.address,
             base: parseEther("100"),
-            quote: parseEther("1000"),
+            quote: parseEther("10000"),
             lowerTick,
             upperTick,
             minBase: 0,

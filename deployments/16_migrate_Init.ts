@@ -101,7 +101,11 @@ async function main() {
     {
         const poolAddr = await uniswapV3Factory.getPool(vBAYC.address, vUSD.address, uniFeeTier)
         const uniPool = await hre.ethers.getContractAt('UniswapV3Pool', poolAddr);
-        await uniPool.initialize(encodePriceSqrt('80', "1"))
+        // if (network == 'local') {
+        //     await uniPool.initialize(encodePriceSqrt('100', "1"))
+        // } else {
+        //     await uniPool.initialize(encodePriceSqrt('80', "1"))
+        // }
         const uniFeeRatio = await uniPool.fee()
         await marketRegistry.addPool(vBAYC.address, uniFeeRatio)
         if (maxTickCrossedWithinBlock != 0) {
@@ -112,7 +116,11 @@ async function main() {
     {
         const poolAddr = await uniswapV3Factory.getPool(vMAYC.address, vUSD.address, uniFeeTier)
         const uniPool = await hre.ethers.getContractAt('UniswapV3Pool', poolAddr);
-        await uniPool.initialize(encodePriceSqrt('10', "1"))
+        // if (network == 'local') {
+        //     await uniPool.initialize(encodePriceSqrt('100', "1"))
+        // } else {
+        //     await uniPool.initialize(encodePriceSqrt('10', "1"))
+        // }
         const uniFeeRatio = await uniPool.fee()
         await marketRegistry.addPool(vMAYC.address, uniFeeRatio)
         if (maxTickCrossedWithinBlock != 0) {

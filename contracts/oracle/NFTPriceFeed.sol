@@ -16,8 +16,8 @@ contract NftPriceFeed is IPriceFeedV2, Ownable, BlockContext {
     event FeedAdminUpdated(address indexed admin);
     event PriceUpdated(uint256 price);
 
-    constructor(string memory symbol, address priceFeedAdminArg) {
-        priceFeedAdmin = priceFeedAdminArg;
+    constructor(string memory symbol) {
+        priceFeedAdmin = msg.sender;
     }
 
     modifier onlyAdmin() {

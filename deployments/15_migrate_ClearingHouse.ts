@@ -18,11 +18,30 @@ async function main() {
     deployData = JSON.parse(dataText.toString())
     // 
     const TransparentUpgradeableProxy = await hre.ethers.getContractFactory('TransparentUpgradeableProxy');
-    const LiquidityLogic = await hre.ethers.getContractFactory("LiquidityLogic");
+    const GenericLogic = await hre.ethers.getContractFactory("GenericLogic");
     // 
     var proxyAdmin = await hre.ethers.getContractAt('ProxyAdmin', deployData.proxyAdminAddress);
     //
-    if (deployData.liquidityLogic.address == undefined || deployData.liquidityLogic.implAddress == '') {
+    if (deployData.genericLogic.address == undefined || deployData.genericLogic.address == '') {
+        const genericLogic = await waitForDeploy(await GenericLogic.deploy())
+        {
+            deployData.genericLogic.address = genericLogic.address;
+            await fs.writeFileSync(fileName, JSON.stringify(deployData, null, 4))
+            console.log('LiquidityLogic is deployed', genericLogic.address)
+        }
+    }
+    var genericLogic = await hre.ethers.getContractAt('GenericLogic', deployData.genericLogic.address);
+    const LiquidityLogic = await hre.ethers.getContractFactory("LiquidityLogic", {
+        libraries: {
+            GenericLogic: genericLogic.address,
+        },
+    });
+    const ExchangeLogic = await hre.ethers.getContractFactory("ExchangeLogic", {
+        libraries: {
+            GenericLogic: genericLogic.address,
+        },
+    });
+    if (deployData.liquidityLogic.address == undefined || deployData.liquidityLogic.address == '') {
         const liquidityLogic = await waitForDeploy(await LiquidityLogic.deploy())
         {
             deployData.liquidityLogic.address = liquidityLogic.address;
@@ -30,11 +49,21 @@ async function main() {
             console.log('LiquidityLogic is deployed', liquidityLogic.address)
         }
     }
+    if (deployData.exchangeLogic.address == undefined || deployData.liquidityLogic.address == '') {
+        const exchangeLogic = await waitForDeploy(await ExchangeLogic.deploy())
+        {
+            deployData.exchangeLogic.address = exchangeLogic.address;
+            await fs.writeFileSync(fileName, JSON.stringify(deployData, null, 4))
+            console.log('LiquidityLogic is deployed', exchangeLogic.address)
+        }
+    }
     if (deployData.clearingHouse.implAddress == undefined || deployData.clearingHouse.implAddress == '') {
         var liquidityLogic = await hre.ethers.getContractAt('LiquidityLogic', deployData.liquidityLogic.address);
+        var exchangeLogic = await hre.ethers.getContractAt('ExchangeLogic', deployData.liquidityLogic.address);
         let ClearingHouse = await hre.ethers.getContractFactory("ClearingHouse", {
             libraries: {
                 LiquidityLogic: liquidityLogic.address,
+                ExchangeLogic: exchangeLogic.address,
             },
         });
         const clearingHouse = await waitForDeploy(await ClearingHouse.deploy())
@@ -78,14 +107,41 @@ async function main() {
         await verifyContract(
             deployData,
             network,
-            deployData.liquidityLogic.address,
+            deployData.genericLogic.address,
             [],
             {},
+            "contracts/lib/GenericLogic.sol:GenericLogic",
+        )
+    }
+    {
+        var genericLogic = await hre.ethers.getContractAt('GenericLogic', deployData.genericLogic.address);
+        await verifyContract(
+            deployData,
+            network,
+            deployData.liquidityLogic.address,
+            [],
+            {
+                GenericLogic: genericLogic.address,
+            },
             "contracts/lib/LiquidityLogic.sol:LiquidityLogic",
         )
     }
     {
+        var genericLogic = await hre.ethers.getContractAt('GenericLogic', deployData.genericLogic.address);
+        await verifyContract(
+            deployData,
+            network,
+            deployData.exchangeLogic.address,
+            [],
+            {
+                GenericLogic: genericLogic.address,
+            },
+            "contracts/lib/ExchangeLogic.sol:ExchangeLogic",
+        )
+    }
+    {
         var liquidityLogic = await hre.ethers.getContractAt('LiquidityLogic', deployData.liquidityLogic.address);
+        var exchangeLogic = await hre.ethers.getContractAt('ExchangeLogic', deployData.liquidityLogic.address);
         await verifyContract(
             deployData,
             network,
@@ -93,6 +149,7 @@ async function main() {
             [],
             {
                 LiquidityLogic: liquidityLogic.address,
+                ExchangeLogic: exchangeLogic.address,
             },
             "contracts/ClearingHouse.sol:ClearingHouse",
         )

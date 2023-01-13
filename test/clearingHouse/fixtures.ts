@@ -77,7 +77,6 @@ export enum BaseQuoteOrdering {
 export function createClearingHouseFixture(
     canMockTime: boolean = true,
     uniFeeTier = 10000, // 1%
-    priceAdmin: string,
 ): () => Promise<ClearingHouseFixture> {
     return async (): Promise<ClearingHouseFixture> => {
         // deploy test tokens
@@ -105,7 +104,7 @@ export function createClearingHouseFixture(
         const wethDecimals = await WETH.decimals()
 
         let baseToken: BaseToken, quoteToken: QuoteToken, mockedNFTPriceFeed: MockContract
-        const { token0, mockedNFTPriceFeed0, token1 } = await tokensFixture(priceAdmin)
+        const { token0, mockedNFTPriceFeed0, token1 } = await tokensFixture()
 
         // price feed for weth and wbtc
         const aggregatorFactory = await ethers.getContractFactory("TestAggregatorV3")
@@ -215,7 +214,7 @@ export function createClearingHouseFixture(
         await quoteToken.addWhitelist(pool.address)
 
         // deploy another pool
-        const _token0Fixture = await token0Fixture(quoteToken.address, priceAdmin)
+        const _token0Fixture = await token0Fixture(quoteToken.address)
         const baseToken2 = _token0Fixture.baseToken
         const mockedNFTPriceFeed2 = _token0Fixture.mockedNFTPriceFeed
         await uniV3Factory.createPool(baseToken2.address, quoteToken.address, uniFeeTier)
@@ -473,9 +472,9 @@ export async function mockedClearingHouseFixture(): Promise<MockedClearingHouseF
     }
 }
 
-export function createClearingHouseWithDelegateApprovalFixture(priceAdmin: string): () => Promise<ClearingHouseWithDelegateApprovalFixture> {
+export function createClearingHouseWithDelegateApprovalFixture(): () => Promise<ClearingHouseWithDelegateApprovalFixture> {
     return async (): Promise<ClearingHouseWithDelegateApprovalFixture> => {
-        const clearingHouseFixture = await createClearingHouseFixture(true, 10000, priceAdmin)()
+        const clearingHouseFixture = await createClearingHouseFixture()()
         const clearingHouse = clearingHouseFixture.clearingHouse as TestClearingHouse
 
         const delegateApprovalFactory = await ethers.getContractFactory("DelegateApproval")

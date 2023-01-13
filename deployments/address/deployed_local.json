@@ -1,15 +1,15 @@
 {
     "verifiedContracts": {},
     "nftPriceFeedBAYC": {
-        "address": "0x0Ef60c5D96e21D60B59D8bf902416A1bf8945dd6",
+        "address": "0xcde7975c240AD4a45F2022394Eb6dd8bD20D62D2",
         "symbol": "BAYC_ETH"
     },
     "nftPriceFeedMAYC": {
-        "address": "0x0d3C22d92980576BD0eFb3B4c9cDb094c6C6094C",
+        "address": "0xd93E3b7Fa4AbF42251fE37E4b0ABF4bE2518836E",
         "symbol": "MAYC_ETH"
     },
     "wETH": {
-        "address": "0xb2D0857834915578CF64D5B04ab15bB7b821e646",
+        "address": "0x08E29Bab603Fcb1e5e877D09D401899c906D838F",
         "name": "Wrapped Ether",
         "symbol": "WETH",
         "decimals": 18
@@ -18,20 +18,20 @@
         "name": "vUSD",
         "symbol": "vUSD",
         "decimals": 18,
-        "address": "0xe53FBf9e6059e00DFddCb2CF1312560BCBA7B862",
-        "implAddress": "0xbDb42Fa2ee56716b4CF6bbF4D52B4CABc6e36858"
+        "address": "0x8934B8Ebb268c9fe8e7fFfD288B1B0e4685FA851",
+        "implAddress": "0x6cD27D3cA0A8145b975e99D8BCD713d512E15825"
     },
     "baseToken": {
-        "implAddress": "0xe87087951D20A65D9A34813dDd2078cc690eA164"
+        "implAddress": "0x498a3280a063F1E172d6E7b61e46E335EB670691"
     },
     "vBAYC": {
-        "address": "0x7484C5e26657E6911365653181051d26F74Ec51E",
+        "address": "0x530A0958ED58519e467DF6A20b79b03C19aF3CDB",
         "name": "BoredApeYachtClub",
         "symbol": "vBAYC",
         "decimals": 18
     },
     "vMAYC": {
-        "address": "0x5097E17664f0002CbdC025413a819a1Dc1290E60",
+        "address": "0x74Cd456b7Eaf15636785628D2c98E67d04DE81F1",
         "name": "MutantApeYachtClub",
         "symbol": "vMAYC",
         "decimals": 18
@@ -39,48 +39,60 @@
     "priceAdminAddress": "0x9686203be0cae320bb4Dee971BB8a530A15EF489",
     "platformFundAddress": "0x9686203be0cae320bb4Dee971BB8a530A15EF489",
     "makerFundAddress": "0x9686203be0cae320bb4Dee971BB8a530A15EF489",
-    "proxyAdminAddress": "0x24AC2186Cb571Eaa0FB38ECB6F96830350a9B315",
+    "proxyAdminAddress": "0x76c8F3aEA7d733e57Ea13C49Cbb60eBeFf080Dc9",
     "uniswapV3Factory": {
-        "address": "0xE9fEe053943AFB821f39F6c8519A8050FC455aF4"
+        "address": "0xfa02c44AF3145fb28E5d37e52D38aA2b9Ac8a016"
     },
     "clearingHouseConfig": {
-        "address": "0xE6f803dCa1a0e648EBb46Bf3DbC973F183a64006",
-        "implAddress": "0xf0aA44d6D1528F4157911388B5EA8102e5DbC774"
+        "address": "0x9383cd30E0DE95Fb3e4AB20DFb2D0490423F9268",
+        "implAddress": "0xDEE18459571Af9CEeA332c6A3cDa744bAE1C1022"
     },
     "marketRegistry": {
-        "address": "0xC149F665A8F4D3440Aa597b439eB613AdEdDF6bd",
-        "implAddress": "0xA52678B7BbD002e8120F202DB5A16107dB7Cd662"
+        "address": "0x7Fa2667c5E3dc62962C4743e3319eAb69E66AAbC",
+        "implAddress": "0x410cA393f6d623DbB6ED2773b46747dD19e2cAFF"
     },
     "orderBook": {
-        "address": "0xc1a681Ba19283170cFda6382a7d3937B79c60fE9",
-        "implAddress": "0xAd745c864C87A759c4a4B8E1Dc822A3CF1ABd50f"
+        "address": "0x5192A2D7557f94E5961E3dc851FcADd2B4883C68",
+        "implAddress": "0xaBf56c540202Dd02299C103E21c851f16265263E"
     },
     "accountBalance": {
-        "address": "0x572C9575e6e0078FE9342c5a3A7f1415b2dcb57C",
-        "implAddress": "0x5ff7Bfaa6785A38E8B7Dad2090d4c46FeE01C1f9"
+        "address": "0x056D7Cc6cCAAd76Ce89345Caed79B0422B9a912A",
+        "implAddress": "0xbD4b90fA9F591904652dB86D18fb787FD60DA4F8"
     },
     "exchange": {
-        "address": "0xa30D82e1Eb893ff7dE000c1786bB53F5949EdE3D",
-        "implAddress": "0x38477977C98A7F1Ec1043db4C3c0AfAcdDfdd91F"
+        "address": "0xbd540CFD87B4b4a5F20f29AeB924d95dc02A92B3",
+        "implAddress": "0xF730c7807Aa94064d2A0FA6B7E5425584BE8a881"
     },
     "insuranceFund": {
-        "address": "0x677f9e4fae08D00Cb6069f219286BC7438527c17",
-        "implAddress": "0x4794382FD6c68Fb45ab35126862698e3FB6d41AE"
+        "address": "0xF4936BcaB1F29d6440392Ae37823dcce84861e61",
+        "implAddress": "0x350B28004531B14C79F8721fCaa2089551cFD8DE"
     },
     "vault": {
-        "address": "0x38bF6345EAA1D9E75704e1a37121A815244002a3",
-        "implAddress": "0xc3f3eF2E2b9331F71AFbb15556c5dd36B1cbb9E3"
+        "address": "0x134588739003F7332dd15DBAdF65f0443bc6D96A",
+        "implAddress": "0x90125E6A7CD5B8A7c754eD0Ec71AC57C22445952"
     },
     "collateralManager": {
-        "address": "0x08FAC3B6a8bDe6e03040966A64EFC3f00cD7EBd8",
-        "implAddress": "0x01c54e8A6763EE42fd78D6ddd2867E609eDeF837"
+        "address": "0x614f53595905589B8a36484ab6dBb483068F00ac",
+        "implAddress": "0xfCF78D0c2DFF6568C552a73Df3aea5f147cD6B3D"
+    },
+    "genericLogic": {
+        "address": "0x174839CeED77890D306ee09f58f989af4F2BACbc"
     },
     "liquidityLogic": {
-        "address": "0xB77D76f3Ed5fB66dCE9a709B22013306C4cd31a2",
-        "implAddress": ""
+        "address": "0x45bB19b12BbE469F622B4303445f0203385c4d1e"
+    },
+    "exchangeLogic": {
+        "address": ""
     },
     "clearingHouse": {
-        "address": "0x61C8FB2EfB1f80061A73a9cd2eD093b37b7E38Cb",
-        "implAddress": "0xD7f033Cb1c9339AE068483378BfE4CCf36612C45"
+        "address": "0xbcd46BD5060C08C6a360e49260eA9C8098ada19D",
+        "implAddress": "0xA5197d0fCC29C7d0c92Dd98b0946993bb2a784B8"
+    },
+    "testCheck": {
+        "addLiquidity": false,
+        "deposit": false,
+        "openPosition": false,
+        "closePosition": false,
+        "removeLiquidity": false
     }
 }

@@ -96,18 +96,18 @@ contract ClearingHouse is
 
     modifier onlyMaker() {
         // only maker
-        require(_msgSender() == _maker, "CHD_OM");
+        require(_msgSender() == _maker, "CH_OM");
         _;
     }
 
     function _requireMaker(address maker) internal view {
         // only Maker
-        require(maker == _maker, "CHD_OM");
+        require(maker == _maker, "CH_OM");
     }
 
     function _requireNotMaker(address maker) internal view {
         // not Maker
-        require(maker != _maker, "CHD_NM");
+        require(maker != _maker, "CH_NM");
     }
 
     //

@@ -97,11 +97,11 @@ contract OrderBook is
     /// @inheritdoc IOrderBook
     function addLiquidity(AddLiquidityParams calldata params) external override returns (AddLiquidityResponse memory) {
         _requireOnlyClearingHouse();
+
         address pool = IMarketRegistry(_marketRegistry).getPool(params.baseToken);
+
         UniswapV3Broker.AddLiquidityResponse memory response;
         {
-            bool initializedBeforeLower = UniswapV3Broker.getIsTickInitialized(pool, params.lowerTick);
-            bool initializedBeforeUpper = UniswapV3Broker.getIsTickInitialized(pool, params.upperTick);
             // add liquidity to pool
             response = UniswapV3Broker.addLiquidity(
                 UniswapV3Broker.AddLiquidityParams(
@@ -113,10 +113,6 @@ contract OrderBook is
                     abi.encode(MintCallbackData(params.trader, pool))
                 )
             );
-            (, int24 currentTick, , , , , ) = UniswapV3Broker.getSlot0(pool);
-            // initialize tick info
-            if (!initializedBeforeLower && UniswapV3Broker.getIsTickInitialized(pool, params.lowerTick)) {}
-            if (!initializedBeforeUpper && UniswapV3Broker.getIsTickInitialized(pool, params.upperTick)) {}
         }
 
         // state changes; if adding liquidity to an existing order, get fees accrued

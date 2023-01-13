@@ -1,0 +1,98 @@
+{
+    "verifiedContracts": {},
+    "nftPriceFeedBAYC": {
+        "address": "",
+        "symbol": "BAYC_ETH"
+    },
+    "nftPriceFeedMAYC": {
+        "address": "",
+        "symbol": "MAYC_ETH"
+    },
+    "wETH": {
+        "address": "",
+        "name": "Wrapped Ether",
+        "symbol": "WETH",
+        "decimals": 18
+    },
+    "vUSD": {
+        "name": "vUSD",
+        "symbol": "vUSD",
+        "decimals": 18,
+        "address": "",
+        "implAddress": ""
+    },
+    "baseToken": {
+        "implAddress": ""
+    },
+    "vBAYC": {
+        "address": "",
+        "name": "BoredApeYachtClub",
+        "symbol": "vBAYC",
+        "decimals": 18
+    },
+    "vMAYC": {
+        "address": "",
+        "name": "MutantApeYachtClub",
+        "symbol": "vMAYC",
+        "decimals": 18
+    },
+    "priceAdminAddress": "0x9686203be0cae320bb4Dee971BB8a530A15EF489",
+    "platformFundAddress": "0x9686203be0cae320bb4Dee971BB8a530A15EF489",
+    "makerFundAddress": "0x9686203be0cae320bb4Dee971BB8a530A15EF489",
+    "proxyAdminAddress": "",
+    "uniswapV3Factory": {
+        "address": ""
+    },
+    "clearingHouseConfig": {
+        "address": "",
+        "implAddress": ""
+    },
+    "marketRegistry": {
+        "address": "",
+        "implAddress": ""
+    },
+    "orderBook": {
+        "address": "",
+        "implAddress": ""
+    },
+    "accountBalance": {
+        "address": "",
+        "implAddress": ""
+    },
+    "exchange": {
+        "address": "",
+        "implAddress": ""
+    },
+    "insuranceFund": {
+        "address": "",
+        "implAddress": ""
+    },
+    "vault": {
+        "address": "",
+        "implAddress": ""
+    },
+    "collateralManager": {
+        "address": "",
+        "implAddress": ""
+    },
+    "genericLogic": {
+        "address": ""
+    },
+    "liquidityLogic": {
+        "address": ""
+    },
+    "exchangeLogic": {
+        "address": ""
+    },
+    "clearingHouse": {
+        "address": "",
+        "implAddress": ""
+    },
+    "testCheck": {
+        "addLiquidity": false,
+        "deposit": false,
+        "openPosition": false,
+        "closePosition": false,
+        "removeLiquidity": false
+    }
+}

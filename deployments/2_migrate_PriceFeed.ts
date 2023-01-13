@@ -1,6 +1,8 @@
+import { formatEther, parseEther } from "ethers/lib/utils";
 import fs from "fs";
 
 import hre from "hardhat";
+import { NftPriceFeed } from "../typechain";
 import helpers from "./helpers";
 
 const { waitForDeploy, verifyContract, upgradeContract } = helpers;
@@ -78,7 +80,7 @@ async function main() {
 
     if (deployData.nftPriceFeedBAYC.address == undefined || deployData.nftPriceFeedBAYC.address == '') {
         const NftPriceFeed = await hre.ethers.getContractFactory("NftPriceFeed")
-        const priceFeed = await waitForDeploy(await NftPriceFeed.deploy(deployData.nftPriceFeedBAYC.symbol, deployData.priceAdminAddress))
+        const priceFeed = (await waitForDeploy(await NftPriceFeed.deploy(deployData.nftPriceFeedBAYC.symbol))) as NftPriceFeed
         {
             deployData.nftPriceFeedBAYC.address = priceFeed.address
             await fs.writeFileSync(fileName, JSON.stringify(deployData, null, 4))
@@ -87,7 +89,7 @@ async function main() {
     }
     if (deployData.nftPriceFeedMAYC.address == undefined || deployData.nftPriceFeedMAYC.address == '') {
         const NftPriceFeed = await hre.ethers.getContractFactory("NftPriceFeed")
-        const priceFeed = await waitForDeploy(await NftPriceFeed.deploy(deployData.nftPriceFeedMAYC.symbol, deployData.priceAdminAddress))
+        const priceFeed = (await waitForDeploy(await NftPriceFeed.deploy(deployData.nftPriceFeedMAYC.symbol))) as NftPriceFeed
         {
             deployData.nftPriceFeedMAYC.address = priceFeed.address
             await fs.writeFileSync(fileName, JSON.stringify(deployData, null, 4))
@@ -99,7 +101,7 @@ async function main() {
             deployData,
             network,
             deployData.nftPriceFeedBAYC.address,
-            [deployData.nftPriceFeedBAYC.symbol, deployData.priceAdminAddress],
+            [deployData.nftPriceFeedBAYC.symbol],
             {},
             "contracts/oracle/NftPriceFeed.sol:NftPriceFeed",
         )
@@ -109,7 +111,7 @@ async function main() {
             deployData,
             network,
             deployData.nftPriceFeedMAYC.address,
-            [deployData.nftPriceFeedMAYC.symbol, deployData.priceAdminAddress],
+            [deployData.nftPriceFeedMAYC.symbol],
             {},
             "contracts/oracle/NftPriceFeed.sol:NftPriceFeed",
         )
