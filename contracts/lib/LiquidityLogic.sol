@@ -463,4 +463,60 @@ library LiquidityLogic {
 
         return DataTypes.RemoveLiquidityResponse({ quote: response.quote, base: response.base, fee: response.fee });
     }
+
+    function removeAllLiquidity(address chAddress, address maker, address baseToken, bytes32[] memory orderIds) public {
+        IOrderBook.RemoveLiquidityResponse memory removeLiquidityResponse;
+
+        uint256 length = orderIds.length;
+        for (uint256 i = 0; i < length; i++) {
+            OpenOrder.Info memory order = IOrderBook(IClearingHouse(chAddress).getOrderBook()).getOpenOrderById(
+                orderIds[i]
+            );
+
+            // CH_ONBM: order is not belongs to this maker
+            require(
+                OpenOrder.calcOrderKey(maker, baseToken, order.lowerTick, order.upperTick) == orderIds[i],
+                "CH_ONBM"
+            );
+
+            IOrderBook.RemoveLiquidityResponse memory response = _removeLiquidity(
+                chAddress,
+                IOrderBook.RemoveLiquidityParams({
+                    maker: maker,
+                    baseToken: baseToken,
+                    lowerTick: order.lowerTick,
+                    upperTick: order.upperTick,
+                    liquidity: order.liquidity
+                })
+            );
+
+            removeLiquidityResponse.base = removeLiquidityResponse.base.add(response.base);
+            removeLiquidityResponse.quote = removeLiquidityResponse.quote.add(response.quote);
+            removeLiquidityResponse.fee = removeLiquidityResponse.fee.add(response.fee);
+            removeLiquidityResponse.takerBase = removeLiquidityResponse.takerBase.add(response.takerBase);
+            removeLiquidityResponse.takerQuote = removeLiquidityResponse.takerQuote.add(response.takerQuote);
+
+            _emitLiquidityChanged(
+                maker,
+                baseToken,
+                IClearingHouse(chAddress).getQuoteToken(),
+                order.lowerTick,
+                order.upperTick,
+                response.base.neg256(),
+                response.quote.neg256(),
+                order.liquidity.neg128(),
+                response.fee
+            );
+        }
+
+        _modifyPositionAndRealizePnl(
+            chAddress,
+            maker,
+            baseToken,
+            removeLiquidityResponse.takerBase,
+            removeLiquidityResponse.takerQuote,
+            removeLiquidityResponse.fee,
+            0
+        );
+    }
 }
