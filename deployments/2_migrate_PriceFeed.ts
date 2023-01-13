@@ -14,66 +14,104 @@ async function main() {
     }
     let dataText = await fs.readFileSync(fileName)
     deployData = JSON.parse(dataText.toString())
-    const cacheTwapInterval = 15 * 60
     // 
-    if (deployData.priceFeedETH.address == undefined || deployData.priceFeedETH.address == '') {
-        if (network == 'local') {
-            if (deployData.priceFeedETH.aggregatorAddress == undefined || deployData.priceFeedETH.aggregatorAddress == '') {
-                const aggregatorFactory = await hre.ethers.getContractFactory("TestAggregatorV3")
-                const aggregator = await waitForDeploy(await aggregatorFactory.deploy())
-                {
-                    deployData.priceFeedETH.aggregatorAddress = aggregator.address
-                    await fs.writeFileSync(fileName, JSON.stringify(deployData, null, 4))
-                    console.log('TestAggregatorV3 is deployed', aggregator.address)
-                }
-            }
-        }
-        const chainlinkPriceFeedFactory = await hre.ethers.getContractFactory("ChainlinkPriceFeedV2")
-        const priceFeed = await waitForDeploy(await chainlinkPriceFeedFactory.deploy(deployData.priceFeedETH.aggregatorAddress, cacheTwapInterval))
+    // if (deployData.priceFeedETH.address == undefined || deployData.priceFeedETH.address == '') {
+    //     if (network == 'local') {
+    //         if (deployData.priceFeedETH.aggregatorAddress == undefined || deployData.priceFeedETH.aggregatorAddress == '') {
+    //             const aggregatorFactory = await hre.ethers.getContractFactory("TestAggregatorV3")
+    //             const aggregator = await waitForDeploy(await aggregatorFactory.deploy())
+    //             {
+    //                 deployData.priceFeedETH.aggregatorAddress = aggregator.address
+    //                 await fs.writeFileSync(fileName, JSON.stringify(deployData, null, 4))
+    //                 console.log('TestAggregatorV3 is deployed', aggregator.address)
+    //             }
+    //         }
+    //     }
+    //     const chainlinkPriceFeedFactory = await hre.ethers.getContractFactory("ChainlinkPriceFeedV2")
+    //     const priceFeed = await waitForDeploy(await chainlinkPriceFeedFactory.deploy(deployData.priceFeedETH.aggregatorAddress, cacheTwapInterval))
+    //     {
+    //         deployData.priceFeedETH.address = priceFeed.address
+    //         await fs.writeFileSync(fileName, JSON.stringify(deployData, null, 4))
+    //         console.log('ChainlinkPriceFeedV2 is deployed', priceFeed.address)
+    //     }
+    // }
+    // if (deployData.priceFeedBTC.address == undefined || deployData.priceFeedBTC.address == '') {
+    //     if (network == 'local') {
+    //         if (deployData.priceFeedBTC.aggregatorAddress == undefined || deployData.priceFeedBTC.aggregatorAddress == '') {
+    //             const aggregatorFactory = await hre.ethers.getContractFactory("TestAggregatorV3")
+    //             const aggregator = await waitForDeploy(await aggregatorFactory.deploy())
+    //             {
+    //                 deployData.priceFeedBTC.aggregatorAddress = aggregator.address
+    //                 await fs.writeFileSync(fileName, JSON.stringify(deployData, null, 4))
+    //                 console.log('TestAggregatorV3 is deployed', aggregator.address)
+    //             }
+    //         }
+    //     }
+    //     const chainlinkPriceFeedFactory = await hre.ethers.getContractFactory("ChainlinkPriceFeedV2")
+    //     const priceFeed = await waitForDeploy(await chainlinkPriceFeedFactory.deploy(deployData.priceFeedBTC.aggregatorAddress, cacheTwapInterval))
+    //     {
+    //         deployData.priceFeedBTC.address = priceFeed.address
+    //         await fs.writeFileSync(fileName, JSON.stringify(deployData, null, 4))
+    //         console.log('ChainlinkPriceFeedV2 is deployed', priceFeed.address)
+    //     }
+    // }
+    // {
+    //     await verifyContract(
+    //         deployData,
+    //         network,
+    //         deployData.priceFeedETH.address,
+    //         [deployData.priceFeedETH.aggregatorAddress, cacheTwapInterval],
+    //         {},
+    //         "@perp/perp-oracle-contract/contracts/ChainlinkPriceFeedV2.sol:ChainlinkPriceFeedV2",
+    //     )
+    // }
+    // {
+    //     await verifyContract(
+    //         deployData,
+    //         network,
+    //         deployData.priceFeedBTC.address,
+    //         [deployData.priceFeedBTC.aggregatorAddress, cacheTwapInterval],
+    //         {},
+    //         "@perp/perp-oracle-contract/contracts/ChainlinkPriceFeedV2.sol:ChainlinkPriceFeedV2",
+    //     )
+    // }
+
+    if (deployData.nftPriceFeedBAYC.address == undefined || deployData.nftPriceFeedBAYC.address == '') {
+        const NftPriceFeed = await hre.ethers.getContractFactory("NftPriceFeed")
+        const priceFeed = await waitForDeploy(await NftPriceFeed.deploy(deployData.nftPriceFeedBAYC.symbol, deployData.priceAdminAddress))
         {
-            deployData.priceFeedETH.address = priceFeed.address
+            deployData.nftPriceFeedBAYC.address = priceFeed.address
             await fs.writeFileSync(fileName, JSON.stringify(deployData, null, 4))
-            console.log('ChainlinkPriceFeedV2 is deployed', priceFeed.address)
+            console.log('NftPriceFeed is deployed', priceFeed.address)
         }
     }
-    if (deployData.priceFeedBTC.address == undefined || deployData.priceFeedBTC.address == '') {
-        if (network == 'local') {
-            if (deployData.priceFeedBTC.aggregatorAddress == undefined || deployData.priceFeedBTC.aggregatorAddress == '') {
-                const aggregatorFactory = await hre.ethers.getContractFactory("TestAggregatorV3")
-                const aggregator = await waitForDeploy(await aggregatorFactory.deploy())
-                {
-                    deployData.priceFeedBTC.aggregatorAddress = aggregator.address
-                    await fs.writeFileSync(fileName, JSON.stringify(deployData, null, 4))
-                    console.log('TestAggregatorV3 is deployed', aggregator.address)
-                }
-            }
-        }
-        const chainlinkPriceFeedFactory = await hre.ethers.getContractFactory("ChainlinkPriceFeedV2")
-        const priceFeed = await waitForDeploy(await chainlinkPriceFeedFactory.deploy(deployData.priceFeedBTC.aggregatorAddress, cacheTwapInterval))
+    if (deployData.nftPriceFeedMAYC.address == undefined || deployData.nftPriceFeedMAYC.address == '') {
+        const NftPriceFeed = await hre.ethers.getContractFactory("NftPriceFeed")
+        const priceFeed = await waitForDeploy(await NftPriceFeed.deploy(deployData.nftPriceFeedMAYC.symbol, deployData.priceAdminAddress))
         {
-            deployData.priceFeedBTC.address = priceFeed.address
+            deployData.nftPriceFeedMAYC.address = priceFeed.address
             await fs.writeFileSync(fileName, JSON.stringify(deployData, null, 4))
-            console.log('ChainlinkPriceFeedV2 is deployed', priceFeed.address)
+            console.log('NftPriceFeed is deployed', priceFeed.address)
         }
     }
     {
         await verifyContract(
             deployData,
             network,
-            deployData.priceFeedETH.address,
-            [deployData.priceFeedETH.aggregatorAddress, cacheTwapInterval],
+            deployData.nftPriceFeedBAYC.address,
+            [deployData.nftPriceFeedBAYC.symbol, deployData.priceAdminAddress],
             {},
-            "@perp/perp-oracle-contract/contracts/ChainlinkPriceFeedV2.sol:ChainlinkPriceFeedV2",
+            "contracts/oracle/NftPriceFeed.sol:NftPriceFeed",
         )
     }
     {
         await verifyContract(
             deployData,
             network,
-            deployData.priceFeedBTC.address,
-            [deployData.priceFeedBTC.aggregatorAddress, cacheTwapInterval],
+            deployData.nftPriceFeedMAYC.address,
+            [deployData.nftPriceFeedMAYC.symbol, deployData.priceAdminAddress],
             {},
-            "@perp/perp-oracle-contract/contracts/ChainlinkPriceFeedV2.sol:ChainlinkPriceFeedV2",
+            "contracts/oracle/NftPriceFeed.sol:NftPriceFeed",
         )
     }
 }

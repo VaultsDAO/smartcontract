@@ -32,7 +32,7 @@ async function main() {
     }
     if (deployData.insuranceFund.address == undefined || deployData.insuranceFund.address == '') {
         var insuranceFund = await hre.ethers.getContractAt('InsuranceFund', deployData.insuranceFund.implAddress);
-        var initializeData = insuranceFund.interface.encodeFunctionData('initialize', [deployData.USDC.address]);
+        var initializeData = insuranceFund.interface.encodeFunctionData('initialize', [deployData.wETH.address]);
         var transparentUpgradeableProxy = await waitForDeploy(
             await TransparentUpgradeableProxy.deploy(
                 deployData.insuranceFund.implAddress,
@@ -61,7 +61,7 @@ async function main() {
     }
     {
         var insuranceFund = await hre.ethers.getContractAt('InsuranceFund', deployData.insuranceFund.implAddress);
-        var initializeData = insuranceFund.interface.encodeFunctionData('initialize', [deployData.USDC.address]);
+        var initializeData = insuranceFund.interface.encodeFunctionData('initialize', [deployData.wETH.address]);
         await verifyContract(
             deployData,
             network,

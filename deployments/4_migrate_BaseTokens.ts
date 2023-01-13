@@ -31,8 +31,8 @@ async function main() {
         }
     }
     var baseToken = await hre.ethers.getContractAt('BaseToken', deployData.baseToken.implAddress);
-    if (deployData.vETH.address == undefined || deployData.vETH.address == '') {
-        var initializeData = baseToken.interface.encodeFunctionData('initialize', [deployData.vETH.name, deployData.vETH.symbol, deployData.priceFeedETH.address]);
+    if (deployData.vBAYC.address == undefined || deployData.vBAYC.address == '') {
+        var initializeData = baseToken.interface.encodeFunctionData('initialize', [deployData.vBAYC.name, deployData.vBAYC.symbol, deployData.nftPriceFeedBAYC.address]);
         var transparentUpgradeableProxy = await waitForDeploy(
             await TransparentUpgradeableProxy.deploy(
                 baseToken.address,
@@ -41,13 +41,13 @@ async function main() {
             )
         );
         {
-            deployData.vETH.address = transparentUpgradeableProxy.address;
+            deployData.vBAYC.address = transparentUpgradeableProxy.address;
             await fs.writeFileSync(fileName, JSON.stringify(deployData, null, 4))
             console.log('BaseToken TransparentUpgradeableProxy is deployed', transparentUpgradeableProxy.address)
         }
     }
-    if (deployData.vBTC.address == undefined || deployData.vBTC.address == '') {
-        var initializeData = baseToken.interface.encodeFunctionData('initialize', [deployData.vBTC.name, deployData.vBTC.symbol, deployData.priceFeedBTC.address]);
+    if (deployData.vMAYC.address == undefined || deployData.vMAYC.address == '') {
+        var initializeData = baseToken.interface.encodeFunctionData('initialize', [deployData.vMAYC.name, deployData.vMAYC.symbol, deployData.nftPriceFeedMAYC.address]);
         var transparentUpgradeableProxy = await waitForDeploy(
             await TransparentUpgradeableProxy.deploy(
                 baseToken.address,
@@ -56,14 +56,14 @@ async function main() {
             )
         );
         {
-            deployData.vBTC.address = transparentUpgradeableProxy.address;
+            deployData.vMAYC.address = transparentUpgradeableProxy.address;
             await fs.writeFileSync(fileName, JSON.stringify(deployData, null, 4))
             console.log('BaseToken TransparentUpgradeableProxy is deployed', transparentUpgradeableProxy.address)
         }
     }
     {
-        await upgradeContract(proxyAdmin as ProxyAdmin, deployData.vETH.address, deployData.baseToken.implAddress)
-        await upgradeContract(proxyAdmin as ProxyAdmin, deployData.vBTC.address, deployData.baseToken.implAddress)
+        await upgradeContract(proxyAdmin as ProxyAdmin, deployData.vBAYC.address, deployData.baseToken.implAddress)
+        await upgradeContract(proxyAdmin as ProxyAdmin, deployData.vMAYC.address, deployData.baseToken.implAddress)
     }
     {
         await verifyContract(
@@ -76,11 +76,11 @@ async function main() {
         )
     }
     {
-        var initializeData = baseToken.interface.encodeFunctionData('initialize', [deployData.vETH.name, deployData.vETH.symbol, deployData.priceFeedETH.address]);
+        var initializeData = baseToken.interface.encodeFunctionData('initialize', [deployData.vBAYC.name, deployData.vBAYC.symbol, deployData.nftPriceFeedBAYC.address]);
         await verifyContract(
             deployData,
             network,
-            deployData.vETH.address,
+            deployData.vBAYC.address,
             [
                 baseToken.address,
                 proxyAdmin.address,
@@ -91,11 +91,11 @@ async function main() {
         )
     }
     {
-        var initializeData = baseToken.interface.encodeFunctionData('initialize', [deployData.vBTC.name, deployData.vBTC.symbol, deployData.priceFeedBTC.address]);
+        var initializeData = baseToken.interface.encodeFunctionData('initialize', [deployData.vMAYC.name, deployData.vMAYC.symbol, deployData.nftPriceFeedMAYC.address]);
         await verifyContract(
             deployData,
             network,
-            deployData.vBTC.address,
+            deployData.vMAYC.address,
             [
                 baseToken.address,
                 proxyAdmin.address,

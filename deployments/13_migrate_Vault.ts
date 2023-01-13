@@ -37,6 +37,7 @@ async function main() {
             deployData.clearingHouseConfig.address,
             deployData.accountBalance.address,
             deployData.exchange.address,
+            deployData.makerFundAddress,
         ]);
         var transparentUpgradeableProxy = await waitForDeploy(
             await TransparentUpgradeableProxy.deploy(
@@ -71,6 +72,7 @@ async function main() {
             deployData.clearingHouseConfig.address,
             deployData.accountBalance.address,
             deployData.exchange.address,
+            deployData.makerFundAddress,
         ]);
         await verifyContract(
             deployData,

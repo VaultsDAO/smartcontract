@@ -18,11 +18,25 @@ async function main() {
     deployData = JSON.parse(dataText.toString())
     // 
     const TransparentUpgradeableProxy = await hre.ethers.getContractFactory('TransparentUpgradeableProxy');
-    const ClearingHouse = await hre.ethers.getContractFactory("ClearingHouse");
+    const LiquidityLogic = await hre.ethers.getContractFactory("LiquidityLogic");
     // 
     var proxyAdmin = await hre.ethers.getContractAt('ProxyAdmin', deployData.proxyAdminAddress);
-    // 
+    //
+    if (deployData.liquidityLogic.address == undefined || deployData.liquidityLogic.implAddress == '') {
+        const liquidityLogic = await waitForDeploy(await LiquidityLogic.deploy())
+        {
+            deployData.liquidityLogic.address = liquidityLogic.address;
+            await fs.writeFileSync(fileName, JSON.stringify(deployData, null, 4))
+            console.log('LiquidityLogic is deployed', liquidityLogic.address)
+        }
+    }
     if (deployData.clearingHouse.implAddress == undefined || deployData.clearingHouse.implAddress == '') {
+        var liquidityLogic = await hre.ethers.getContractAt('LiquidityLogic', deployData.liquidityLogic.address);
+        let ClearingHouse = await hre.ethers.getContractFactory("ClearingHouse", {
+            libraries: {
+                LiquidityLogic: liquidityLogic.address,
+            },
+        });
         const clearingHouse = await waitForDeploy(await ClearingHouse.deploy())
         {
             deployData.clearingHouse.implAddress = clearingHouse.address;
@@ -39,7 +53,10 @@ async function main() {
             deployData.uniswapV3Factory.address,
             deployData.exchange.address,
             deployData.accountBalance.address,
+            deployData.marketRegistry.address,
             deployData.insuranceFund.address,
+            deployData.platformFundAddress,
+            deployData.makerFundAddress,
         ]);
         var transparentUpgradeableProxy = await waitForDeploy(
             await TransparentUpgradeableProxy.deploy(
@@ -61,9 +78,22 @@ async function main() {
         await verifyContract(
             deployData,
             network,
-            deployData.clearingHouse.implAddress,
+            deployData.liquidityLogic.address,
             [],
             {},
+            "contracts/lib/LiquidityLogic.sol:LiquidityLogic",
+        )
+    }
+    {
+        var liquidityLogic = await hre.ethers.getContractAt('LiquidityLogic', deployData.liquidityLogic.address);
+        await verifyContract(
+            deployData,
+            network,
+            deployData.clearingHouse.implAddress,
+            [],
+            {
+                LiquidityLogic: liquidityLogic.address,
+            },
             "contracts/ClearingHouse.sol:ClearingHouse",
         )
     }
@@ -76,7 +106,10 @@ async function main() {
             deployData.uniswapV3Factory.address,
             deployData.exchange.address,
             deployData.accountBalance.address,
+            deployData.marketRegistry.address,
             deployData.insuranceFund.address,
+            deployData.platformFundAddress,
+            deployData.makerFundAddress,
         ]);
         await verifyContract(
             deployData,

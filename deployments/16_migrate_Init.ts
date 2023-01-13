@@ -5,6 +5,7 @@ import hre, { ethers } from "hardhat";
 import { UniswapV3Pool } from "../typechain/UniswapV3Pool";
 import { parseUnits } from "ethers/lib/utils";
 import { encodePriceSqrt } from "../test/shared/utilities";
+import { AccountBalance, MarketRegistry, OrderBook } from "../typechain";
 
 
 async function main() {
@@ -17,21 +18,15 @@ async function main() {
     let dataText = await fs.readFileSync(fileName)
     deployData = JSON.parse(dataText.toString())
     // 
-    const TransparentUpgradeableProxy = await hre.ethers.getContractFactory('TransparentUpgradeableProxy');
-    const ClearingHouse = await hre.ethers.getContractFactory("ClearingHouse");
     const QuoteToken = await hre.ethers.getContractFactory("QuoteToken");
     const BaseToken = await hre.ethers.getContractFactory("BaseToken");
-
-    const TestAggregatorV3 = await hre.ethers.getContractFactory("TestAggregatorV3")
-    const ChainlinkPriceFeedV2 = await hre.ethers.getContractFactory("ChainlinkPriceFeedV2")
-
 
     // deploy UniV3 factory
     var uniswapV3Factory = await hre.ethers.getContractAt('UniswapV3Factory', deployData.uniswapV3Factory.address);
     var clearingHouseConfig = await hre.ethers.getContractAt('ClearingHouseConfig', deployData.clearingHouseConfig.address);
-    var marketRegistry = await hre.ethers.getContractAt('MarketRegistry', deployData.marketRegistry.address);
-    var orderBook = await hre.ethers.getContractAt('OrderBook', deployData.orderBook.address);
-    var accountBalance = await hre.ethers.getContractAt('AccountBalance', deployData.accountBalance.address);
+    var marketRegistry = (await hre.ethers.getContractAt('MarketRegistry', deployData.marketRegistry.address)) as MarketRegistry;
+    var orderBook = (await hre.ethers.getContractAt('OrderBook', deployData.orderBook.address)) as OrderBook;
+    var accountBalance = (await hre.ethers.getContractAt('AccountBalance', deployData.accountBalance.address)) as AccountBalance;
     var exchange = await hre.ethers.getContractAt('Exchange', deployData.exchange.address);
     var insuranceFund = await hre.ethers.getContractAt('InsuranceFund', deployData.insuranceFund.address);
     var vault = await hre.ethers.getContractAt('Vault', deployData.vault.address);
@@ -40,7 +35,7 @@ async function main() {
 
     var uniFeeTier = 3000 // 0.3%
 
-    const uniswapV3Pool = await hre.ethers.getContractFactory("UniswapV3Pool")
+    const UniswapV3Pool = await hre.ethers.getContractFactory("UniswapV3Pool")
 
     await exchange.setAccountBalance(accountBalance.address)
     await orderBook.setExchange(exchange.address)
@@ -53,78 +48,75 @@ async function main() {
     await exchange.setClearingHouse(clearingHouse.address)
     await accountBalance.setClearingHouse(clearingHouse.address)
     await vault.setClearingHouse(clearingHouse.address)
-    await vault.setWETH9(deployData.wETH.address)
+    if (network == 'arbitrum') {
+        await vault.setWETH9(deployData.wETH.address)
+    }
 
     // deploy vault
-    await collateralManager.addCollateral(deployData.wETH.address, {
-        priceFeed: deployData.priceFeedETH.address,
-        collateralRatio: (0.8e6).toString(),
-        discountRatio: (0.5e6).toString(),
-        depositCap: parseUnits("1000", deployData.wETH.decimals),
-    })
-    await collateralManager.addCollateral(deployData.wBTC.address, {
-        priceFeed: deployData.priceFeedBTC.address,
-        collateralRatio: (0.8e6).toString(),
-        discountRatio: (0.5e6).toString(),
-        depositCap: parseUnits("1000", deployData.wBTC.decimals),
-    })
+    // await collateralManager.addCollateral(deployData.wETH.address, {
+    //     priceFeed: deployData.priceFeedETH.address,
+    //     collateralRatio: (0.8e6).toString(),
+    //     discountRatio: (0.5e6).toString(),
+    //     depositCap: parseUnits("1000", deployData.wETH.decimals),
+    // })
+    // await collateralManager.addCollateral(deployData.wBTC.address, {
+    //     priceFeed: deployData.priceFeedBTC.address,
+    //     collateralRatio: (0.8e6).toString(),
+    //     discountRatio: (0.5e6).toString(),
+    //     depositCap: parseUnits("1000", deployData.wBTC.decimals),
+    // })
 
     var vUSD = await QuoteToken.attach(deployData.vUSD.address)
 
-    var vETH = await BaseToken.attach(deployData.vETH.address)
-    const poolETHAddr = await uniswapV3Factory.getPool(deployData.vETH.address, deployData.vUSD.address, uniFeeTier)
-    if (poolETHAddr.toString() == "0x0000000000000000000000000000000000000000") {
-        await uniswapV3Factory.createPool(deployData.vETH.address, deployData.vUSD.address, uniFeeTier)
+    var vBAYC = await BaseToken.attach(deployData.vBAYC.address)
+    const poolBAYCAddr = await uniswapV3Factory.getPool(deployData.vBAYC.address, deployData.vUSD.address, uniFeeTier)
+    if (poolBAYCAddr.toString() == "0x0000000000000000000000000000000000000000") {
+        await uniswapV3Factory.createPool(deployData.vBAYC.address, deployData.vUSD.address, uniFeeTier)
     }
-    const poolETH = uniswapV3Pool.attach(poolETHAddr) as UniswapV3Pool
-    await vETH.addWhitelist(poolETH.address)
-    await vUSD.addWhitelist(poolETH.address)
+    const poolBAYC = UniswapV3Pool.attach(poolBAYCAddr) as UniswapV3Pool
+    await vBAYC.addWhitelist(poolBAYC.address)
+    await vUSD.addWhitelist(poolBAYC.address)
 
-    var vBTC = await BaseToken.attach(deployData.vBTC.address)
-    const poolBTCAddr = await uniswapV3Factory.getPool(deployData.vBTC.address, deployData.vUSD.address, uniFeeTier)
-    if (poolBTCAddr.toString() == "0x0000000000000000000000000000000000000000") {
-        await uniswapV3Factory.createPool(deployData.vBTC.address, deployData.vUSD.address, uniFeeTier)
+    var vMAYC = await BaseToken.attach(deployData.vMAYC.address)
+    const poolMAYCAddr = await uniswapV3Factory.getPool(deployData.vMAYC.address, deployData.vUSD.address, uniFeeTier)
+    if (poolMAYCAddr.toString() == "0x0000000000000000000000000000000000000000") {
+        await uniswapV3Factory.createPool(deployData.vMAYC.address, deployData.vUSD.address, uniFeeTier)
     }
-    const poolBTC = uniswapV3Pool.attach(poolBTCAddr) as UniswapV3Pool
-    await vBTC.addWhitelist(poolBTC.address)
-    await vBTC.addWhitelist(poolBTC.address)
+    const poolMAYC = UniswapV3Pool.attach(poolMAYCAddr) as UniswapV3Pool
+    await vMAYC.addWhitelist(poolMAYC.address)
+    await vUSD.addWhitelist(poolMAYC.address)
 
     // deploy clearingHouse
     await vUSD.addWhitelist(clearingHouse.address)
-    await vETH.addWhitelist(clearingHouse.address)
-    await vBTC.addWhitelist(clearingHouse.address)
+    await vBAYC.addWhitelist(clearingHouse.address)
+    await vMAYC.addWhitelist(clearingHouse.address)
+
     await vUSD.mintMaximumTo(clearingHouse.address)
-    await vETH.mintMaximumTo(clearingHouse.address)
-    await vBTC.mintMaximumTo(clearingHouse.address)
+    await vBAYC.mintMaximumTo(clearingHouse.address)
+    await vMAYC.mintMaximumTo(clearingHouse.address)
 
     // initMarket
-    var exFeeRatio = 10000 // 1%
-    var ifFeeRatio = 100000 // 10%
     var maxTickCrossedWithinBlock = 0
-    // vETH
+    // vBAYC
     {
-        const poolAddr = await uniswapV3Factory.getPool(vETH.address, vUSD.address, uniFeeTier)
-        const uniPool = uniswapV3Factory.attach(poolAddr)
-        await uniPool.initialize(encodePriceSqrt('1200', "1"))
+        const poolAddr = await uniswapV3Factory.getPool(vBAYC.address, vUSD.address, uniFeeTier)
+        const uniPool = await hre.ethers.getContractAt('UniswapV3Pool', poolAddr);
+        await uniPool.initialize(encodePriceSqrt('80', "1"))
         const uniFeeRatio = await uniPool.fee()
-        await marketRegistry.addPool(vETH.address, uniFeeRatio)
-        await marketRegistry.setFeeRatio(vETH.address, exFeeRatio)
-        await marketRegistry.setInsuranceFundFeeRatio(vETH.address, ifFeeRatio)
+        await marketRegistry.addPool(vBAYC.address, uniFeeRatio)
         if (maxTickCrossedWithinBlock != 0) {
-            await exchange.setMaxTickCrossedWithinBlock(vETH.address, maxTickCrossedWithinBlock)
+            await exchange.setMaxTickCrossedWithinBlock(vBAYC.address, maxTickCrossedWithinBlock)
         }
     }
-    // vBTC
+    // vMAYC
     {
-        const poolAddr = await uniswapV3Factory.getPool(vBTC.address, vUSD.address, uniFeeTier)
-        const uniPool = uniswapV3Factory.attach(poolAddr)
-        await uniPool.initialize(encodePriceSqrt('16000', "1"))
+        const poolAddr = await uniswapV3Factory.getPool(vMAYC.address, vUSD.address, uniFeeTier)
+        const uniPool = await hre.ethers.getContractAt('UniswapV3Pool', poolAddr);
+        await uniPool.initialize(encodePriceSqrt('10', "1"))
         const uniFeeRatio = await uniPool.fee()
-        await marketRegistry.addPool(vBTC.address, uniFeeRatio)
-        await marketRegistry.setFeeRatio(vBTC.address, exFeeRatio)
-        await marketRegistry.setInsuranceFundFeeRatio(vBTC.address, ifFeeRatio)
+        await marketRegistry.addPool(vMAYC.address, uniFeeRatio)
         if (maxTickCrossedWithinBlock != 0) {
-            await exchange.setMaxTickCrossedWithinBlock(vBTC.address, maxTickCrossedWithinBlock)
+            await exchange.setMaxTickCrossedWithinBlock(vMAYC.address, maxTickCrossedWithinBlock)
         }
     }
 }

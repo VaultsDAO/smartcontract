@@ -36,13 +36,13 @@ async function main() {
         var initializeData = collateralManager.interface.encodeFunctionData('initialize', [
             deployData.clearingHouseConfig.address,
             deployData.vault.address,
-            5, // maxCollateralTokensPerAccount
+            3, // maxCollateralTokensPerAccount
             "750000", // debtNonSettlementTokenValueRatio
             "500000", // liquidationRatio
-            "2000", // mmRatioBuffer
-            "30000", // clInsuranceFundFeeRatio
-            parseUnits("10000", deployData.USDC.decimals), // debtThreshold
-            parseUnits("500", deployData.USDC.decimals), // collateralValueDust
+            "5000", // mmRatioBuffer
+            "12500", // clInsuranceFundFeeRatio
+            parseUnits("10", deployData.wETH.decimals), // debtThreshold
+            parseUnits("0.3", deployData.wETH.decimals), // collateralValueDust
         ]);
         var transparentUpgradeableProxy = await waitForDeploy(
             await TransparentUpgradeableProxy.deploy(
@@ -75,13 +75,13 @@ async function main() {
         var initializeData = collateralManager.interface.encodeFunctionData('initialize', [
             deployData.clearingHouseConfig.address,
             deployData.vault.address,
-            5, // maxCollateralTokensPerAccount
+            3, // maxCollateralTokensPerAccount
             "750000", // debtNonSettlementTokenValueRatio
             "500000", // liquidationRatio
-            "2000", // mmRatioBuffer
-            "30000", // clInsuranceFundFeeRatio
-            parseUnits("10000", deployData.USDC.decimals), // debtThreshold
-            parseUnits("500", deployData.USDC.decimals), // collateralValueDust
+            "5000", // mmRatioBuffer
+            "12500", // clInsuranceFundFeeRatio
+            parseUnits("10", deployData.wETH.decimals), // debtThreshold
+            parseUnits("0.3", deployData.wETH.decimals), // collateralValueDust
         ]);
         await verifyContract(
             deployData,
