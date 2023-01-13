@@ -561,52 +561,6 @@ contract ClearingHouse is
         return ExchangeLogic.liquidate(address(this), _msgSender(), trader, baseToken, positionSizeToBeLiquidated);
     }
 
-    /// @dev Calculate how much profit/loss we should realize,
-    ///      The profit/loss is calculated by exchangedPositionSize/exchangedPositionNotional amount
-    ///      and existing taker's base/quote amount.
-    function _modifyPositionAndRealizePnl(
-        address trader,
-        address baseToken,
-        int256 exchangedPositionSize,
-        int256 exchangedPositionNotional,
-        uint256 makerFee,
-        uint256 takerFee
-    ) internal {
-        int256 realizedPnl;
-        if (exchangedPositionSize != 0) {
-            realizedPnl = IExchange(_exchange).getPnlToBeRealized(
-                IExchange.RealizePnlParams({
-                    trader: trader,
-                    baseToken: baseToken,
-                    base: exchangedPositionSize,
-                    quote: exchangedPositionNotional
-                })
-            );
-        }
-
-        // realizedPnl is realized here
-        // will deregister baseToken if there is no position
-        _settleBalanceAndDeregister(
-            trader,
-            baseToken,
-            exchangedPositionSize, // takerBase
-            exchangedPositionNotional, // takerQuote
-            realizedPnl,
-            makerFee.toInt256()
-        );
-
-        _emitPositionChanged(
-            trader,
-            baseToken,
-            exchangedPositionSize,
-            exchangedPositionNotional,
-            takerFee, // fee
-            _getTakerOpenNotional(trader, baseToken), // openNotional
-            realizedPnl,
-            _getSqrtMarkX96(baseToken) // sqrtPriceAfterX96: no swap, so market price didn't change
-        );
-    }
-
     /// @dev only cancel open orders if there are not enough free collateral with mmRatio
     /// or account is able to being liquidated.
     function _cancelExcessOrders(address maker, address baseToken, bytes32[] memory orderIds) internal {
@@ -629,74 +583,6 @@ contract ClearingHouse is
         // remove all orders in internal function
         LiquidityLogic.removeAllLiquidity(address(this), maker, baseToken, orderIds);
     }
-
-    /// @dev explainer diagram for the relationship between exchangedPositionNotional, fee and openNotional:
-    ///      https://www.figma.com/file/xuue5qGH4RalX7uAbbzgP3/swap-accounting-and-events
-    // function _openPosition(InternalOpenPositionParams memory params) internal returns (IExchange.SwapResponse memory) {
-    //     IExchange.SwapResponse memory response = IExchange(_exchange).swap(
-    //         IExchange.SwapParams({
-    //             trader: params.trader,
-    //             baseToken: params.baseToken,
-    //             isBaseToQuote: params.isBaseToQuote,
-    //             isExactInput: params.isExactInput,
-    //             isClose: params.isClose,
-    //             amount: params.amount,
-    //             sqrtPriceLimitX96: params.sqrtPriceLimitX96
-    //         })
-    //     );
-
-    //     // insuranceFundFee
-    //     _modifyOwedRealizedPnl(_insuranceFund, response.insuranceFundFee.toInt256());
-    //     // platformFundFee
-    //     _modifyOwedRealizedPnl(_platformFund, response.platformFundFee.toInt256());
-    //     // sum fee
-    //     uint256 fee = response.insuranceFundFee.add(response.platformFundFee);
-    //     // examples:
-    //     // https://www.figma.com/file/xuue5qGH4RalX7uAbbzgP3/swap-accounting-and-events?node-id=0%3A1
-    //     _settleBalanceAndDeregister(
-    //         params.trader,
-    //         params.baseToken,
-    //         response.exchangedPositionSize,
-    //         response.exchangedPositionNotional.sub(fee.toInt256()),
-    //         response.pnlToBeRealized,
-    //         0
-    //     );
-
-    //     if (response.pnlToBeRealized != 0) {
-    //         // if realized pnl is not zero, that means trader is reducing or closing position
-    //         // trader cannot reduce/close position if the remaining account value is less than
-    //         // accountValue * LiquidationPenaltyRatio, which
-    //         // enforces traders to keep LiquidationPenaltyRatio of accountValue to
-    //         // shore the remaining positions and make sure traders having enough money to pay liquidation penalty.
-
-    //         // CH_NEMRM : not enough minimum required margin after reducing/closing position
-    //         require(
-    //             getAccountValue(params.trader) >=
-    //                 _getTotalAbsPositionValue(params.trader).mulRatio(_getLiquidationPenaltyRatio()).toInt256(),
-    //             "CH_NEMRM"
-    //         );
-    //     }
-
-    //     // if not closing a position, check margin ratio after swap
-    //     if (!params.isClose) {
-    //         _requireEnoughFreeCollateral(params.trader);
-    //     }
-
-    //     // openNotional will be zero if baseToken is deregistered from trader's token list.
-    //     int256 openNotional = _getTakerOpenNotional(params.trader, params.baseToken);
-    //     _emitPositionChanged(
-    //         params.trader,
-    //         params.baseToken,
-    //         response.exchangedPositionSize,
-    //         response.exchangedPositionNotional,
-    //         fee,
-    //         openNotional,
-    //         response.pnlToBeRealized, // realizedPnl
-    //         response.sqrtPriceAfterX96
-    //     );
-
-    //     return response;
-    // }
 
     function _openPositionFor(
         address trader,
@@ -822,10 +708,6 @@ contract ClearingHouse is
         return IAccountBalance(_accountBalance).getMarginRequirementForLiquidation(trader);
     }
 
-    // function _getIndexPrice(address baseToken) internal view returns (uint256) {
-    //     return IIndexPrice(baseToken).getIndexPrice(IClearingHouseConfig(_clearingHouseConfig).getTwapInterval());
-    // }
-
     function _getLiquidationPenaltyRatio() internal view returns (uint24) {
         return IClearingHouseConfig(_clearingHouseConfig).getLiquidationPenaltyRatio();
     }
@@ -844,36 +726,6 @@ contract ClearingHouse is
         return getAccountValue(trader) < _getMarginRequirementForLiquidation(trader);
     }
 
-    /// @param positionSizeToBeLiquidated its direction should be the same as taker's existing position
-    function _getLiquidatedPositionSizeAndNotional(
-        address trader,
-        address baseToken,
-        int256 accountValue,
-        int256 positionSizeToBeLiquidated
-    ) internal view returns (int256, int256) {
-        int256 maxLiquidatablePositionSize = IAccountBalance(_accountBalance).getLiquidatablePositionSize(
-            trader,
-            baseToken,
-            accountValue
-        );
-
-        if (positionSizeToBeLiquidated.abs() > maxLiquidatablePositionSize.abs() || positionSizeToBeLiquidated == 0) {
-            positionSizeToBeLiquidated = maxLiquidatablePositionSize;
-        }
-
-        int256 liquidatedPositionSize = positionSizeToBeLiquidated.neg256();
-        int256 liquidatedPositionNotional = positionSizeToBeLiquidated.mulDiv(
-            _getIndexPrice(baseToken).toInt256(),
-            1e18
-        );
-
-        return (liquidatedPositionSize, liquidatedPositionNotional);
-    }
-
-    function _getIndexPrice(address baseToken) internal view returns (uint256) {
-        return IIndexPrice(baseToken).getIndexPrice(IClearingHouseConfig(_clearingHouseConfig).getTwapInterval());
-    }
-
     function _settleBalanceAndDeregister(
         address trader,
         address baseToken,
@@ -889,15 +741,6 @@ contract ClearingHouse is
             takerQuote,
             realizedPnl,
             makerFee
-        );
-    }
-
-    function _requireEnoughFreeCollateral(address trader) internal view {
-        if (trader == _maker) return;
-        // CH_NEFCI: not enough free collateral by imRatio
-        require(
-            _getFreeCollateralByRatio(trader, IClearingHouseConfig(_clearingHouseConfig).getImRatio()) >= 0,
-            "CH_NEFCI"
         );
     }
 
