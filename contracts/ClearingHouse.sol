@@ -32,7 +32,7 @@ import { BlockContext } from "./base/BlockContext.sol";
 import { IClearingHouse } from "./interface/IClearingHouse.sol";
 import { AccountMarket } from "./lib/AccountMarket.sol";
 import { OpenOrder } from "./lib/OpenOrder.sol";
-import { GenericLogic } from "./lib/GenericLogic.sol";
+import { LiquidityLogic } from "./lib/LiquidityLogic.sol";
 import { IMarketRegistry } from "./interface/IMarketRegistry.sol";
 import { DataTypes } from "./types/DataTypes.sol";
 import "hardhat/console.sol";
@@ -351,12 +351,73 @@ contract ClearingHouse is
             DataTypes.AddLiquidityResponse memory
         )
     {
-        return GenericLogic.addLiquidity(address(this), _msgSender(), params);
+        return LiquidityLogic.addLiquidity(address(this), _msgSender(), params);
     }
 
     /// @inheritdoc IClearingHouse
+    // function removeLiquidity(
+    //     RemoveLiquidityParams calldata params
+    // )
+    //     external
+    //     override
+    //     whenNotPaused
+    //     nonReentrant
+    //     checkDeadline(params.deadline)
+    //     onlyMaker
+    //     returns (RemoveLiquidityResponse memory)
+    // {
+    //     // input requirement checks:
+    //     //   baseToken: in Exchange.settleFunding()
+    //     //   lowerTick & upperTick: in UniswapV3Pool._modifyPosition()
+    //     //   liquidity: in LiquidityMath.addDelta()
+    //     //   minBase, minQuote & deadline: here
+
+    //     // CH_MP: Market paused
+    //     require(!IBaseToken(params.baseToken).isPaused(), "CH_MP");
+
+    //     address trader = _msgSender();
+
+    //     // must settle funding first
+    //     _settleFunding(trader, params.baseToken);
+
+    //     IOrderBook.RemoveLiquidityResponse memory response = _removeLiquidity(
+    //         IOrderBook.RemoveLiquidityParams({
+    //             maker: trader,
+    //             baseToken: params.baseToken,
+    //             lowerTick: params.lowerTick,
+    //             upperTick: params.upperTick,
+    //             liquidity: params.liquidity
+    //         })
+    //     );
+
+    //     _checkSlippageAfterLiquidityChange(response.base, params.minBase, response.quote, params.minQuote);
+
+    //     _modifyPositionAndRealizePnl(
+    //         trader,
+    //         params.baseToken,
+    //         response.takerBase, // exchangedPositionSize
+    //         response.takerQuote, // exchangedPositionNotional
+    //         response.fee, // makerFee
+    //         0 //takerFee
+    //     );
+
+    //     _emitLiquidityChanged(
+    //         trader,
+    //         params.baseToken,
+    //         _quoteToken,
+    //         params.lowerTick,
+    //         params.upperTick,
+    //         response.base.neg256(),
+    //         response.quote.neg256(),
+    //         params.liquidity.neg128(),
+    //         response.fee
+    //     );
+
+    //     return RemoveLiquidityResponse({ quote: response.quote, base: response.base, fee: response.fee });
+    // }
+
     function removeLiquidity(
-        RemoveLiquidityParams calldata params
+        DataTypes.RemoveLiquidityParams calldata params
     )
         external
         override
@@ -364,56 +425,9 @@ contract ClearingHouse is
         nonReentrant
         checkDeadline(params.deadline)
         onlyMaker
-        returns (RemoveLiquidityResponse memory)
+        returns (DataTypes.RemoveLiquidityResponse memory)
     {
-        // input requirement checks:
-        //   baseToken: in Exchange.settleFunding()
-        //   lowerTick & upperTick: in UniswapV3Pool._modifyPosition()
-        //   liquidity: in LiquidityMath.addDelta()
-        //   minBase, minQuote & deadline: here
-
-        // CH_MP: Market paused
-        require(!IBaseToken(params.baseToken).isPaused(), "CH_MP");
-
-        address trader = _msgSender();
-
-        // must settle funding first
-        _settleFunding(trader, params.baseToken);
-
-        IOrderBook.RemoveLiquidityResponse memory response = _removeLiquidity(
-            IOrderBook.RemoveLiquidityParams({
-                maker: trader,
-                baseToken: params.baseToken,
-                lowerTick: params.lowerTick,
-                upperTick: params.upperTick,
-                liquidity: params.liquidity
-            })
-        );
-
-        _checkSlippageAfterLiquidityChange(response.base, params.minBase, response.quote, params.minQuote);
-
-        _modifyPositionAndRealizePnl(
-            trader,
-            params.baseToken,
-            response.takerBase, // exchangedPositionSize
-            response.takerQuote, // exchangedPositionNotional
-            response.fee, // makerFee
-            0 //takerFee
-        );
-
-        _emitLiquidityChanged(
-            trader,
-            params.baseToken,
-            _quoteToken,
-            params.lowerTick,
-            params.upperTick,
-            response.base.neg256(),
-            response.quote.neg256(),
-            params.liquidity.neg128(),
-            response.fee
-        );
-
-        return RemoveLiquidityResponse({ quote: response.quote, base: response.base, fee: response.fee });
+        return LiquidityLogic.removeLiquidity(address(this), _msgSender(), params);
     }
 
     /// @inheritdoc IClearingHouse

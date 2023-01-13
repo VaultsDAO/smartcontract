@@ -39,4 +39,20 @@ library DataTypes {
         int256 lastLongTwPremiumGrowthGlobalX96;
         int256 lastShortTwPremiumGrowthGlobalX96;
     }
+
+    struct RemoveLiquidityParams {
+        address baseToken;
+        int24 lowerTick;
+        int24 upperTick;
+        uint128 liquidity;
+        uint256 minBase;
+        uint256 minQuote;
+        uint256 deadline;
+    }
+
+    struct RemoveLiquidityResponse {
+        uint256 base;
+        uint256 quote;
+        uint256 fee;
+    }
 }

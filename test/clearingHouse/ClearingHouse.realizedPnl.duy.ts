@@ -124,20 +124,21 @@ describe("ClearingHouse realizedPnl", () => {
         //short
         await b2qExactInput(fixture, taker, 1)
         // // maker move liquidity range down 10% and collect fee (first step: remove liquidity)
-        // const makerMoveLiquidityRemoveReceipt = await (
-        //     await clearingHouse.connect(maker).removeLiquidity({
-        //         baseToken: baseToken.address,
-        //         lowerTick,
-        //         upperTick,
-        //         liquidity: (
-        //             await orderBook.getOpenOrder(maker.address, baseToken.address, lowerTick, upperTick)
-        //         ).liquidity,
-        //         minBase: parseEther("0"),
-        //         minQuote: parseEther("0"),
-        //         deadline: ethers.constants.MaxUint256,
-        //     })
-        // ).wait()
+        const makerMoveLiquidityRemoveReceipt = await (
+            await clearingHouse.connect(maker).removeLiquidity({
+                baseToken: baseToken.address,
+                lowerTick,
+                upperTick,
+                liquidity: (
+                    await orderBook.getOpenOrder(maker.address, baseToken.address, lowerTick, upperTick)
+                ).liquidity,
+                minBase: parseEther("0"),
+                minQuote: parseEther("0"),
+                deadline: ethers.constants.MaxUint256,
+            })
+        ).wait()
 
+        return
         // // maker move liquidity range down 10% (second step: add liquidity)
         // await clearingHouse.connect(maker).addLiquidity({
         //     baseToken: baseToken.address,
