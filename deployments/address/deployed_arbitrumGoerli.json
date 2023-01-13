@@ -1,1 +1,86 @@
-{"verifiedContracts":{"0x816773701B7f0Ea97420840c6d16Dfc98cA3324a":true},"collterals":[{"name":"WETH","symbol":"WETH","address":"","aggregatorAddress":"","priceFeedAddress":""}],"quoteToken":{"name":"vUSD","symbol":"vUSD","address":""},"baseTokens":[{"name":"vETH","symbol":"vETH","address":"","aggregatorAddress":"","priceFeedAddress":""}],"proxyAdminAddress":"0x816773701B7f0Ea97420840c6d16Dfc98cA3324a"}
+{
+    "verifiedContracts": {},
+    "nftPriceFeedBAYC": {
+        "address": "",
+        "symbol": "BAYC_ETH"
+    },
+    "nftPriceFeedMAYC": {
+        "address": "",
+        "symbol": "MAYC_ETH"
+    },
+    "wETH": {
+        "address": "",
+        "name": "Wrapped Ether",
+        "symbol": "WETH",
+        "decimals": 18
+    },
+    "vUSD": {
+        "name": "vUSD",
+        "symbol": "vUSD",
+        "decimals": 18,
+        "address": "",
+        "implAddress": ""
+    },
+    "baseToken": {
+        "implAddress": ""
+    },
+    "vBAYC": {
+        "address": "",
+        "name": "BoredApeYachtClub",
+        "symbol": "vBAYC",
+        "decimals": 18
+    },
+    "vMAYC": {
+        "address": "",
+        "name": "MutantApeYachtClub",
+        "symbol": "vMAYC",
+        "decimals": 18
+    },
+    "priceAdminAddress": "0x9686203be0cae320bb4Dee971BB8a530A15EF489",
+    "platformFundAddress": "0x9686203be0cae320bb4Dee971BB8a530A15EF489",
+    "makerFundAddress": "0x9686203be0cae320bb4Dee971BB8a530A15EF489",
+    "proxyAdminAddress": "",
+    "uniswapV3Factory": {
+        "address": "0x4893376342d5D7b3e31d4184c08b265e5aB2A3f6"
+    },
+    "clearingHouseConfig": {
+        "address": "",
+        "implAddress": ""
+    },
+    "marketRegistry": {
+        "address": "",
+        "implAddress": ""
+    },
+    "orderBook": {
+        "address": "",
+        "implAddress": ""
+    },
+    "accountBalance": {
+        "address": "",
+        "implAddress": ""
+    },
+    "exchange": {
+        "address": "",
+        "implAddress": ""
+    },
+    "insuranceFund": {
+        "address": "",
+        "implAddress": ""
+    },
+    "vault": {
+        "address": "",
+        "implAddress": ""
+    },
+    "collateralManager": {
+        "address": "",
+        "implAddress": ""
+    },
+    "liquidityLogic": {
+        "address": "",
+        "implAddress": ""
+    },
+    "clearingHouse": {
+        "address": "",
+        "implAddress": ""
+    }
+}

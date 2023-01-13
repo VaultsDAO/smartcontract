@@ -28,7 +28,7 @@ import { deposit } from "../helper/token"
 import { ClearingHouseFixture, createClearingHouseFixture } from "./fixtures"
 
 describe("ClearingHouse liquidate trader", () => {
-    const [admin, maker, trader, liquidator] = waffle.provider.getWallets()
+    const [admin, maker, trader, liquidator, priceAdmin] = waffle.provider.getWallets()
     const loadFixture: ReturnType<typeof waffle.createFixtureLoader> = waffle.createFixtureLoader([admin])
     let fixture: ClearingHouseFixture
     let clearingHouse: TestClearingHouse
@@ -40,13 +40,12 @@ describe("ClearingHouse liquidate trader", () => {
     let baseToken: BaseToken
     let mockedNFTPriceFeed: MockContract
     let collateralDecimals: number
-    let traderUsdcBalanceBefore: BigNumber
     const lowerTick: number = 45800
     const upperTick: number = 46400
     const initPrice = "100"
 
     beforeEach(async () => {
-        fixture = await loadFixture(createClearingHouseFixture())
+        fixture = await loadFixture(createClearingHouseFixture(true, 10000, priceAdmin.address))
         clearingHouse = fixture.clearingHouse as TestClearingHouse
         orderBook = fixture.orderBook
         accountBalance = fixture.accountBalance

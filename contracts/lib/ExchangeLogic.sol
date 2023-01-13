@@ -269,14 +269,130 @@ library ExchangeLogic {
         int256 liquidatorExchangedPositionSize;
     }
 
-    function liquidate(
-        address chAddress,
-        address liquidator,
-        address trader,
-        address baseToken,
-        int256 positionSizeToBeLiquidated
-    ) public {
+    // function liquidate(
+    //     address chAddress,
+    //     address liquidator,
+    //     address trader,
+    //     address baseToken,
+    //     int256 positionSizeToBeLiquidated
+    // ) public {
+    //     InternalLiquidateParams memory vars;
+
+    //     GenericLogic.checkMarketOpen(baseToken);
+
+    //     GenericLogic.requireNotMaker(chAddress, trader);
+
+    //     // CH_CLWTISO: cannot liquidate when there is still order
+    //     require(!IAccountBalance(IClearingHouse(chAddress).getAccountBalance()).hasOrder(trader), "CH_CLWTISO");
+
+    //     // CH_EAV: enough account value
+    //     require(GenericLogic.isLiquidatable(chAddress, trader), "CH_EAV");
+
+    //     vars.positionSize = GenericLogic.getTakerPositionSafe(chAddress, trader, baseToken);
+
+    //     // CH_WLD: wrong liquidation direction
+    //     require(vars.positionSize.mul(positionSizeToBeLiquidated) >= 0, "CH_WLD");
+
+    //     GenericLogic.registerBaseToken(chAddress, liquidator, baseToken);
+
+    //     // must settle funding first
+    //     GenericLogic.settleFunding(chAddress, trader, baseToken);
+    //     GenericLogic.settleFunding(chAddress, liquidator, baseToken);
+
+    //     vars.accountValue = GenericLogic.getAccountValue(chAddress, trader);
+
+    //     // trader's position is closed at index price and pnl realized
+    //     (vars.liquidatedPositionSize, vars.liquidatedPositionNotional) = _getLiquidatedPositionSizeAndNotional(
+    //         chAddress,
+    //         trader,
+    //         baseToken,
+    //         vars.accountValue,
+    //         positionSizeToBeLiquidated
+    //     );
+    //     _modifyPositionAndRealizePnl(
+    //         chAddress,
+    //         trader,
+    //         baseToken,
+    //         vars.liquidatedPositionSize,
+    //         vars.liquidatedPositionNotional,
+    //         0,
+    //         0
+    //     );
+
+    //     // trader pays liquidation penalty
+    //     vars.liquidationPenalty = vars.liquidatedPositionNotional.abs().mulRatio(
+    //         GenericLogic.getLiquidationPenaltyRatio(chAddress)
+    //     );
+    //     IAccountBalance(IClearingHouse(chAddress).getAccountBalance()).modifyOwedRealizedPnl(
+    //         trader,
+    //         vars.liquidationPenalty.neg256()
+    //     );
+
+    //     address insuranceFund = IClearingHouse(chAddress).getInsuranceFund();
+
+    //     // if there is bad debt, liquidation fees all go to liquidator; otherwise, split between liquidator & IF
+    //     vars.liquidationFeeToLiquidator = vars.liquidationPenalty.div(2);
+    //     vars.liquidationFeeToIF;
+    //     if (vars.accountValue < 0) {
+    //         vars.liquidationFeeToLiquidator = vars.liquidationPenalty;
+    //     } else {
+    //         vars.liquidationFeeToIF = vars.liquidationPenalty.sub(vars.liquidationFeeToLiquidator);
+    //         IAccountBalance(IClearingHouse(chAddress).getAccountBalance()).modifyOwedRealizedPnl(
+    //             insuranceFund,
+    //             vars.liquidationFeeToIF.toInt256()
+    //         );
+    //     }
+
+    //     // assume there is no longer any unsettled bad debt in the system
+    //     // (so that true IF capacity = accountValue(IF) + USDC.balanceOf(IF))
+    //     // if trader's account value becomes negative, the amount is the bad debt IF must have enough capacity to cover
+    //     {
+    //         vars.accountValueAfterLiquidationX10_18 = GenericLogic.getAccountValue(chAddress, trader);
+
+    //         if (vars.accountValueAfterLiquidationX10_18 < 0) {
+    //             vars.insuranceFundCapacityX10_18 = IInsuranceFund(insuranceFund)
+    //                 .getInsuranceFundCapacity()
+    //                 .parseSettlementToken(IVault(IClearingHouse(chAddress).getVault()).decimals());
+
+    //             // CH_IIC: insufficient insuranceFund capacity
+    //             require(vars.insuranceFundCapacityX10_18 >= vars.accountValueAfterLiquidationX10_18.neg256(), "CH_IIC");
+    //         }
+    //     }
+
+    //     // liquidator opens a position with liquidationFeeToLiquidator as a discount
+    //     // liquidator's openNotional = -liquidatedPositionNotional + liquidationFeeToLiquidator
+    //     vars.liquidatorExchangedPositionSize = vars.liquidatedPositionSize.neg256();
+    //     vars.liquidatorExchangedPositionNotional = vars.liquidatedPositionNotional.neg256().add(
+    //         vars.liquidationFeeToLiquidator.toInt256()
+    //     );
+    //     // note that this function will realize pnl if it's reducing liquidator's existing position size
+    //     _modifyPositionAndRealizePnl(
+    //         chAddress,
+    //         liquidator,
+    //         baseToken,
+    //         vars.liquidatorExchangedPositionSize, // exchangedPositionSize
+    //         vars.liquidatorExchangedPositionNotional, // exchangedPositionNotional
+    //         0, // makerFee
+    //         0 // takerFee
+    //     );
+
+    //     GenericLogic.requireEnoughFreeCollateral(chAddress, liquidator);
+
+    //     emit PositionLiquidated(
+    //         trader,
+    //         baseToken,
+    //         vars.liquidatedPositionNotional.abs(), // positionNotional
+    //         vars.liquidatedPositionSize.abs(), // positionSize
+    //         vars.liquidationPenalty,
+    //         liquidator
+    //     );
+
+    //     IVault(IClearingHouse(chAddress).getVault()).settleBadDebt(trader);
+    // }
+
+    function liquidate(address chAddress, address liquidator, address trader, address baseToken) public {
         InternalLiquidateParams memory vars;
+
         GenericLogic.checkMarketOpen(baseToken);
 
         GenericLogic.requireNotMaker(chAddress, trader);
@@ -289,100 +405,68 @@ library ExchangeLogic {
 
         vars.positionSize = GenericLogic.getTakerPositionSafe(chAddress, trader, baseToken);
 
-        // CH_WLD: wrong liquidation direction
-        require(vars.positionSize.mul(positionSizeToBeLiquidated) >= 0, "CH_WLD");
-
-        GenericLogic.registerBaseToken(chAddress, liquidator, baseToken);
-
         // must settle funding first
         GenericLogic.settleFunding(chAddress, trader, baseToken);
-        GenericLogic.settleFunding(chAddress, liquidator, baseToken);
 
         vars.accountValue = GenericLogic.getAccountValue(chAddress, trader);
 
-        // trader's position is closed at index price and pnl realized
-        (vars.liquidatedPositionSize, vars.liquidatedPositionNotional) = _getLiquidatedPositionSizeAndNotional(
+        // old position is long. when closing, it's baseToQuote && exactInput (sell exact base)
+        // old position is short. when closing, it's quoteToBase && exactOutput (buy exact base back)
+        bool isBaseToQuote = vars.positionSize > 0;
+
+        IExchange.SwapResponse memory response = _openPosition(
             chAddress,
-            trader,
-            baseToken,
-            vars.accountValue,
-            positionSizeToBeLiquidated
-        );
-        _modifyPositionAndRealizePnl(
-            chAddress,
-            trader,
-            baseToken,
-            vars.liquidatedPositionSize,
-            vars.liquidatedPositionNotional,
-            0,
-            0
+            InternalOpenPositionParams({
+                trader: trader,
+                baseToken: baseToken,
+                isBaseToQuote: isBaseToQuote,
+                isExactInput: isBaseToQuote,
+                isClose: true,
+                amount: vars.positionSize.abs(),
+                sqrtPriceLimitX96: 0
+            })
         );
 
-        // trader pays liquidation penalty
-        vars.liquidationPenalty = vars.liquidatedPositionNotional.abs().mulRatio(
-            GenericLogic.getLiquidationPenaltyRatio(chAddress)
-        );
-        IAccountBalance(IClearingHouse(chAddress).getAccountBalance()).modifyOwedRealizedPnl(
-            trader,
-            vars.liquidationPenalty.neg256()
-        );
+        // // trader pays liquidation penalty
+        // uint256 liquidationPenalty = liquidatedPositionNotional.abs().mulRatio(_getLiquidationPenaltyRatio());
+        uint256 liquidationPenalty = response.quote.mulRatio(GenericLogic.getLiquidationPenaltyRatio(chAddress));
+        _modifyOwedRealizedPnl(chAddress, trader, liquidationPenalty.neg256());
 
         address insuranceFund = IClearingHouse(chAddress).getInsuranceFund();
 
-        // if there is bad debt, liquidation fees all go to liquidator; otherwise, split between liquidator & IF
-        vars.liquidationFeeToLiquidator = vars.liquidationPenalty.div(2);
-        vars.liquidationFeeToIF;
+        // // if there is bad debt, liquidation fees all go to liquidator; otherwise, split between liquidator & IF
+        uint256 liquidationFeeToLiquidator = liquidationPenalty.div(2);
+        uint256 liquidationFeeToIF;
         if (vars.accountValue < 0) {
-            vars.liquidationFeeToLiquidator = vars.liquidationPenalty;
+            liquidationFeeToLiquidator = liquidationPenalty;
         } else {
-            vars.liquidationFeeToIF = vars.liquidationPenalty.sub(vars.liquidationFeeToLiquidator);
-            IAccountBalance(IClearingHouse(chAddress).getAccountBalance()).modifyOwedRealizedPnl(
-                insuranceFund,
-                vars.liquidationFeeToIF.toInt256()
-            );
+            liquidationFeeToIF = liquidationPenalty.sub(liquidationFeeToLiquidator);
+            _modifyOwedRealizedPnl(chAddress, insuranceFund, liquidationFeeToIF.toInt256());
         }
+        _modifyOwedRealizedPnl(chAddress, liquidator, liquidationFeeToLiquidator.toInt256());
 
-        // assume there is no longer any unsettled bad debt in the system
-        // (so that true IF capacity = accountValue(IF) + USDC.balanceOf(IF))
-        // if trader's account value becomes negative, the amount is the bad debt IF must have enough capacity to cover
+        // // assume there is no longer any unsettled bad debt in the system
+        // // (so that true IF capacity = accountValue(IF) + USDC.balanceOf(IF))
+        // // if trader's account value becomes negative, the amount is the bad debt IF must have enough capacity to cover
         {
-            vars.accountValueAfterLiquidationX10_18 = GenericLogic.getAccountValue(chAddress, trader);
+            int256 accountValueAfterLiquidationX10_18 = GenericLogic.getAccountValue(chAddress, trader);
 
-            if (vars.accountValueAfterLiquidationX10_18 < 0) {
-                vars.insuranceFundCapacityX10_18 = IInsuranceFund(insuranceFund)
+            if (accountValueAfterLiquidationX10_18 < 0) {
+                int256 insuranceFundCapacityX10_18 = IInsuranceFund(insuranceFund)
                     .getInsuranceFundCapacity()
                     .parseSettlementToken(IVault(IClearingHouse(chAddress).getVault()).decimals());
 
                 // CH_IIC: insufficient insuranceFund capacity
-                require(vars.insuranceFundCapacityX10_18 >= vars.accountValueAfterLiquidationX10_18.neg256(), "CH_IIC");
+                require(insuranceFundCapacityX10_18 >= accountValueAfterLiquidationX10_18.neg256(), "CH_IIC");
             }
         }
-
-        // liquidator opens a position with liquidationFeeToLiquidator as a discount
-        // liquidator's openNotional = -liquidatedPositionNotional + liquidationFeeToLiquidator
-        vars.liquidatorExchangedPositionSize = vars.liquidatedPositionSize.neg256();
-        vars.liquidatorExchangedPositionNotional = vars.liquidatedPositionNotional.neg256().add(
-            vars.liquidationFeeToLiquidator.toInt256()
-        );
-        // note that this function will realize pnl if it's reducing liquidator's existing position size
-        _modifyPositionAndRealizePnl(
-            chAddress,
-            liquidator,
-            baseToken,
-            vars.liquidatorExchangedPositionSize, // exchangedPositionSize
-            vars.liquidatorExchangedPositionNotional, // exchangedPositionNotional
-            0, // makerFee
-            0 // takerFee
-        );
-
-        GenericLogic.requireEnoughFreeCollateral(chAddress, liquidator);
 
         emit PositionLiquidated(
             trader,
             baseToken,
-            vars.liquidatedPositionNotional.abs(), // positionNotional
-            vars.liquidatedPositionSize.abs(), // positionSize
-            vars.liquidationPenalty,
+            response.quote, // positionNotional
+            response.base, // positionSize
+            liquidationPenalty,
             liquidator
         );
 
@@ -410,6 +494,10 @@ library ExchangeLogic {
         );
 
         return (liquidatedPositionSize, liquidatedPositionNotional);
+    }
+
+    function _modifyOwedRealizedPnl(address chAddress, address trader, int256 amount) internal {
+        IAccountBalance(IClearingHouse(chAddress).getAccountBalance()).modifyOwedRealizedPnl(trader, amount);
     }
 
     /// @dev Calculate how much profit/loss we should realize,

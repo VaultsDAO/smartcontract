@@ -76,8 +76,8 @@ export enum BaseQuoteOrdering {
 //    but keeping this param and the comment here for notifying this issue; can see time.ts for more info
 export function createClearingHouseFixture(
     canMockTime: boolean = true,
-    // uniFeeTier = 10000, // 1%
     uniFeeTier = 10000, // 1%
+    priceAdmin: string,
 ): () => Promise<ClearingHouseFixture> {
     return async (): Promise<ClearingHouseFixture> => {
         // deploy test tokens
@@ -87,13 +87,25 @@ export function createClearingHouseFixture(
         const WBTC = (await tokenFactory.deploy()) as TestERC20
         await WBTC.__TestERC20_init("TestWBTC", "WBTC", 8)
 
-        let LiquidityLogic = await ethers.getContractFactory("LiquidityLogic");
+        let GenericLogic = await ethers.getContractFactory("GenericLogic");
+        let genericLogic = await GenericLogic.deploy();
+        let LiquidityLogic = await ethers.getContractFactory("LiquidityLogic", {
+            libraries: {
+                GenericLogic: genericLogic.address,
+            },
+        });
         let liquidityLogic = await LiquidityLogic.deploy();
+        let ExchangeLogic = await ethers.getContractFactory("ExchangeLogic", {
+            libraries: {
+                GenericLogic: genericLogic.address,
+            },
+        });
+        let exchangeLogic = await ExchangeLogic.deploy();
 
         const wethDecimals = await WETH.decimals()
 
         let baseToken: BaseToken, quoteToken: QuoteToken, mockedNFTPriceFeed: MockContract
-        const { token0, mockedNFTPriceFeed0, token1 } = await tokensFixture()
+        const { token0, mockedNFTPriceFeed0, token1 } = await tokensFixture(priceAdmin)
 
         // price feed for weth and wbtc
         const aggregatorFactory = await ethers.getContractFactory("TestAggregatorV3")
@@ -203,7 +215,7 @@ export function createClearingHouseFixture(
         await quoteToken.addWhitelist(pool.address)
 
         // deploy another pool
-        const _token0Fixture = await token0Fixture(quoteToken.address)
+        const _token0Fixture = await token0Fixture(quoteToken.address, priceAdmin)
         const baseToken2 = _token0Fixture.baseToken
         const mockedNFTPriceFeed2 = _token0Fixture.mockedNFTPriceFeed
         await uniV3Factory.createPool(baseToken2.address, quoteToken.address, uniFeeTier)
@@ -220,6 +232,7 @@ export function createClearingHouseFixture(
             const clearingHouseFactory = await ethers.getContractFactory("TestClearingHouse", {
                 libraries: {
                     LiquidityLogic: liquidityLogic.address,
+                    ExchangeLogic: exchangeLogic.address,
                 },
             })
             const testClearingHouse = (await clearingHouseFactory.deploy()) as TestClearingHouse
@@ -240,6 +253,7 @@ export function createClearingHouseFixture(
             const clearingHouseFactory = await ethers.getContractFactory("ClearingHouse", {
                 libraries: {
                     LiquidityLogic: liquidityLogic.address,
+                    ExchangeLogic: exchangeLogic.address,
                 },
             })
             clearingHouse = (await clearingHouseFactory.deploy()) as ClearingHouse
@@ -354,8 +368,20 @@ export async function mockedBaseTokenTo(longerThan: boolean, targetAddr: string)
 }
 
 export async function mockedClearingHouseFixture(): Promise<MockedClearingHouseFixture> {
-    let LiquidityLogic = await ethers.getContractFactory("LiquidityLogic");
+    let GenericLogic = await ethers.getContractFactory("GenericLogic");
+    let genericLogic = await GenericLogic.deploy();
+    let LiquidityLogic = await ethers.getContractFactory("LiquidityLogic", {
+        libraries: {
+            GenericLogic: genericLogic.address,
+        },
+    });
     let liquidityLogic = await LiquidityLogic.deploy();
+    let ExchangeLogic = await ethers.getContractFactory("ExchangeLogic", {
+        libraries: {
+            GenericLogic: genericLogic.address,
+        },
+    });
+    let exchangeLogic = await ExchangeLogic.deploy();
 
     const token1 = await createQuoteTokenFixture("RandomVirtualToken", "RVT")()
 
@@ -383,11 +409,7 @@ export async function mockedClearingHouseFixture(): Promise<MockedClearingHouseF
     const uniV3Factory = (await factoryFactory.deploy()) as UniswapV3Factory
     const mockedUniV3Factory = await smockit(uniV3Factory)
 
-    const clearingHouseConfigFactory = await ethers.getContractFactory("ClearingHouseConfig", {
-        libraries: {
-            LiquidityLogic: liquidityLogic.address,
-        },
-    })
+    const clearingHouseConfigFactory = await ethers.getContractFactory("ClearingHouseConfig")
     const clearingHouseConfig = (await clearingHouseConfigFactory.deploy()) as ClearingHouseConfig
 
     const marketRegistryFactory = await ethers.getContractFactory("MarketRegistry")
@@ -419,6 +441,7 @@ export async function mockedClearingHouseFixture(): Promise<MockedClearingHouseF
     const clearingHouseFactory = await ethers.getContractFactory("ClearingHouse", {
         libraries: {
             LiquidityLogic: liquidityLogic.address,
+            ExchangeLogic: exchangeLogic.address,
         },
     })
     const clearingHouse = (await clearingHouseFactory.deploy()) as ClearingHouse
@@ -450,9 +473,9 @@ export async function mockedClearingHouseFixture(): Promise<MockedClearingHouseF
     }
 }
 
-export function createClearingHouseWithDelegateApprovalFixture(): () => Promise<ClearingHouseWithDelegateApprovalFixture> {
+export function createClearingHouseWithDelegateApprovalFixture(priceAdmin: string): () => Promise<ClearingHouseWithDelegateApprovalFixture> {
     return async (): Promise<ClearingHouseWithDelegateApprovalFixture> => {
-        const clearingHouseFixture = await createClearingHouseFixture()()
+        const clearingHouseFixture = await createClearingHouseFixture(true, 10000, priceAdmin)()
         const clearingHouse = clearingHouseFixture.clearingHouse as TestClearingHouse
 
         const delegateApprovalFactory = await ethers.getContractFactory("DelegateApproval")

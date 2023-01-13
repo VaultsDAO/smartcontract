@@ -278,18 +278,9 @@ contract ClearingHouse is
     }
 
     /// @inheritdoc IClearingHouse
-    function liquidate(
-        address trader,
-        address baseToken,
-        int256 positionSize
-    ) external override whenNotPaused nonReentrant {
-        _liquidate(trader, baseToken, positionSize);
-    }
-
-    /// @inheritdoc IClearingHouse
     function liquidate(address trader, address baseToken) external override whenNotPaused nonReentrant {
         // positionSizeToBeLiquidated = 0 means liquidating as much as possible
-        _liquidate(trader, baseToken, 0);
+        _liquidate(trader, baseToken);
     }
 
     /// @inheritdoc IClearingHouse
@@ -475,90 +466,8 @@ contract ClearingHouse is
         require(IERC20Metadata(token).transfer(to, amount), "CH_TF");
     }
 
-    // function _liquidate(address trader, address baseToken, int256 positionSizeToBeLiquidated) internal {
-    //     _checkMarketOpen(baseToken);
-
-    //     _requireNotMaker(trader);
-
-    //     // CH_CLWTISO: cannot liquidate when there is still order
-    //     require(!IAccountBalance(_accountBalance).hasOrder(trader), "CH_CLWTISO");
-
-    //     // CH_EAV: enough account value
-    //     require(_isLiquidatable(trader), "CH_EAV");
-
-    //     int256 positionSize = _getTakerPositionSafe(trader, baseToken);
-
-    //     int256 accountValue = getAccountValue(trader);
-
-    //     // old position is long. when closing, it's baseToQuote && exactInput (sell exact base)
-    //     // old position is short. when closing, it's quoteToBase && exactOutput (buy exact base back)
-    //     bool isBaseToQuote = positionSize > 0;
-
-    //     IExchange.SwapResponse memory response = _openPosition(
-    //         InternalOpenPositionParams({
-    //             trader: trader,
-    //             baseToken: baseToken,
-    //             isBaseToQuote: isBaseToQuote,
-    //             isExactInput: isBaseToQuote,
-    //             isClose: true,
-    //             amount: positionSize.abs(),
-    //             sqrtPriceLimitX96: 0
-    //         })
-    //     );
-
-    //     address liquidator = _msgSender();
-
-    //     // // must settle funding first
-    //     _settleFunding(trader, baseToken);
-
-    //     // // trader pays liquidation penalty
-    //     // uint256 liquidationPenalty = liquidatedPositionNotional.abs().mulRatio(_getLiquidationPenaltyRatio());
-    //     uint256 liquidationPenalty = response.quote.mulRatio(_getLiquidationPenaltyRatio());
-    //     _modifyOwedRealizedPnl(trader, liquidationPenalty.neg256());
-
-    //     address insuranceFund = _insuranceFund;
-
-    //     // // if there is bad debt, liquidation fees all go to liquidator; otherwise, split between liquidator & IF
-    //     uint256 liquidationFeeToLiquidator = liquidationPenalty.div(2);
-    //     uint256 liquidationFeeToIF;
-    //     if (accountValue < 0) {
-    //         liquidationFeeToLiquidator = liquidationPenalty;
-    //     } else {
-    //         liquidationFeeToIF = liquidationPenalty.sub(liquidationFeeToLiquidator);
-    //         _modifyOwedRealizedPnl(insuranceFund, liquidationFeeToIF.toInt256());
-    //     }
-    //     _modifyOwedRealizedPnl(liquidator, liquidationFeeToLiquidator.toInt256());
-
-    //     // // assume there is no longer any unsettled bad debt in the system
-    //     // // (so that true IF capacity = accountValue(IF) + USDC.balanceOf(IF))
-    //     // // if trader's account value becomes negative, the amount is the bad debt IF must have enough capacity to cover
-    //     {
-    //         int256 accountValueAfterLiquidationX10_18 = getAccountValue(trader);
-
-    //         if (accountValueAfterLiquidationX10_18 < 0) {
-    //             int256 insuranceFundCapacityX10_18 = IInsuranceFund(insuranceFund)
-    //                 .getInsuranceFundCapacity()
-    //                 .parseSettlementToken(_settlementTokenDecimals);
-
-    //             // CH_IIC: insufficient insuranceFund capacity
-    //             require(insuranceFundCapacityX10_18 >= accountValueAfterLiquidationX10_18.neg256(), "CH_IIC");
-    //         }
-    //     }
-
-    //     emit PositionLiquidated(
-    //         trader,
-    //         baseToken,
-    //         response.quote, // positionNotional
-    //         response.base, // positionSize
-    //         liquidationPenalty,
-    //         liquidator
-    //     );
-
-    //     _settleBadDebt(trader);
-    // }
-
-    function _liquidate(address trader, address baseToken, int256 positionSizeToBeLiquidated) internal {
-        return ExchangeLogic.liquidate(address(this), _msgSender(), trader, baseToken, positionSizeToBeLiquidated);
+    function _liquidate(address trader, address baseToken) internal {
+        return ExchangeLogic.liquidate(address(this), _msgSender(), trader, baseToken);
     }
 
     /// @dev only cancel open orders if there are not enough free collateral with mmRatio
