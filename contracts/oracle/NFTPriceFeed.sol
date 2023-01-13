@@ -6,14 +6,14 @@ import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
 import { IPriceFeedV2 } from "./interface/IPriceFeedV2.sol";
 import { BlockContext } from "../base/BlockContext.sol";
 
-contract NFTPriceFeed is IPriceFeedV2, Ownable, BlockContext {
+contract NftPriceFeed is IPriceFeedV2, Ownable, BlockContext {
     using Address for address;
 
     address public priceFeedAdmin;
     uint256 public latestPrice = 0;
 
     event FeedAdminUpdated(address indexed admin);
-    event SetPrice(uint256 price);
+    event PriceUpdated(uint256 price);
 
     constructor() {
         priceFeedAdmin = msg.sender;
@@ -35,13 +35,13 @@ contract NFTPriceFeed is IPriceFeedV2, Ownable, BlockContext {
     }
 
     function decimals() external view override returns (uint8) {
-        return 8;
+        return 18;
     }
 
     function setPrice(uint256 _price) external onlyAdmin {
         require(_price > 0, "NPF_IP");
         latestPrice = _price;
-        emit SetPrice(_price);
+        emit PriceUpdated(_price);
     }
 
     function getPrice(uint256 interval) external view override returns (uint256) {

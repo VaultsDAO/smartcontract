@@ -39,16 +39,15 @@ export interface ClearingHouseFixture {
     uniV3Factory: UniswapV3Factory
     pool: UniswapV3Pool
     uniFeeTier: number
-    USDC: TestERC20
     WETH: TestERC20
     WBTC: TestERC20
     mockedWethPriceFeed: MockContract
     mockedWbtcPriceFeed: MockContract
     quoteToken: QuoteToken
     baseToken: BaseToken
-    mockedBaseAggregator: MockContract
+    mockedNFTPriceFeed: MockContract
     baseToken2: BaseToken
-    mockedBaseAggregator2: MockContract
+    mockedNFTPriceFeed2: MockContract
     pool2: UniswapV3Pool
 }
 
@@ -83,8 +82,6 @@ export function createClearingHouseFixture(
     return async (): Promise<ClearingHouseFixture> => {
         // deploy test tokens
         const tokenFactory = await ethers.getContractFactory("TestERC20")
-        const USDC = (await tokenFactory.deploy()) as TestERC20
-        await USDC.__TestERC20_init("TestUSDC", "USDC", 18)
         const WETH = (await tokenFactory.deploy()) as TestERC20
         await WETH.__TestERC20_init("TestWETH", "WETH", 18)
         const WBTC = (await tokenFactory.deploy()) as TestERC20
@@ -93,10 +90,10 @@ export function createClearingHouseFixture(
         let GenericLogic = await ethers.getContractFactory("GenericLogic");
         let genericLogic = await GenericLogic.deploy();
 
-        const usdcDecimals = await USDC.decimals()
+        const wethDecimals = await WETH.decimals()
 
-        let baseToken: BaseToken, quoteToken: QuoteToken, mockedBaseAggregator: MockContract
-        const { token0, mockedAggregator0, token1 } = await tokensFixture()
+        let baseToken: BaseToken, quoteToken: QuoteToken, mockedNFTPriceFeed: MockContract
+        const { token0, mockedNFTPriceFeed0, token1 } = await tokensFixture()
 
         // price feed for weth and wbtc
         const aggregatorFactory = await ethers.getContractFactory("TestAggregatorV3")
@@ -112,7 +109,7 @@ export function createClearingHouseFixture(
         // we assume (base, quote) == (token0, token1)
         baseToken = token0
         quoteToken = token1
-        mockedBaseAggregator = mockedAggregator0
+        mockedNFTPriceFeed = mockedNFTPriceFeed0
 
         // deploy UniV3 factory
         const factoryFactory = await ethers.getContractFactory("UniswapV3Factory")
@@ -152,7 +149,7 @@ export function createClearingHouseFixture(
 
         const insuranceFundFactory = await ethers.getContractFactory("InsuranceFund")
         const insuranceFund = (await insuranceFundFactory.deploy()) as InsuranceFund
-        await insuranceFund.initialize(USDC.address)
+        await insuranceFund.initialize(WETH.address)
 
         // deploy exchange
         await exchange.initialize(marketRegistry.address, orderBook.address, clearingHouseConfig.address)
@@ -185,15 +182,9 @@ export function createClearingHouseFixture(
             "500000", // liquidationRatio
             "2000", // mmRatioBuffer
             "30000", // clInsuranceFundFeeRatio
-            parseUnits("10000", usdcDecimals), // debtThreshold
-            parseUnits("500", usdcDecimals), // collateralValueDust
+            parseUnits("10000", wethDecimals), // debtThreshold
+            parseUnits("500", wethDecimals), // collateralValueDust
         )
-        await collateralManager.addCollateral(WETH.address, {
-            priceFeed: mockedWethPriceFeed.address,
-            collateralRatio: (0.7e6).toString(),
-            discountRatio: (0.1e6).toString(),
-            depositCap: parseEther("1000"),
-        })
         await collateralManager.addCollateral(WBTC.address, {
             priceFeed: mockedWbtcPriceFeed.address,
             collateralRatio: (0.7e6).toString(),
@@ -214,7 +205,7 @@ export function createClearingHouseFixture(
         // deploy another pool
         const _token0Fixture = await token0Fixture(quoteToken.address)
         const baseToken2 = _token0Fixture.baseToken
-        const mockedBaseAggregator2 = _token0Fixture.mockedAggregator
+        const mockedNFTPriceFeed2 = _token0Fixture.mockedNFTPriceFeed
         await uniV3Factory.createPool(baseToken2.address, quoteToken.address, uniFeeTier)
         const pool2Addr = await uniV3Factory.getPool(baseToken2.address, quoteToken.address, uniFeeTier)
         const pool2 = poolFactory.attach(pool2Addr) as UniswapV3Pool
@@ -292,16 +283,15 @@ export function createClearingHouseFixture(
             uniV3Factory,
             pool,
             uniFeeTier,
-            USDC,
             WETH,
             WBTC,
             mockedWethPriceFeed,
             mockedWbtcPriceFeed,
             quoteToken,
             baseToken,
-            mockedBaseAggregator,
+            mockedNFTPriceFeed,
             baseToken2,
-            mockedBaseAggregator2,
+            mockedNFTPriceFeed2,
             pool2,
         }
     }
@@ -322,7 +312,7 @@ interface MockedClearingHouseFixture {
     mockedUniV3Factory: MockContract
     mockedVault: MockContract
     mockedQuoteToken: MockContract
-    mockedUSDC: MockContract
+    mockedWETH: MockContract
     mockedBaseToken: MockContract
     mockedExchange: MockContract
     mockedInsuranceFund: MockContract
@@ -371,8 +361,8 @@ export async function mockedClearingHouseFixture(): Promise<MockedClearingHouseF
 
     // deploy test tokens
     const tokenFactory = await ethers.getContractFactory("TestERC20")
-    const USDC = (await tokenFactory.deploy()) as TestERC20
-    await USDC.__TestERC20_init("TestUSDC", "USDC", 18)
+    const WETH = (await tokenFactory.deploy()) as TestERC20
+    await WETH.__TestERC20_init("TestWETH", "WETH", 18)
 
     const insuranceFundFactory = await ethers.getContractFactory("InsuranceFund")
     const insuranceFund = (await insuranceFundFactory.deploy()) as InsuranceFund
@@ -382,7 +372,7 @@ export async function mockedClearingHouseFixture(): Promise<MockedClearingHouseF
     const vault = (await vaultFactory.deploy()) as Vault
     const mockedVault = await smockit(vault)
 
-    const mockedUSDC = await smockit(USDC)
+    const mockedWETH = await smockit(WETH)
     const mockedQuoteToken = await smockit(token1)
     mockedQuoteToken.smocked.decimals.will.return.with(async () => {
         return 18
@@ -452,7 +442,7 @@ export async function mockedClearingHouseFixture(): Promise<MockedClearingHouseF
         mockedUniV3Factory,
         mockedVault,
         mockedQuoteToken,
-        mockedUSDC,
+        mockedWETH,
         mockedBaseToken,
         mockedInsuranceFund,
         mockedAccountBalance,

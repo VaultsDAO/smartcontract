@@ -38,7 +38,7 @@ describe("ClearingHouse liquidate taker", () => {
     let vault: Vault
     let collateral: TestERC20
     let baseToken: BaseToken
-    let mockedBaseAggregator: MockContract
+    let mockedNFTPriceFeed: MockContract
     let collateralDecimals: number
     let takerUsdcBalanceBefore: BigNumber
     const lowerTick: number = 45800
@@ -52,14 +52,14 @@ describe("ClearingHouse liquidate taker", () => {
         accountBalance = fixture.accountBalance
         vault = fixture.vault
         marketRegistry = fixture.marketRegistry
-        collateral = fixture.USDC
+        collateral = fixture.WETH
         baseToken = fixture.baseToken
-        mockedBaseAggregator = fixture.mockedBaseAggregator
+        mockedNFTPriceFeed = fixture.mockedNFTPriceFeed
         collateralDecimals = await collateral.decimals()
 
         await initMarket(fixture, initPrice, undefined, 0)
-        mockedBaseAggregator.smocked.latestRoundData.will.return.with(async () => {
-            return [0, parseUnits(initPrice, 6), 0, 0, 0]
+        mockedNFTPriceFeed.smocked.getPrice.will.return.with(async () => {
+            return parseUnits(initPrice, 18)
         })
 
         // prepare collateral for taker
@@ -95,8 +95,8 @@ describe("ClearingHouse liquidate taker", () => {
             referralCode: ethers.constants.HashZero,
         })
 
-        mockedBaseAggregator.smocked.latestRoundData.will.return.with(async () => {
-            return [0, parseUnits(initPrice, 6).sub(parseUnits('15', 6)), 0, 0, 0]
+        mockedNFTPriceFeed.smocked.getPrice.will.return.with(async () => {
+            return parseUnits(initPrice, 18).sub(parseUnits('15', 18))
         })
 
         {
@@ -152,8 +152,8 @@ describe("ClearingHouse liquidate taker", () => {
     //         referralCode: ethers.constants.HashZero,
     //     })
 
-    //     mockedBaseAggregator.smocked.latestRoundData.will.return.with(async () => {
-    //         return [0, parseUnits(initPrice, 6).mul(11200).div(10000), 0, 0, 0]
+    //     mockedNFTPriceFeed.smocked.getPrice.will.return.with(async () => {
+    //         return parseUnits(initPrice, 6).mul(11200).div(10000)
     //     })
 
     //     {

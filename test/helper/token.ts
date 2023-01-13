@@ -11,7 +11,7 @@ export async function deposit(sender: Wallet, vault: Vault, amount: number, toke
 }
 
 export async function mintAndDeposit(fixture: ClearingHouseFixture, wallet: Wallet, amount: number): Promise<void> {
-    const usdc = fixture.USDC
+    const usdc = fixture.WETH
     const decimals = await usdc.decimals()
     await usdc.mint(wallet.address, parseUnits(amount.toString(), decimals))
     await deposit(wallet, fixture.vault, amount, usdc)

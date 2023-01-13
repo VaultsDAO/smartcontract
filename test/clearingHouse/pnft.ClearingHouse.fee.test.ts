@@ -28,7 +28,7 @@ import { IGNORABLE_DUST } from "../helper/number"
 import { deposit } from "../helper/token"
 import { ClearingHouseFixture, createClearingHouseFixture } from "./fixtures"
 
-describe("ClearingHouse liquidate taker", () => {
+describe("ClearingHouse fee updated", () => {
     const [admin, maker, taker, liquidator] = waffle.provider.getWallets()
     const loadFixture: ReturnType<typeof waffle.createFixtureLoader> = waffle.createFixtureLoader([admin])
     let fixture: ClearingHouseFixture
@@ -41,7 +41,7 @@ describe("ClearingHouse liquidate taker", () => {
     let exchange: Exchange
     let collateral: TestERC20
     let baseToken: BaseToken
-    let mockedBaseAggregator: MockContract
+    let mockedNFTPriceFeed: MockContract
     let collateralDecimals: number
     const lowerTick: number = 45800
     const upperTick: number = 46400
@@ -56,14 +56,14 @@ describe("ClearingHouse liquidate taker", () => {
         insuranceFund = fixture.insuranceFund as InsuranceFund
         exchange = fixture.exchange as Exchange
         marketRegistry = fixture.marketRegistry
-        collateral = fixture.USDC
+        collateral = fixture.WETH
         baseToken = fixture.baseToken
-        mockedBaseAggregator = fixture.mockedBaseAggregator
+        mockedNFTPriceFeed = fixture.mockedNFTPriceFeed
         collateralDecimals = await collateral.decimals()
 
         await initMarket(fixture, initPrice, undefined, 0)
-        mockedBaseAggregator.smocked.latestRoundData.will.return.with(async () => {
-            return [0, parseUnits(initPrice, 6), 0, 0, 0]
+        mockedNFTPriceFeed.smocked.getPrice.will.return.with(async () => {
+            return parseUnits(initPrice, 18)
         })
 
         // prepare collateral for taker
@@ -74,12 +74,12 @@ describe("ClearingHouse liquidate taker", () => {
         await deposit(liquidator, vault, 1000, collateral)
     })
 
-    it("long liquidate", async () => {
+    it("long fee updated", async () => {
         // maker add liquidity
         await clearingHouse.connect(maker).addLiquidity({
             baseToken: baseToken.address,
-            base: parseEther("100"),
-            quote: parseEther("1000"),
+            base: parseEther("1000"),
+            quote: parseEther("100000"),
             lowerTick,
             upperTick,
             minBase: 0,
@@ -121,8 +121,8 @@ describe("ClearingHouse liquidate taker", () => {
         expect((await accountBalance.getPnlAndPendingFee(platformFund.address))[0]).to.eq(
             parseEther("0.2"),
         )
-        mockedBaseAggregator.smocked.latestRoundData.will.return.with(async () => {
-            return [0, parseUnits("96", 6), 0, 0, 0]
+        mockedNFTPriceFeed.smocked.getPrice.will.return.with(async () => {
+            return parseUnits("96", 18)
         })
         // short 100$
         await clearingHouse.connect(taker).openPosition({
@@ -136,14 +136,11 @@ describe("ClearingHouse liquidate taker", () => {
             referralCode: ethers.constants.HashZero,
         })
         expect((await accountBalance.getPnlAndPendingFee(insuranceFund.address))[0]).to.eq(
-            parseEther("1.04485"),
+            parseEther("1.238975"),
         )
         expect((await accountBalance.getPnlAndPendingFee(platformFund.address))[0]).to.eq(
             parseEther("0.3"),
         )
-        mockedBaseAggregator.smocked.latestRoundData.will.return.with(async () => {
-            return [0, parseUnits("96", 6), 0, 0, 0]
-        })
         // long 100$
         await clearingHouse.connect(taker).openPosition({
             baseToken: baseToken.address,
@@ -156,10 +153,15 @@ describe("ClearingHouse liquidate taker", () => {
             referralCode: ethers.constants.HashZero,
         })
         expect((await accountBalance.getPnlAndPendingFee(insuranceFund.address))[0]).to.eq(
-            parseEther("1.04485"),
+            parseEther("1.238975"),
         )
         expect((await accountBalance.getPnlAndPendingFee(platformFund.address))[0]).to.eq(
             parseEther("0.4"),
         )
+        // console.log(formatEther(await accountBalance.getBase(taker.address, baseToken.address)))
+        // console.log(formatEther(await accountBalance.getQuote(taker.address, baseToken.address)))
+        // const [takerOwedRealizedPnl, takerUnrealizedPnl] = await accountBalance.getPnlAndPendingFee(taker.address)
+        // console.log(formatEther(takerOwedRealizedPnl.toString()))
+        // console.log(formatEther(takerUnrealizedPnl.toString()))
     })
 })

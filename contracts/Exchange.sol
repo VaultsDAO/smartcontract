@@ -238,10 +238,7 @@ contract Exchange is
             1e6
         );
         // insuranceFundFee
-        uint256 insuranceFundFee = getDetalTawpInsuranceFundFee(
-            params.baseToken,
-            response.exchangedPositionNotional
-        );
+        uint256 insuranceFundFee = getDetalTawpInsuranceFundFee(params.baseToken, response.exchangedPositionNotional);
 
         return
             SwapResponse({
