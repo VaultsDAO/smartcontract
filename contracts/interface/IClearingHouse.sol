@@ -215,7 +215,7 @@ interface IClearingHouse {
     /// @param params OpenPositionParams struct
     /// @return base The amount of baseToken the taker got or spent
     /// @return quote The amount of quoteToken the taker got or spent
-    function openPosition(OpenPositionParams memory params) external returns (uint256 base, uint256 quote);
+    function openPosition(DataTypes.OpenPositionParams memory params) external returns (uint256 base, uint256 quote);
 
     /// @param trader The address of trader
     /// @param params OpenPositionParams struct is the same as `openPosition()`
@@ -224,14 +224,16 @@ interface IClearingHouse {
     /// @return fee The trading fee
     function openPositionFor(
         address trader,
-        OpenPositionParams memory params
+        DataTypes.OpenPositionParams memory params
     ) external returns (uint256 base, uint256 quote, uint256 fee);
 
     /// @notice Close trader's position
     /// @param params ClosePositionParams struct
     /// @return base The amount of baseToken the taker got or spent
     /// @return quote The amount of quoteToken the taker got or spent
-    function closePosition(ClosePositionParams calldata params) external returns (uint256 base, uint256 quote);
+    function closePosition(
+        DataTypes.ClosePositionParams calldata params
+    ) external returns (uint256 base, uint256 quote);
 
     /// @notice If trader is underwater, any one can call `liquidate` to liquidate this trader
     /// @dev If trader has open orders, need to call `cancelAllExcessOrders` first
@@ -318,4 +320,6 @@ interface IClearingHouse {
     function getDelegateApproval() external view returns (address delegateApproval);
 
     function getMaker() external view returns (address maker);
+
+    function getPlatformFund() external view returns (address platformFund);
 }

@@ -33,6 +33,7 @@ import { IClearingHouse } from "./interface/IClearingHouse.sol";
 import { AccountMarket } from "./lib/AccountMarket.sol";
 import { OpenOrder } from "./lib/OpenOrder.sol";
 import { LiquidityLogic } from "./lib/LiquidityLogic.sol";
+import { ExchangeLogic } from "./lib/ExchangeLogic.sol";
 import { IMarketRegistry } from "./interface/IMarketRegistry.sol";
 import { DataTypes } from "./types/DataTypes.sol";
 import "hardhat/console.sol";
@@ -230,7 +231,7 @@ contract ClearingHouse is
 
     /// @inheritdoc IClearingHouse
     function openPosition(
-        OpenPositionParams memory params
+        DataTypes.OpenPositionParams memory params
     )
         external
         override
@@ -247,7 +248,7 @@ contract ClearingHouse is
     /// @inheritdoc IClearingHouse
     function openPositionFor(
         address trader,
-        OpenPositionParams memory params
+        DataTypes.OpenPositionParams memory params
     )
         external
         override
@@ -264,7 +265,7 @@ contract ClearingHouse is
 
     /// @inheritdoc IClearingHouse
     function closePosition(
-        ClosePositionParams calldata params
+        DataTypes.ClosePositionParams calldata params
     )
         external
         override
@@ -273,51 +274,7 @@ contract ClearingHouse is
         checkDeadline(params.deadline)
         returns (uint256 base, uint256 quote)
     {
-        // input requirement checks:
-        //   baseToken: in Exchange.settleFunding()
-        //   sqrtPriceLimitX96: X (this is not for slippage protection)
-        //   oppositeAmountBound: in _checkSlippage()
-        //   deadline: here
-        //   referralCode: X
-
-        _checkMarketOpen(params.baseToken);
-
-        address trader = _msgSender();
-
-        // must settle funding first
-        _settleFunding(trader, params.baseToken);
-
-        int256 positionSize = _getTakerPositionSafe(trader, params.baseToken);
-
-        // old position is long. when closing, it's baseToQuote && exactInput (sell exact base)
-        // old position is short. when closing, it's quoteToBase && exactOutput (buy exact base back)
-        bool isBaseToQuote = positionSize > 0;
-
-        IExchange.SwapResponse memory response = _openPosition(
-            InternalOpenPositionParams({
-                trader: trader,
-                baseToken: params.baseToken,
-                isBaseToQuote: isBaseToQuote,
-                isExactInput: isBaseToQuote,
-                isClose: true,
-                amount: positionSize.abs(),
-                sqrtPriceLimitX96: params.sqrtPriceLimitX96
-            })
-        );
-
-        _checkSlippage(
-            InternalCheckSlippageParams({
-                isBaseToQuote: isBaseToQuote,
-                isExactInput: isBaseToQuote,
-                base: response.base,
-                quote: response.quote,
-                oppositeAmountBound: _getOppositeAmount(params.oppositeAmountBound, response.isPartialClose)
-            })
-        );
-
-        _referredPositionChanged(params.referralCode);
-
-        return (response.base, response.quote);
+        return ExchangeLogic.closePosition(address(this), _msgSender(), params);
     }
 
     /// @inheritdoc IClearingHouse
@@ -491,6 +448,11 @@ contract ClearingHouse is
     }
 
     /// @inheritdoc IClearingHouse
+    function getPlatformFund() external view override returns (address) {
+        return _platformFund;
+    }
+
+    /// @inheritdoc IClearingHouse
     function getDelegateApproval() external view override returns (address) {
         return _delegateApproval;
     }
@@ -596,96 +558,7 @@ contract ClearingHouse is
     // }
 
     function _liquidate(address trader, address baseToken, int256 positionSizeToBeLiquidated) internal {
-        _checkMarketOpen(baseToken);
-
-        _requireNotMaker(trader);
-
-        // CH_CLWTISO: cannot liquidate when there is still order
-        require(!IAccountBalance(_accountBalance).hasOrder(trader), "CH_CLWTISO");
-
-        // CH_EAV: enough account value
-        require(_isLiquidatable(trader), "CH_EAV");
-
-        int256 positionSize = _getTakerPositionSafe(trader, baseToken);
-
-        // CH_WLD: wrong liquidation direction
-        require(positionSize.mul(positionSizeToBeLiquidated) >= 0, "CH_WLD");
-
-        address liquidator = _msgSender();
-
-        _registerBaseToken(liquidator, baseToken);
-
-        // must settle funding first
-        _settleFunding(trader, baseToken);
-        _settleFunding(liquidator, baseToken);
-
-        int256 accountValue = getAccountValue(trader);
-
-        // trader's position is closed at index price and pnl realized
-        (int256 liquidatedPositionSize, int256 liquidatedPositionNotional) =
-            _getLiquidatedPositionSizeAndNotional(trader, baseToken, accountValue, positionSizeToBeLiquidated);
-        _modifyPositionAndRealizePnl(trader, baseToken, liquidatedPositionSize, liquidatedPositionNotional, 0, 0);
-
-        // trader pays liquidation penalty
-        uint256 liquidationPenalty = liquidatedPositionNotional.abs().mulRatio(_getLiquidationPenaltyRatio());
-        _modifyOwedRealizedPnl(trader, liquidationPenalty.neg256());
-
-        address insuranceFund = _insuranceFund;
-
-        // if there is bad debt, liquidation fees all go to liquidator; otherwise, split between liquidator & IF
-        uint256 liquidationFeeToLiquidator = liquidationPenalty.div(2);
-        uint256 liquidationFeeToIF;
-        if (accountValue < 0) {
-            liquidationFeeToLiquidator = liquidationPenalty;
-        } else {
-            liquidationFeeToIF = liquidationPenalty.sub(liquidationFeeToLiquidator);
-            _modifyOwedRealizedPnl(insuranceFund, liquidationFeeToIF.toInt256());
-        }
-
-        // assume there is no longer any unsettled bad debt in the system
-        // (so that true IF capacity = accountValue(IF) + USDC.balanceOf(IF))
-        // if trader's account value becomes negative, the amount is the bad debt IF must have enough capacity to cover
-        {
-            int256 accountValueAfterLiquidationX10_18 = getAccountValue(trader);
-
-            if (accountValueAfterLiquidationX10_18 < 0) {
-                int256 insuranceFundCapacityX10_18 =
-                    IInsuranceFund(insuranceFund).getInsuranceFundCapacity().parseSettlementToken(
-                        _settlementTokenDecimals
-                    );
-
-                // CH_IIC: insufficient insuranceFund capacity
-                require(insuranceFundCapacityX10_18 >= accountValueAfterLiquidationX10_18.neg256(), "CH_IIC");
-            }
-        }
-
-        // liquidator opens a position with liquidationFeeToLiquidator as a discount
-        // liquidator's openNotional = -liquidatedPositionNotional + liquidationFeeToLiquidator
-        int256 liquidatorExchangedPositionSize = liquidatedPositionSize.neg256();
-        int256 liquidatorExchangedPositionNotional =
-            liquidatedPositionNotional.neg256().add(liquidationFeeToLiquidator.toInt256());
-        // note that this function will realize pnl if it's reducing liquidator's existing position size
-        _modifyPositionAndRealizePnl(
-            liquidator,
-            baseToken,
-            liquidatorExchangedPositionSize, // exchangedPositionSize
-            liquidatorExchangedPositionNotional, // exchangedPositionNotional
-            0, // makerFee
-            0 // takerFee
-        );
-
-        _requireEnoughFreeCollateral(liquidator);
-
-        emit PositionLiquidated(
-            trader,
-            baseToken,
-            liquidatedPositionNotional.abs(), // positionNotional
-            liquidatedPositionSize.abs(), // positionSize
-            liquidationPenalty,
-            liquidator
-        );
-
-        _settleBadDebt(trader);
+        return ExchangeLogic.liquidate(address(this), _msgSender(), trader, baseToken, positionSizeToBeLiquidated);
     }
 
     /// @dev Calculate how much profit/loss we should realize,
@@ -759,125 +632,77 @@ contract ClearingHouse is
 
     /// @dev explainer diagram for the relationship between exchangedPositionNotional, fee and openNotional:
     ///      https://www.figma.com/file/xuue5qGH4RalX7uAbbzgP3/swap-accounting-and-events
-    function _openPosition(InternalOpenPositionParams memory params) internal returns (IExchange.SwapResponse memory) {
-        IExchange.SwapResponse memory response = IExchange(_exchange).swap(
-            IExchange.SwapParams({
-                trader: params.trader,
-                baseToken: params.baseToken,
-                isBaseToQuote: params.isBaseToQuote,
-                isExactInput: params.isExactInput,
-                isClose: params.isClose,
-                amount: params.amount,
-                sqrtPriceLimitX96: params.sqrtPriceLimitX96
-            })
-        );
+    // function _openPosition(InternalOpenPositionParams memory params) internal returns (IExchange.SwapResponse memory) {
+    //     IExchange.SwapResponse memory response = IExchange(_exchange).swap(
+    //         IExchange.SwapParams({
+    //             trader: params.trader,
+    //             baseToken: params.baseToken,
+    //             isBaseToQuote: params.isBaseToQuote,
+    //             isExactInput: params.isExactInput,
+    //             isClose: params.isClose,
+    //             amount: params.amount,
+    //             sqrtPriceLimitX96: params.sqrtPriceLimitX96
+    //         })
+    //     );
 
-        // insuranceFundFee
-        _modifyOwedRealizedPnl(_insuranceFund, response.insuranceFundFee.toInt256());
-        // platformFundFee
-        _modifyOwedRealizedPnl(_platformFund, response.platformFundFee.toInt256());
-        // sum fee
-        uint256 fee = response.insuranceFundFee.add(response.platformFundFee);
-        // examples:
-        // https://www.figma.com/file/xuue5qGH4RalX7uAbbzgP3/swap-accounting-and-events?node-id=0%3A1
-        _settleBalanceAndDeregister(
-            params.trader,
-            params.baseToken,
-            response.exchangedPositionSize,
-            response.exchangedPositionNotional.sub(fee.toInt256()),
-            response.pnlToBeRealized,
-            0
-        );
+    //     // insuranceFundFee
+    //     _modifyOwedRealizedPnl(_insuranceFund, response.insuranceFundFee.toInt256());
+    //     // platformFundFee
+    //     _modifyOwedRealizedPnl(_platformFund, response.platformFundFee.toInt256());
+    //     // sum fee
+    //     uint256 fee = response.insuranceFundFee.add(response.platformFundFee);
+    //     // examples:
+    //     // https://www.figma.com/file/xuue5qGH4RalX7uAbbzgP3/swap-accounting-and-events?node-id=0%3A1
+    //     _settleBalanceAndDeregister(
+    //         params.trader,
+    //         params.baseToken,
+    //         response.exchangedPositionSize,
+    //         response.exchangedPositionNotional.sub(fee.toInt256()),
+    //         response.pnlToBeRealized,
+    //         0
+    //     );
 
-        if (response.pnlToBeRealized != 0) {
-            // if realized pnl is not zero, that means trader is reducing or closing position
-            // trader cannot reduce/close position if the remaining account value is less than
-            // accountValue * LiquidationPenaltyRatio, which
-            // enforces traders to keep LiquidationPenaltyRatio of accountValue to
-            // shore the remaining positions and make sure traders having enough money to pay liquidation penalty.
+    //     if (response.pnlToBeRealized != 0) {
+    //         // if realized pnl is not zero, that means trader is reducing or closing position
+    //         // trader cannot reduce/close position if the remaining account value is less than
+    //         // accountValue * LiquidationPenaltyRatio, which
+    //         // enforces traders to keep LiquidationPenaltyRatio of accountValue to
+    //         // shore the remaining positions and make sure traders having enough money to pay liquidation penalty.
 
-            // CH_NEMRM : not enough minimum required margin after reducing/closing position
-            require(
-                getAccountValue(params.trader) >=
-                    _getTotalAbsPositionValue(params.trader).mulRatio(_getLiquidationPenaltyRatio()).toInt256(),
-                "CH_NEMRM"
-            );
-        }
+    //         // CH_NEMRM : not enough minimum required margin after reducing/closing position
+    //         require(
+    //             getAccountValue(params.trader) >=
+    //                 _getTotalAbsPositionValue(params.trader).mulRatio(_getLiquidationPenaltyRatio()).toInt256(),
+    //             "CH_NEMRM"
+    //         );
+    //     }
 
-        // if not closing a position, check margin ratio after swap
-        if (!params.isClose) {
-            _requireEnoughFreeCollateral(params.trader);
-        }
+    //     // if not closing a position, check margin ratio after swap
+    //     if (!params.isClose) {
+    //         _requireEnoughFreeCollateral(params.trader);
+    //     }
 
-        // openNotional will be zero if baseToken is deregistered from trader's token list.
-        int256 openNotional = _getTakerOpenNotional(params.trader, params.baseToken);
-        _emitPositionChanged(
-            params.trader,
-            params.baseToken,
-            response.exchangedPositionSize,
-            response.exchangedPositionNotional,
-            fee,
-            openNotional,
-            response.pnlToBeRealized, // realizedPnl
-            response.sqrtPriceAfterX96
-        );
+    //     // openNotional will be zero if baseToken is deregistered from trader's token list.
+    //     int256 openNotional = _getTakerOpenNotional(params.trader, params.baseToken);
+    //     _emitPositionChanged(
+    //         params.trader,
+    //         params.baseToken,
+    //         response.exchangedPositionSize,
+    //         response.exchangedPositionNotional,
+    //         fee,
+    //         openNotional,
+    //         response.pnlToBeRealized, // realizedPnl
+    //         response.sqrtPriceAfterX96
+    //     );
 
-        return response;
-    }
+    //     return response;
+    // }
 
     function _openPositionFor(
         address trader,
-        OpenPositionParams memory params
+        DataTypes.OpenPositionParams memory params
     ) internal returns (uint256 base, uint256 quote, uint256 fee) {
-        // input requirement checks:
-        //   baseToken: in Exchange.settleFunding()
-        //   isBaseToQuote & isExactInput: X
-        //   amount: in UniswapV3Pool.swap()
-        //   oppositeAmountBound: in _checkSlippage()
-        //   deadline: here
-        //   sqrtPriceLimitX96: X (this is not for slippage protection)
-        //   referralCode: X
-
-        _checkMarketOpen(params.baseToken);
-
-        // register token if it's the first time
-        _registerBaseToken(trader, params.baseToken);
-
-        // must settle funding first
-        _settleFunding(trader, params.baseToken);
-
-        IExchange.SwapResponse memory response = _openPosition(
-            InternalOpenPositionParams({
-                trader: trader,
-                baseToken: params.baseToken,
-                isBaseToQuote: params.isBaseToQuote,
-                isExactInput: params.isExactInput,
-                amount: params.amount,
-                isClose: false,
-                sqrtPriceLimitX96: params.sqrtPriceLimitX96
-            })
-        );
-
-        _checkSlippage(
-            InternalCheckSlippageParams({
-                isBaseToQuote: params.isBaseToQuote,
-                isExactInput: params.isExactInput,
-                base: response.base,
-                quote: response.quote,
-                oppositeAmountBound: params.oppositeAmountBound
-            })
-        );
-
-        _referredPositionChanged(params.referralCode);
-
-        return (response.base, response.quote, response.insuranceFundFee.add(response.platformFundFee));
-    }
-
-    /// @dev Remove maker's liquidity.
-    function _removeLiquidity(
-        IOrderBook.RemoveLiquidityParams memory params
-    ) internal returns (IOrderBook.RemoveLiquidityResponse memory) {
-        return IOrderBook(_orderBook).removeLiquidity(params);
+        return ExchangeLogic.openPositionFor(address(this), trader, params);
     }
 
     /// @dev Settle trader's funding payment to his/her realized pnl.

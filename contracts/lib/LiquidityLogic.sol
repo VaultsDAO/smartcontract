@@ -17,6 +17,7 @@ import { SafeMathUpgradeable } from "@openzeppelin/contracts-upgradeable/math/Sa
 import { SignedSafeMathUpgradeable } from "@openzeppelin/contracts-upgradeable/math/SignedSafeMathUpgradeable.sol";
 import { DataTypes } from "../types/DataTypes.sol";
 import { OpenOrder } from "../lib/OpenOrder.sol";
+import { GenericLogic } from "../lib/GenericLogic.sol";
 import "hardhat/console.sol";
 
 library LiquidityLogic {
@@ -30,155 +31,6 @@ library LiquidityLogic {
     using PerpMath for uint128;
     using PerpMath for int256;
     using SettlementTokenMath for int256;
-
-    /// @notice Emitted when taker's position is being changed
-    /// @param trader Trader address
-    /// @param baseToken The address of virtual base token(ETH, BTC, etc...)
-    /// @param exchangedPositionSize The actual amount swap to uniswapV3 pool
-    /// @param exchangedPositionNotional The cost of position, include fee
-    /// @param fee The fee of open/close position
-    /// @param openNotional The cost of open/close position, < 0: long, > 0: short
-    /// @param realizedPnl The realized Pnl after open/close position
-    /// @param sqrtPriceAfterX96 The sqrt price after swap, in X96
-    event PositionChanged(
-        address indexed trader,
-        address indexed baseToken,
-        int256 exchangedPositionSize,
-        int256 exchangedPositionNotional,
-        uint256 fee,
-        int256 openNotional,
-        int256 realizedPnl,
-        uint256 sqrtPriceAfterX96
-    );
-
-    /// @notice Emitted when maker's liquidity of a order changed
-    /// @param maker The one who provide liquidity
-    /// @param baseToken The address of virtual base token(ETH, BTC, etc...)
-    /// @param quoteToken The address of virtual USD token
-    /// @param lowerTick The lower tick of the position in which to add liquidity
-    /// @param upperTick The upper tick of the position in which to add liquidity
-    /// @param base The amount of base token added (> 0) / removed (< 0) as liquidity; fees not included
-    /// @param quote The amount of quote token added ... (same as the above)
-    /// @param liquidity The amount of liquidity unit added (> 0) / removed (< 0)
-    /// @param quoteFee The amount of quote token the maker received as fees
-    event LiquidityChanged(
-        address indexed maker,
-        address indexed baseToken,
-        address indexed quoteToken,
-        int24 lowerTick,
-        int24 upperTick,
-        int256 base,
-        int256 quote,
-        int128 liquidity,
-        uint256 quoteFee
-    );
-
-    event FundingPaymentSettled(address indexed trader, address indexed baseToken, int256 fundingPayment);
-
-    function _checkMarketOpen(address baseToken) internal view {
-        // CH_MNO: Market not opened
-        require(IBaseToken(baseToken).isOpen(), "CH_MNO");
-    }
-
-    function _registerBaseToken(address chAddress, address trader, address baseToken) internal {
-        IAccountBalance(IClearingHouse(chAddress).getAccountBalance()).registerBaseToken(trader, baseToken);
-    }
-
-    function _modifyOwedRealizedPnl(address chAddress, address trader, int256 amount) internal {
-        IAccountBalance(IClearingHouse(chAddress).getAccountBalance()).modifyOwedRealizedPnl(trader, amount);
-    }
-
-    function _settleFunding(
-        address chAddress,
-        address trader,
-        address baseToken
-    ) internal returns (DataTypes.Growth memory fundingGrowthGlobal) {
-        int256 fundingPayment;
-        (fundingPayment, fundingGrowthGlobal) = IExchange(IClearingHouse(chAddress).getExchange()).settleFunding(
-            trader,
-            baseToken
-        );
-
-        if (fundingPayment != 0) {
-            _modifyOwedRealizedPnl(chAddress, trader, fundingPayment.neg256());
-            emit FundingPaymentSettled(trader, baseToken, fundingPayment);
-        }
-
-        IAccountBalance(IClearingHouse(chAddress).getAccountBalance()).updateTwPremiumGrowthGlobal(
-            trader,
-            baseToken,
-            fundingGrowthGlobal.twLongPremiumX96,
-            fundingGrowthGlobal.twShortPremiumX96
-        );
-        return fundingGrowthGlobal;
-    }
-
-    function _emitPositionChanged(
-        address trader,
-        address baseToken,
-        int256 exchangedPositionSize,
-        int256 exchangedPositionNotional,
-        uint256 fee,
-        int256 openNotional,
-        int256 realizedPnl,
-        uint256 sqrtPriceAfterX96
-    ) internal {
-        emit PositionChanged(
-            trader,
-            baseToken,
-            exchangedPositionSize,
-            exchangedPositionNotional,
-            fee,
-            openNotional,
-            realizedPnl,
-            sqrtPriceAfterX96
-        );
-    }
-
-    function _getFreeCollateralByRatio(address chAddress, address trader, uint24 ratio) internal view returns (int256) {
-        return IVault(IClearingHouse(chAddress).getVault()).getFreeCollateralByRatio(trader, ratio);
-    }
-
-    function _checkSlippageAfterLiquidityChange(
-        uint256 base,
-        uint256 minBase,
-        uint256 quote,
-        uint256 minQuote
-    ) internal pure {
-        // CH_PSCF: price slippage check fails
-        require(base >= minBase && quote >= minQuote, "CH_PSCF");
-    }
-
-    function _getSqrtMarkX96(address chAddress, address baseToken) internal view returns (uint160) {
-        return IExchange(IClearingHouse(chAddress).getExchange()).getSqrtMarkTwapX96(baseToken, 0);
-    }
-
-    function _emitLiquidityChanged(
-        address maker,
-        address baseToken,
-        address quoteToken,
-        int24 lowerTick,
-        int24 upperTick,
-        int256 base,
-        int256 quote,
-        int128 liquidity,
-        uint256 quoteFee
-    ) internal {
-        emit LiquidityChanged(maker, baseToken, quoteToken, lowerTick, upperTick, base, quote, liquidity, quoteFee);
-    }
-
-    function _requireEnoughFreeCollateral(address chAddress, address trader) internal view {
-        if (trader == IClearingHouse(chAddress).getMaker()) return;
-        // CH_NEFCI: not enough free collateral by imRatio
-        require(
-            _getFreeCollateralByRatio(
-                chAddress,
-                trader,
-                IClearingHouseConfig(IClearingHouse(chAddress).getClearingHouseConfig()).getImRatio()
-            ) >= 0,
-            "CH_NEFCI"
-        );
-    }
 
     function addLiquidity(
         address chAddress,
@@ -197,7 +49,7 @@ library LiquidityLogic {
         //   lowerTick & upperTick: in UniswapV3Pool._modifyPosition()
         //   minBase, minQuote & deadline: here
 
-        _checkMarketOpen(params.baseToken);
+        GenericLogic.checkMarketOpen(params.baseToken);
 
         // This condition is to prevent the intentional bad debt attack through price manipulation.
         // CH_OMPS: Over the maximum price spread
@@ -207,10 +59,10 @@ library LiquidityLogic {
         require(!params.useTakerBalance, "CH_DUTB");
 
         // register token if it's the first time
-        _registerBaseToken(chAddress, trader, params.baseToken);
+        GenericLogic.registerBaseToken(chAddress, trader, params.baseToken);
 
         // must settle funding first
-        DataTypes.Growth memory fundingGrowthGlobal = _settleFunding(chAddress, trader, params.baseToken);
+        DataTypes.Growth memory fundingGrowthGlobal = GenericLogic.settleFunding(chAddress, trader, params.baseToken);
 
         // note that we no longer check available tokens here because CH will always auto-mint in UniswapV3MintCallback
         IOrderBook.AddLiquidityResponse memory response = IOrderBook(IClearingHouse(chAddress).getOrderBook())
@@ -226,7 +78,7 @@ library LiquidityLogic {
                 })
             );
 
-        _checkSlippageAfterLiquidityChange(response.base, params.minBase, response.quote, params.minQuote);
+        GenericLogic.checkSlippageAfterLiquidityChange(response.base, params.minBase, response.quote, params.minQuote);
 
         // if !useTakerBalance, takerBalance won't change, only need to collects fee to oweRealizedPnl
         if (params.useTakerBalance) {
@@ -286,8 +138,8 @@ library LiquidityLogic {
             (, int256 takerOpenNotional) = IAccountBalance(IClearingHouse(chAddress).getAccountBalance())
                 .modifyTakerBalance(trader, params.baseToken, removedPositionSize, removedOpenNotional);
 
-            uint256 sqrtPrice = _getSqrtMarkX96(chAddress, params.baseToken);
-            _emitPositionChanged(
+            uint256 sqrtPrice = GenericLogic.getSqrtMarkX96(chAddress, params.baseToken);
+            emit GenericLogic.PositionChanged(
                 trader,
                 params.baseToken,
                 removedPositionSize, // exchangedPositionSize
@@ -300,12 +152,15 @@ library LiquidityLogic {
         }
 
         // fees always have to be collected to owedRealizedPnl, as long as there is a change in liquidity
-        _modifyOwedRealizedPnl(chAddress, trader, response.fee.toInt256());
+        IAccountBalance(IClearingHouse(chAddress).getAccountBalance()).modifyOwedRealizedPnl(
+            trader,
+            response.fee.toInt256()
+        );
 
         // after token balances are updated, we can check if there is enough free collateral
-        _requireEnoughFreeCollateral(chAddress, trader);
+        GenericLogic.requireEnoughFreeCollateral(chAddress, trader);
 
-        _emitLiquidityChanged(
+        emit GenericLogic.LiquidityChanged(
             trader,
             params.baseToken,
             IClearingHouse(chAddress).getQuoteToken(),
@@ -324,14 +179,6 @@ library LiquidityLogic {
                 fee: response.fee,
                 liquidity: response.liquidity
             });
-    }
-
-    /// @dev Remove maker's liquidity.
-    function _removeLiquidity(
-        address chAddress,
-        IOrderBook.RemoveLiquidityParams memory params
-    ) internal returns (IOrderBook.RemoveLiquidityResponse memory) {
-        return IOrderBook(IClearingHouse(chAddress).getOrderBook()).removeLiquidity(params);
     }
 
     /// @dev Calculate how much profit/loss we should realize,
@@ -369,14 +216,15 @@ library LiquidityLogic {
             realizedPnl,
             makerFee.toInt256()
         );
-        uint160 currentPrice = _getSqrtMarkX96(chAddress, baseToken);
-        _emitPositionChanged(
+        uint160 currentPrice = GenericLogic.getSqrtMarkX96(chAddress, baseToken);
+        int256 openNotional = GenericLogic.getTakerOpenNotional(chAddress, trader, baseToken); // openNotional
+        emit GenericLogic.PositionChanged(
             trader,
             baseToken,
             exchangedPositionSize,
             exchangedPositionNotional,
             takerFee, // fee
-            _getTakerOpenNotional(chAddress, trader, baseToken), // openNotional
+            openNotional, // openNotional
             realizedPnl,
             currentPrice // sqrtPriceAfterX96: no swap, so market price didn't change
         );
@@ -401,14 +249,6 @@ library LiquidityLogic {
         );
     }
 
-    function _getTakerOpenNotional(
-        address chAddress,
-        address trader,
-        address baseToken
-    ) internal view returns (int256) {
-        return IAccountBalance(IClearingHouse(chAddress).getAccountBalance()).getTakerOpenNotional(trader, baseToken);
-    }
-
     function removeLiquidity(
         address chAddress,
         address trader,
@@ -424,20 +264,19 @@ library LiquidityLogic {
         require(!IBaseToken(params.baseToken).isPaused(), "CH_MP");
 
         // must settle funding first
-        _settleFunding(chAddress, trader, params.baseToken);
 
-        IOrderBook.RemoveLiquidityResponse memory response = _removeLiquidity(
-            chAddress,
-            IOrderBook.RemoveLiquidityParams({
-                maker: trader,
-                baseToken: params.baseToken,
-                lowerTick: params.lowerTick,
-                upperTick: params.upperTick,
-                liquidity: params.liquidity
-            })
-        );
+        IOrderBook.RemoveLiquidityResponse memory response = IOrderBook(IClearingHouse(chAddress).getOrderBook())
+            .removeLiquidity(
+                IOrderBook.RemoveLiquidityParams({
+                    maker: trader,
+                    baseToken: params.baseToken,
+                    lowerTick: params.lowerTick,
+                    upperTick: params.upperTick,
+                    liquidity: params.liquidity
+                })
+            );
 
-        _checkSlippageAfterLiquidityChange(response.base, params.minBase, response.quote, params.minQuote);
+        GenericLogic.checkSlippageAfterLiquidityChange(response.base, params.minBase, response.quote, params.minQuote);
 
         _modifyPositionAndRealizePnl(
             chAddress,
@@ -449,7 +288,7 @@ library LiquidityLogic {
             0 //takerFee
         );
 
-        _emitLiquidityChanged(
+        emit GenericLogic.LiquidityChanged(
             trader,
             params.baseToken,
             IClearingHouse(chAddress).getQuoteToken(),
@@ -479,16 +318,16 @@ library LiquidityLogic {
                 "CH_ONBM"
             );
 
-            IOrderBook.RemoveLiquidityResponse memory response = _removeLiquidity(
-                chAddress,
-                IOrderBook.RemoveLiquidityParams({
-                    maker: maker,
-                    baseToken: baseToken,
-                    lowerTick: order.lowerTick,
-                    upperTick: order.upperTick,
-                    liquidity: order.liquidity
-                })
-            );
+            IOrderBook.RemoveLiquidityResponse memory response = IOrderBook(IClearingHouse(chAddress).getOrderBook())
+                .removeLiquidity(
+                    IOrderBook.RemoveLiquidityParams({
+                        maker: maker,
+                        baseToken: baseToken,
+                        lowerTick: order.lowerTick,
+                        upperTick: order.upperTick,
+                        liquidity: order.liquidity
+                    })
+                );
 
             removeLiquidityResponse.base = removeLiquidityResponse.base.add(response.base);
             removeLiquidityResponse.quote = removeLiquidityResponse.quote.add(response.quote);
@@ -496,7 +335,7 @@ library LiquidityLogic {
             removeLiquidityResponse.takerBase = removeLiquidityResponse.takerBase.add(response.takerBase);
             removeLiquidityResponse.takerQuote = removeLiquidityResponse.takerQuote.add(response.takerQuote);
 
-            _emitLiquidityChanged(
+            emit GenericLogic.LiquidityChanged(
                 maker,
                 baseToken,
                 IClearingHouse(chAddress).getQuoteToken(),

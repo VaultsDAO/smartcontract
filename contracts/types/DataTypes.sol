@@ -55,4 +55,23 @@ library DataTypes {
         uint256 quote;
         uint256 fee;
     }
+
+    struct OpenPositionParams {
+        address baseToken;
+        bool isBaseToQuote;
+        bool isExactInput;
+        uint256 amount;
+        uint256 oppositeAmountBound;
+        uint256 deadline;
+        uint160 sqrtPriceLimitX96;
+        bytes32 referralCode;
+    }
+
+    struct ClosePositionParams {
+        address baseToken;
+        uint160 sqrtPriceLimitX96;
+        uint256 oppositeAmountBound;
+        uint256 deadline;
+        bytes32 referralCode;
+    }
 }

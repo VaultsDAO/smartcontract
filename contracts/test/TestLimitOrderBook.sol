@@ -3,6 +3,7 @@ pragma solidity 0.7.6;
 pragma abicoder v2;
 
 import { IClearingHouse } from "../interface/IClearingHouse.sol";
+import { DataTypes } from "../types/DataTypes.sol";
 
 contract TestLimitOrderBook {
     address internal _clearingHouse;
@@ -16,7 +17,7 @@ contract TestLimitOrderBook {
         // for the actual `fillLimitOrder()` logic, see `perp-curie-limit-order-contract` repo
         IClearingHouse(_clearingHouse).openPositionFor(
             trader,
-            IClearingHouse.OpenPositionParams({
+            DataTypes.OpenPositionParams({
                 baseToken: params.baseToken,
                 isBaseToQuote: params.isBaseToQuote,
                 isExactInput: params.isExactInput,
