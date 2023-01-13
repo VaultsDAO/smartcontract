@@ -191,8 +191,8 @@ interface IClearingHouse {
     /// @param params RemoveLiquidityParams struct
     /// @return response RemoveLiquidityResponse struct
     function removeLiquidity(
-        RemoveLiquidityParams calldata params
-    ) external returns (RemoveLiquidityResponse memory response);
+        DataTypes.RemoveLiquidityParams calldata params
+    ) external returns (DataTypes.RemoveLiquidityResponse memory response);
 
     /// @notice Settle all markets fundingPayment to owedRealized Pnl
     /// @param trader The address of trader

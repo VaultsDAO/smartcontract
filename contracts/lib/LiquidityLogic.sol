@@ -19,7 +19,7 @@ import { DataTypes } from "../types/DataTypes.sol";
 import { OpenOrder } from "../lib/OpenOrder.sol";
 import "hardhat/console.sol";
 
-library GenericLogic {
+library LiquidityLogic {
     using SafeMathUpgradeable for uint256;
     using SignedSafeMathUpgradeable for int256;
     using PerpSafeCast for uint256;
@@ -326,53 +326,197 @@ library GenericLogic {
             });
     }
 
-    /// @param positionSizeToBeLiquidated its direction should be the same as taker's existing position
-    // function getLiquidatedPositionSizeAndNotional(
-    //     address clearingHouseAddress,
-    //     address trader,
-    //     address baseToken,
-    //     int256 accountValue,
-    //     int256 positionSizeToBeLiquidated
-    // ) public view returns (int256, int256) {
-    //     int256 maxLiquidatablePositionSize = IAccountBalance(IClearingHouse(clearingHouseAddress).getAccountBalance())
-    //         .getLiquidatablePositionSize(trader, baseToken, accountValue);
+    /// @dev Remove maker's liquidity.
+    function _removeLiquidity(
+        address chAddress,
+        IOrderBook.RemoveLiquidityParams memory params
+    ) internal returns (IOrderBook.RemoveLiquidityResponse memory) {
+        return IOrderBook(IClearingHouse(chAddress).getOrderBook()).removeLiquidity(params);
+    }
 
-    //     if (positionSizeToBeLiquidated.abs() > maxLiquidatablePositionSize.abs() || positionSizeToBeLiquidated == 0) {
-    //         positionSizeToBeLiquidated = maxLiquidatablePositionSize;
-    //     }
+    /// @dev Calculate how much profit/loss we should realize,
+    ///      The profit/loss is calculated by exchangedPositionSize/exchangedPositionNotional amount
+    ///      and existing taker's base/quote amount.
+    function _modifyPositionAndRealizePnl(
+        address chAddress,
+        address trader,
+        address baseToken,
+        int256 exchangedPositionSize,
+        int256 exchangedPositionNotional,
+        uint256 makerFee,
+        uint256 takerFee
+    ) internal {
+        int256 realizedPnl;
+        if (exchangedPositionSize != 0) {
+            realizedPnl = IExchange(IClearingHouse(chAddress).getExchange()).getPnlToBeRealized(
+                IExchange.RealizePnlParams({
+                    trader: trader,
+                    baseToken: baseToken,
+                    base: exchangedPositionSize,
+                    quote: exchangedPositionNotional
+                })
+            );
+        }
 
-    //     int256 liquidatedPositionSize = positionSizeToBeLiquidated.neg256();
-    //     int256 liquidatedPositionNotional = positionSizeToBeLiquidated.mulDiv(
-    //         getIndexPrice(clearingHouseAddress, baseToken).toInt256(),
-    //         1e18
-    //     );
+        // realizedPnl is realized here
+        // will deregister baseToken if there is no position
+        _settleBalanceAndDeregister(
+            chAddress,
+            trader,
+            baseToken,
+            exchangedPositionSize, // takerBase
+            exchangedPositionNotional, // takerQuote
+            realizedPnl,
+            makerFee.toInt256()
+        );
+        uint160 currentPrice = _getSqrtMarkX96(chAddress, baseToken);
+        _emitPositionChanged(
+            trader,
+            baseToken,
+            exchangedPositionSize,
+            exchangedPositionNotional,
+            takerFee, // fee
+            _getTakerOpenNotional(chAddress, trader, baseToken), // openNotional
+            realizedPnl,
+            currentPrice // sqrtPriceAfterX96: no swap, so market price didn't change
+        );
+    }
 
-    //     return (liquidatedPositionSize, liquidatedPositionNotional);
-    // }
+    function _settleBalanceAndDeregister(
+        address chAddress,
+        address trader,
+        address baseToken,
+        int256 takerBase,
+        int256 takerQuote,
+        int256 realizedPnl,
+        int256 makerFee
+    ) internal {
+        IAccountBalance(IClearingHouse(chAddress).getAccountBalance()).settleBalanceAndDeregister(
+            trader,
+            baseToken,
+            takerBase,
+            takerQuote,
+            realizedPnl,
+            makerFee
+        );
+    }
 
-    // function getIndexPrice(address clearingHouseAddress, address baseToken) public view returns (uint256) {
-    //     return
-    //         IIndexPrice(baseToken).getIndexPrice(
-    //             IClearingHouseConfig(IClearingHouse(clearingHouseAddress).getClearingHouseConfig()).getTwapInterval()
-    //         );
-    // }
+    function _getTakerOpenNotional(
+        address chAddress,
+        address trader,
+        address baseToken
+    ) internal view returns (int256) {
+        return IAccountBalance(IClearingHouse(chAddress).getAccountBalance()).getTakerOpenNotional(trader, baseToken);
+    }
 
-    // function settleBalanceAndDeregister(
-    //     address clearingHouseAddress,
-    //     address trader,
-    //     address baseToken,
-    //     int256 takerBase,
-    //     int256 takerQuote,
-    //     int256 realizedPnl,
-    //     int256 makerFee
-    // ) public {
-    //     IAccountBalance(IClearingHouse(clearingHouseAddress).getAccountBalance()).settleBalanceAndDeregister(
-    //         trader,
-    //         baseToken,
-    //         takerBase,
-    //         takerQuote,
-    //         realizedPnl,
-    //         makerFee
-    //     );
-    // }
+    function removeLiquidity(
+        address chAddress,
+        address trader,
+        DataTypes.RemoveLiquidityParams calldata params
+    ) public returns (DataTypes.RemoveLiquidityResponse memory) {
+        // input requirement checks:
+        //   baseToken: in Exchange.settleFunding()
+        //   lowerTick & upperTick: in UniswapV3Pool._modifyPosition()
+        //   liquidity: in LiquidityMath.addDelta()
+        //   minBase, minQuote & deadline: here
+
+        // CH_MP: Market paused
+        require(!IBaseToken(params.baseToken).isPaused(), "CH_MP");
+
+        // must settle funding first
+        _settleFunding(chAddress, trader, params.baseToken);
+
+        IOrderBook.RemoveLiquidityResponse memory response = _removeLiquidity(
+            chAddress,
+            IOrderBook.RemoveLiquidityParams({
+                maker: trader,
+                baseToken: params.baseToken,
+                lowerTick: params.lowerTick,
+                upperTick: params.upperTick,
+                liquidity: params.liquidity
+            })
+        );
+
+        _checkSlippageAfterLiquidityChange(response.base, params.minBase, response.quote, params.minQuote);
+
+        _modifyPositionAndRealizePnl(
+            chAddress,
+            trader,
+            params.baseToken,
+            response.takerBase, // exchangedPositionSize
+            response.takerQuote, // exchangedPositionNotional
+            response.fee, // makerFee
+            0 //takerFee
+        );
+
+        _emitLiquidityChanged(
+            trader,
+            params.baseToken,
+            IClearingHouse(chAddress).getQuoteToken(),
+            params.lowerTick,
+            params.upperTick,
+            response.base.neg256(),
+            response.quote.neg256(),
+            params.liquidity.neg128(),
+            response.fee
+        );
+
+        return DataTypes.RemoveLiquidityResponse({ quote: response.quote, base: response.base, fee: response.fee });
+    }
+
+    function removeAllLiquidity(address chAddress, address maker, address baseToken, bytes32[] memory orderIds) public {
+        IOrderBook.RemoveLiquidityResponse memory removeLiquidityResponse;
+
+        uint256 length = orderIds.length;
+        for (uint256 i = 0; i < length; i++) {
+            OpenOrder.Info memory order = IOrderBook(IClearingHouse(chAddress).getOrderBook()).getOpenOrderById(
+                orderIds[i]
+            );
+
+            // CH_ONBM: order is not belongs to this maker
+            require(
+                OpenOrder.calcOrderKey(maker, baseToken, order.lowerTick, order.upperTick) == orderIds[i],
+                "CH_ONBM"
+            );
+
+            IOrderBook.RemoveLiquidityResponse memory response = _removeLiquidity(
+                chAddress,
+                IOrderBook.RemoveLiquidityParams({
+                    maker: maker,
+                    baseToken: baseToken,
+                    lowerTick: order.lowerTick,
+                    upperTick: order.upperTick,
+                    liquidity: order.liquidity
+                })
+            );
+
+            removeLiquidityResponse.base = removeLiquidityResponse.base.add(response.base);
+            removeLiquidityResponse.quote = removeLiquidityResponse.quote.add(response.quote);
+            removeLiquidityResponse.fee = removeLiquidityResponse.fee.add(response.fee);
+            removeLiquidityResponse.takerBase = removeLiquidityResponse.takerBase.add(response.takerBase);
+            removeLiquidityResponse.takerQuote = removeLiquidityResponse.takerQuote.add(response.takerQuote);
+
+            _emitLiquidityChanged(
+                maker,
+                baseToken,
+                IClearingHouse(chAddress).getQuoteToken(),
+                order.lowerTick,
+                order.upperTick,
+                response.base.neg256(),
+                response.quote.neg256(),
+                order.liquidity.neg128(),
+                response.fee
+            );
+        }
+
+        _modifyPositionAndRealizePnl(
+            chAddress,
+            maker,
+            baseToken,
+            removeLiquidityResponse.takerBase,
+            removeLiquidityResponse.takerQuote,
+            removeLiquidityResponse.fee,
+            0
+        );
+    }
 }

@@ -87,8 +87,8 @@ export function createClearingHouseFixture(
         const WBTC = (await tokenFactory.deploy()) as TestERC20
         await WBTC.__TestERC20_init("TestWBTC", "WBTC", 8)
 
-        let GenericLogic = await ethers.getContractFactory("GenericLogic");
-        let genericLogic = await GenericLogic.deploy();
+        let LiquidityLogic = await ethers.getContractFactory("LiquidityLogic");
+        let liquidityLogic = await LiquidityLogic.deploy();
 
         const wethDecimals = await WETH.decimals()
 
@@ -219,7 +219,7 @@ export function createClearingHouseFixture(
         if (canMockTime) {
             const clearingHouseFactory = await ethers.getContractFactory("TestClearingHouse", {
                 libraries: {
-                    GenericLogic: genericLogic.address,
+                    LiquidityLogic: liquidityLogic.address,
                 },
             })
             const testClearingHouse = (await clearingHouseFactory.deploy()) as TestClearingHouse
@@ -239,7 +239,7 @@ export function createClearingHouseFixture(
         } else {
             const clearingHouseFactory = await ethers.getContractFactory("ClearingHouse", {
                 libraries: {
-                    GenericLogic: genericLogic.address,
+                    LiquidityLogic: liquidityLogic.address,
                 },
             })
             clearingHouse = (await clearingHouseFactory.deploy()) as ClearingHouse
@@ -354,8 +354,8 @@ export async function mockedBaseTokenTo(longerThan: boolean, targetAddr: string)
 }
 
 export async function mockedClearingHouseFixture(): Promise<MockedClearingHouseFixture> {
-    let GenericLogic = await ethers.getContractFactory("GenericLogic");
-    let genericLogic = await GenericLogic.deploy();
+    let LiquidityLogic = await ethers.getContractFactory("LiquidityLogic");
+    let liquidityLogic = await LiquidityLogic.deploy();
 
     const token1 = await createQuoteTokenFixture("RandomVirtualToken", "RVT")()
 
@@ -385,7 +385,7 @@ export async function mockedClearingHouseFixture(): Promise<MockedClearingHouseF
 
     const clearingHouseConfigFactory = await ethers.getContractFactory("ClearingHouseConfig", {
         libraries: {
-            GenericLogic: genericLogic.address,
+            LiquidityLogic: liquidityLogic.address,
         },
     })
     const clearingHouseConfig = (await clearingHouseConfigFactory.deploy()) as ClearingHouseConfig
@@ -418,7 +418,7 @@ export async function mockedClearingHouseFixture(): Promise<MockedClearingHouseF
     // deploy clearingHouse
     const clearingHouseFactory = await ethers.getContractFactory("ClearingHouse", {
         libraries: {
-            GenericLogic: genericLogic.address,
+            LiquidityLogic: liquidityLogic.address,
         },
     })
     const clearingHouse = (await clearingHouseFactory.deploy()) as ClearingHouse
