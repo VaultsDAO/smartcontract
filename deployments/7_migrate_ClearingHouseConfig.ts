@@ -27,7 +27,7 @@ async function main() {
         {
             deployData.clearingHouseConfig.implAddress = clearingHouseConfig.address;
             await fs.writeFileSync(fileName, JSON.stringify(deployData, null, 4))
-            console.log('ClearingHouseConfig is deployed', clearingHouseConfig.address)
+            console.log('clearingHouseConfig is deployed', clearingHouseConfig.address)
         }
     }
     if (deployData.clearingHouseConfig.address == undefined || deployData.clearingHouseConfig.address == '') {
@@ -43,7 +43,7 @@ async function main() {
         {
             deployData.clearingHouseConfig.address = transparentUpgradeableProxy.address;
             await fs.writeFileSync(fileName, JSON.stringify(deployData, null, 4))
-            console.log('ClearingHouseConfig TransparentUpgradeableProxy is deployed', transparentUpgradeableProxy.address)
+            console.log('clearingHouseConfig TransparentUpgradeableProxy is deployed', transparentUpgradeableProxy.address)
         }
     }
     {

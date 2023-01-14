@@ -5,7 +5,8 @@ import hre, { ethers, waffle } from "hardhat";
 import { UniswapV3Pool } from "../typechain/UniswapV3Pool";
 import { formatEther, parseEther, parseUnits } from "ethers/lib/utils";
 import { encodePriceSqrt } from "../test/shared/utilities";
-import { AccountBalance, MarketRegistry, OrderBook, TestERC20 } from "../typechain";
+import { AccountBalance, BaseToken, ClearingHouse, MarketRegistry, OrderBook, TestERC20 } from "../typechain";
+import { getMaxTickRange } from "../test/helper/number";
 
 
 async function main() {
@@ -35,27 +36,14 @@ async function main() {
         var insuranceFund = await hre.ethers.getContractAt('InsuranceFund', deployData.insuranceFund.address);
         var vault = await hre.ethers.getContractAt('Vault', deployData.vault.address);
         var collateralManager = await hre.ethers.getContractAt('CollateralManager', deployData.collateralManager.address);
-        var clearingHouse = await hre.ethers.getContractAt('ClearingHouse', deployData.clearingHouse.address);
+        var clearingHouse = (await hre.ethers.getContractAt('ClearingHouse', deployData.clearingHouse.address)) as ClearingHouse;
 
         var wETH = (await hre.ethers.getContractAt('TestERC20', deployData.wETH.address)) as TestERC20;
-        var vUSD = await QuoteToken.attach(deployData.vUSD.address)
-        var vBAYC = await BaseToken.attach(deployData.vBAYC.address)
-        var vMAYC = await BaseToken.attach(deployData.vMAYC.address)
-        var uniFeeTier = 3000 // 0.3%
-        // vBAYC
-        {
-            const poolAddr = await uniswapV3Factory.getPool(vBAYC.address, vUSD.address, uniFeeTier)
-            const uniPool = await hre.ethers.getContractAt('UniswapV3Pool', poolAddr);
-            await uniPool.initialize(encodePriceSqrt('100', "1"))
-            console.log('uniPool.initialize is deployed', uniPool.address)
-        }
-        // vMAYC
-        {
-            const poolAddr = await uniswapV3Factory.getPool(vMAYC.address, vUSD.address, uniFeeTier)
-            const uniPool = await hre.ethers.getContractAt('UniswapV3Pool', poolAddr);
-            await uniPool.initialize(encodePriceSqrt('100', "1"))
-            console.log('uniPool.initialize is deployed', uniPool.address)
-        }
+
+        const vUSD = (await ethers.getContractAt('QuoteToken', deployData.vUSD.address)) as BaseToken;
+        const vBAYC = await hre.ethers.getContractAt('BaseToken', deployData.vBAYC.address);
+        const vMAYC = await hre.ethers.getContractAt('BaseToken', deployData.vBAYC.address);
+
         {
             var priceFeed = await hre.ethers.getContractAt('NftPriceFeed', deployData.nftPriceFeedBAYC.address);
             await priceFeed.setPrice(parseEther('100'))
@@ -67,15 +55,15 @@ async function main() {
             console.log('uniPool.setPrice is deployed', priceFeed.address)
         }
 
-        const lowerTick: number = 45800
-        const upperTick: number = 46400
+        const lowerTick: number = 45780
+        const upperTick: number = 46440
 
         if (!deployData.testCheck.addLiquidity) {
             await (
                 await clearingHouse.addLiquidity({
                     baseToken: vBAYC.address,
                     base: parseEther("100"),
-                    quote: parseEther("1000"),
+                    quote: parseEther("10000"),
                     lowerTick,
                     upperTick,
                     minBase: 0,

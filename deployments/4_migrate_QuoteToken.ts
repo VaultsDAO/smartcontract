@@ -4,6 +4,7 @@ import hre from "hardhat";
 import helpers from "./helpers";
 
 import { ProxyAdmin } from "../typechain/openzeppelin/ProxyAdmin";
+import { isAscendingTokenOrder } from "../test/shared/utilities";
 
 const { waitForDeploy, verifyContract, upgradeContract } = helpers;
 
@@ -27,24 +28,28 @@ async function main() {
         {
             deployData.vUSD.implAddress = quoteToken.address;
             await fs.writeFileSync(fileName, JSON.stringify(deployData, null, 4))
-            console.log('QuoteToken is deployed', quoteToken.address)
+            console.log('quoteToken is deployed', quoteToken.address)
         }
     }
     // 
     if (deployData.vUSD.address == undefined || deployData.vUSD.address == '') {
         var quoteToken = await hre.ethers.getContractAt('QuoteToken', deployData.vUSD.implAddress);
         var initializeData = quoteToken.interface.encodeFunctionData('initialize', [deployData.vUSD.name, deployData.vUSD.symbol]);
-        var transparentUpgradeableProxy = await waitForDeploy(
-            await TransparentUpgradeableProxy.deploy(
-                deployData.vUSD.implAddress,
-                proxyAdmin.address,
-                initializeData,
+        for (let i = 0; i < 20; i++) {
+            var transparentUpgradeableProxy = await waitForDeploy(
+                await TransparentUpgradeableProxy.deploy(
+                    deployData.vUSD.implAddress,
+                    proxyAdmin.address,
+                    initializeData,
+                )
             )
-        );
-        {
-            deployData.vUSD.address = transparentUpgradeableProxy.address;
-            await fs.writeFileSync(fileName, JSON.stringify(deployData, null, 4))
-            console.log('QuoteToken TransparentUpgradeableProxy is deployed', transparentUpgradeableProxy.address)
+            if (deployData.vUSD.address == undefined ||
+                deployData.vUSD.address == '' ||
+                isAscendingTokenOrder(deployData.vUSD.address, transparentUpgradeableProxy.address.toString())) {
+                deployData.vUSD.address = transparentUpgradeableProxy.address;
+                await fs.writeFileSync(fileName, JSON.stringify(deployData, null, 4))
+                console.log('vUSD TransparentUpgradeableProxy is deployed', transparentUpgradeableProxy.address)
+            }
         }
     }
     {

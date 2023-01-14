@@ -4,6 +4,9 @@ import hre from "hardhat";
 import helpers from "./helpers";
 
 import { ProxyAdmin } from "../typechain/openzeppelin/ProxyAdmin";
+import { BaseContract } from "ethers";
+import { isAscendingTokenOrder } from "../test/shared/utilities";
+import { BaseToken } from "../typechain";
 
 const { waitForDeploy, verifyContract, upgradeContract } = helpers;
 
@@ -21,44 +24,51 @@ async function main() {
     const BaseToken = await hre.ethers.getContractFactory("BaseToken");
     // 
     var proxyAdmin = await hre.ethers.getContractAt('ProxyAdmin', deployData.proxyAdminAddress);
+    const vUSD = (await hre.ethers.getContractAt('QuoteToken', deployData.vUSD.address)) as BaseToken;
     // 
     if (deployData.baseToken.implAddress == undefined || deployData.baseToken.implAddress == '') {
         let baseToken = await waitForDeploy(await BaseToken.deploy());
         {
             deployData.baseToken.implAddress = baseToken.address;
             await fs.writeFileSync(fileName, JSON.stringify(deployData, null, 4))
-            console.log('BaseToken is deployed', baseToken.address)
+            console.log('baseToken is deployed', baseToken.address)
         }
     }
     var baseToken = await hre.ethers.getContractAt('BaseToken', deployData.baseToken.implAddress);
     if (deployData.vBAYC.address == undefined || deployData.vBAYC.address == '') {
         var initializeData = baseToken.interface.encodeFunctionData('initialize', [deployData.vBAYC.name, deployData.vBAYC.symbol, deployData.nftPriceFeedBAYC.address]);
-        var transparentUpgradeableProxy = await waitForDeploy(
-            await TransparentUpgradeableProxy.deploy(
-                baseToken.address,
-                proxyAdmin.address,
-                initializeData,
-            )
-        );
+        var transparentUpgradeableProxy: BaseContract
+        do {
+            transparentUpgradeableProxy = await waitForDeploy(
+                await TransparentUpgradeableProxy.deploy(
+                    baseToken.address,
+                    proxyAdmin.address,
+                    initializeData,
+                )
+            ) as BaseContract;
+        } while (!isAscendingTokenOrder(transparentUpgradeableProxy.address.toString(), vUSD.address))
         {
             deployData.vBAYC.address = transparentUpgradeableProxy.address;
             await fs.writeFileSync(fileName, JSON.stringify(deployData, null, 4))
-            console.log('BaseToken TransparentUpgradeableProxy is deployed', transparentUpgradeableProxy.address)
+            console.log('vBAYC TransparentUpgradeableProxy is deployed', transparentUpgradeableProxy.address)
         }
     }
     if (deployData.vMAYC.address == undefined || deployData.vMAYC.address == '') {
         var initializeData = baseToken.interface.encodeFunctionData('initialize', [deployData.vMAYC.name, deployData.vMAYC.symbol, deployData.nftPriceFeedMAYC.address]);
-        var transparentUpgradeableProxy = await waitForDeploy(
-            await TransparentUpgradeableProxy.deploy(
-                baseToken.address,
-                proxyAdmin.address,
-                initializeData,
-            )
-        );
+        var transparentUpgradeableProxy: BaseContract
+        do {
+            transparentUpgradeableProxy = await waitForDeploy(
+                await TransparentUpgradeableProxy.deploy(
+                    baseToken.address,
+                    proxyAdmin.address,
+                    initializeData,
+                )
+            ) as BaseContract;
+        } while (!isAscendingTokenOrder(transparentUpgradeableProxy.address.toString(), vUSD.address))
         {
             deployData.vMAYC.address = transparentUpgradeableProxy.address;
             await fs.writeFileSync(fileName, JSON.stringify(deployData, null, 4))
-            console.log('BaseToken TransparentUpgradeableProxy is deployed', transparentUpgradeableProxy.address)
+            console.log('vMAYC TransparentUpgradeableProxy is deployed', transparentUpgradeableProxy.address)
         }
     }
     {

@@ -27,7 +27,7 @@ async function main() {
         {
             deployData.insuranceFund.implAddress = insuranceFund.address;
             await fs.writeFileSync(fileName, JSON.stringify(deployData, null, 4))
-            console.log('InsuranceFund is deployed', insuranceFund.address)
+            console.log('insuranceFund is deployed', insuranceFund.address)
         }
     }
     if (deployData.insuranceFund.address == undefined || deployData.insuranceFund.address == '') {
@@ -43,7 +43,7 @@ async function main() {
         {
             deployData.insuranceFund.address = transparentUpgradeableProxy.address;
             await fs.writeFileSync(fileName, JSON.stringify(deployData, null, 4))
-            console.log('InsuranceFund TransparentUpgradeableProxy is deployed', transparentUpgradeableProxy.address)
+            console.log('insuranceFund TransparentUpgradeableProxy is deployed', transparentUpgradeableProxy.address)
         }
     }
     {

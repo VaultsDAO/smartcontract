@@ -84,7 +84,8 @@ contract Exchange is
     //
 
     uint256 internal constant _FULLY_CLOSED_RATIO = 1e18;
-    uint24 internal constant _MAX_TICK_CROSSED_WITHIN_BLOCK_CAP = 1000; // 10%
+    // uint24 internal constant _MAX_TICK_CROSSED_WITHIN_BLOCK_CAP = 1000; // 10%
+    uint24 internal constant _MAX_TICK_CROSSED_WITHIN_BLOCK_CAP = 1774544; // 10%
     uint24 internal constant _MAX_PRICE_SPREAD_RATIO = 0.1e6; // 10% in decimal 6
 
     //

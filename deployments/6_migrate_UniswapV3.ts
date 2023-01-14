@@ -23,7 +23,7 @@ async function main() {
             {
                 deployData.uniswapV3Factory.address = uniV3Factory.address;
                 await fs.writeFileSync(fileName, JSON.stringify(deployData, null, 4))
-                console.log('UniswapV3Factory is deployed', uniV3Factory.address)
+                console.log('uniV3Factory is deployed', uniV3Factory.address)
             }
         }
     }

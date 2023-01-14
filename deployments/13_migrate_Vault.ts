@@ -27,7 +27,7 @@ async function main() {
         {
             deployData.vault.implAddress = vault.address;
             await fs.writeFileSync(fileName, JSON.stringify(deployData, null, 4))
-            console.log('Vault is deployed', vault.address)
+            console.log('vault is deployed', vault.address)
         }
     }
     if (deployData.vault.address == undefined || deployData.vault.address == '') {
@@ -49,7 +49,7 @@ async function main() {
         {
             deployData.vault.address = transparentUpgradeableProxy.address;
             await fs.writeFileSync(fileName, JSON.stringify(deployData, null, 4))
-            console.log('Vault TransparentUpgradeableProxy is deployed', transparentUpgradeableProxy.address)
+            console.log('vault TransparentUpgradeableProxy is deployed', transparentUpgradeableProxy.address)
         }
     }
     {

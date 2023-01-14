@@ -27,7 +27,7 @@ async function main() {
         {
             deployData.accountBalance.implAddress = accountBalance.address;
             await fs.writeFileSync(fileName, JSON.stringify(deployData, null, 4))
-            console.log('AccountBalance is deployed', accountBalance.address)
+            console.log('accountBalance is deployed', accountBalance.address)
         }
     }
     if (deployData.accountBalance.address == undefined || deployData.accountBalance.address == '') {
@@ -43,7 +43,7 @@ async function main() {
         {
             deployData.accountBalance.address = transparentUpgradeableProxy.address;
             await fs.writeFileSync(fileName, JSON.stringify(deployData, null, 4))
-            console.log('AccountBalance TransparentUpgradeableProxy is deployed', transparentUpgradeableProxy.address)
+            console.log('accountBalance TransparentUpgradeableProxy is deployed', transparentUpgradeableProxy.address)
         }
     }
     {

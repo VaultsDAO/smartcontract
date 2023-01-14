@@ -27,7 +27,7 @@ async function main() {
         {
             deployData.marketRegistry.implAddress = marketRegistry.address;
             await fs.writeFileSync(fileName, JSON.stringify(deployData, null, 4))
-            console.log('MarketRegistry is deployed', marketRegistry.address)
+            console.log('marketRegistry is deployed', marketRegistry.address)
         }
     }
     if (deployData.marketRegistry.address == undefined || deployData.marketRegistry.address == '') {
@@ -43,7 +43,7 @@ async function main() {
         {
             deployData.marketRegistry.address = transparentUpgradeableProxy.address;
             await fs.writeFileSync(fileName, JSON.stringify(deployData, null, 4))
-            console.log('MarketRegistry TransparentUpgradeableProxy is deployed', transparentUpgradeableProxy.address)
+            console.log('marketRegistry TransparentUpgradeableProxy is deployed', transparentUpgradeableProxy.address)
         }
     }
     {

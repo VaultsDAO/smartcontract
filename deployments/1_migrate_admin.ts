@@ -22,7 +22,7 @@ async function main() {
             deployData.proxyAdminAddress = proxyAdmin.address;
             await fs.writeFileSync(fileName, JSON.stringify(deployData, null, 4))
         }
-        console.log('ProxyAdmin is deployed', proxyAdmin.address)
+        console.log('proxyAdmin is deployed', proxyAdmin.address)
     }
     {
         await verifyContract(

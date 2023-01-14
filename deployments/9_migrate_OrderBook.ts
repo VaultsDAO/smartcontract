@@ -27,7 +27,7 @@ async function main() {
         {
             deployData.orderBook.implAddress = orderBook.address;
             await fs.writeFileSync(fileName, JSON.stringify(deployData, null, 4))
-            console.log('OrderBook is deployed', orderBook.address)
+            console.log('orderBook is deployed', orderBook.address)
         }
     }
     if (deployData.orderBook.address == undefined || deployData.orderBook.address == '') {
@@ -43,7 +43,7 @@ async function main() {
         {
             deployData.orderBook.address = transparentUpgradeableProxy.address;
             await fs.writeFileSync(fileName, JSON.stringify(deployData, null, 4))
-            console.log('OrderBook TransparentUpgradeableProxy is deployed', transparentUpgradeableProxy.address)
+            console.log('orderBook TransparentUpgradeableProxy is deployed', transparentUpgradeableProxy.address)
         }
     }
     {

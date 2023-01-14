@@ -84,7 +84,7 @@ async function main() {
         {
             deployData.nftPriceFeedBAYC.address = priceFeed.address
             await fs.writeFileSync(fileName, JSON.stringify(deployData, null, 4))
-            console.log('NftPriceFeed is deployed', priceFeed.address)
+            console.log('nftPriceFeed is deployed', priceFeed.address)
         }
     }
     if (deployData.nftPriceFeedMAYC.address == undefined || deployData.nftPriceFeedMAYC.address == '') {
@@ -93,7 +93,7 @@ async function main() {
         {
             deployData.nftPriceFeedMAYC.address = priceFeed.address
             await fs.writeFileSync(fileName, JSON.stringify(deployData, null, 4))
-            console.log('NftPriceFeed is deployed', priceFeed.address)
+            console.log('nftPriceFeed is deployed', priceFeed.address)
         }
     }
     {

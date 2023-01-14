@@ -27,7 +27,7 @@ async function main() {
         {
             deployData.exchange.implAddress = exchange.address;
             await fs.writeFileSync(fileName, JSON.stringify(deployData, null, 4))
-            console.log('Exchange is deployed', exchange.address)
+            console.log('exchange is deployed', exchange.address)
         }
     }
     if (deployData.exchange.address == undefined || deployData.exchange.address == '') {
@@ -43,7 +43,7 @@ async function main() {
         {
             deployData.exchange.address = transparentUpgradeableProxy.address;
             await fs.writeFileSync(fileName, JSON.stringify(deployData, null, 4))
-            console.log('Exchange TransparentUpgradeableProxy is deployed', transparentUpgradeableProxy.address)
+            console.log('exchange TransparentUpgradeableProxy is deployed', transparentUpgradeableProxy.address)
         }
     }
     {

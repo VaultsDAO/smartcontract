@@ -7,11 +7,7 @@ import "@openzeppelin/contracts-upgradeable/presets/ERC20PresetMinterPauserUpgra
 contract TestERC20 is ERC20PresetMinterPauserUpgradeable {
     uint256 _transferFeeRatio;
 
-    function __TestERC20_init(
-        string memory name,
-        string memory symbol,
-        uint8 decimal
-    ) public initializer {
+    function __TestERC20_init(string memory name, string memory symbol, uint8 decimal) public initializer {
         __ERC20PresetMinterPauser_init(name, symbol);
         _setupDecimals(decimal);
         _transferFeeRatio = 0;

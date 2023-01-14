@@ -32,7 +32,7 @@ async function main() {
             {
                 deployData.wETH.address = wETH.address;
                 await fs.writeFileSync(fileName, JSON.stringify(deployData, null, 4))
-                console.log('TestERC20 is deployed', wETH.address)
+                console.log('wETH is deployed', wETH.address)
             }
             await wETH.__TestERC20_init(deployData.wETH.name, deployData.wETH.symbol, deployData.wETH.decimals)
         }

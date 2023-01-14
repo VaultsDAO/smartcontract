@@ -441,7 +441,7 @@ describe("Deployment check", () => {
             var collateralManager = await ethers.getContractAt('CollateralManager', deployData.collateralManager.address);
             var clearingHouse = await ethers.getContractAt('ClearingHouse', deployData.clearingHouse.address);
 
-            var uniFeeTier = 10000 // 1%
+            var uniFeeTier = 3000 // 1%
 
             await exchange.setAccountBalance(accountBalance.address)
             await orderBook.setExchange(exchange.address)
@@ -533,21 +533,24 @@ describe("Deployment check", () => {
                 console.log('uniPool.setPrice is deployed', priceFeed.address)
             }
 
-            const lowerTick: number = 45800
-            const upperTick: number = 46400
+            const lowerTick: number = 45780
+            const upperTick: number = 46440
 
             {
-                await clearingHouse.addLiquidity({
-                    baseToken: vBAYC.address,
-                    base: parseEther("100"),
-                    quote: parseEther("10000"),
-                    lowerTick,
-                    upperTick,
-                    minBase: 0,
-                    minQuote: 0,
-                    useTakerBalance: false,
-                    deadline: ethers.constants.MaxUint256,
-                })
+                let r = await (
+                    await clearingHouse.addLiquidity({
+                        baseToken: vBAYC.address,
+                        base: parseEther("100"),
+                        quote: parseEther("10000"),
+                        lowerTick,
+                        upperTick,
+                        minBase: 0,
+                        minQuote: 0,
+                        useTakerBalance: false,
+                        deadline: ethers.constants.MaxUint256,
+                    })
+                ).wait()
+                console.log(r)
             }
             // if (!deployData.testCheck.deposit) {
             //     await wETH.mint(admin.address, parseUnits("10", await wETH.decimals()))

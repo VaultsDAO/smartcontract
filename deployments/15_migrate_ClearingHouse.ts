@@ -21,6 +21,11 @@ async function main() {
     const GenericLogic = await hre.ethers.getContractFactory("GenericLogic");
     // 
     var proxyAdmin = await hre.ethers.getContractAt('ProxyAdmin', deployData.proxyAdminAddress);
+    if (network == 'local') {
+        const [admin] = await hre.ethers.getSigners()
+        deployData.platformFundAddress = admin.address
+        deployData.makerFundAddress = admin.address
+    }
     //
     if (deployData.genericLogic.address == undefined || deployData.genericLogic.address == '') {
         const genericLogic = await waitForDeploy(await GenericLogic.deploy())
@@ -70,7 +75,7 @@ async function main() {
         {
             deployData.clearingHouse.implAddress = clearingHouse.address;
             await fs.writeFileSync(fileName, JSON.stringify(deployData, null, 4))
-            console.log('ClearingHouse is deployed', clearingHouse.address)
+            console.log('clearingHouse is deployed', clearingHouse.address)
         }
     }
     if (deployData.clearingHouse.address == undefined || deployData.clearingHouse.address == '') {
@@ -97,7 +102,7 @@ async function main() {
         {
             deployData.clearingHouse.address = transparentUpgradeableProxy.address;
             await fs.writeFileSync(fileName, JSON.stringify(deployData, null, 4))
-            console.log('ClearingHouse TransparentUpgradeableProxy is deployed', transparentUpgradeableProxy.address)
+            console.log('clearingHouse TransparentUpgradeableProxy is deployed', transparentUpgradeableProxy.address)
         }
     }
     {

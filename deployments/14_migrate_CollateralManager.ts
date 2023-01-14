@@ -28,7 +28,7 @@ async function main() {
         {
             deployData.collateralManager.implAddress = collateralManager.address;
             await fs.writeFileSync(fileName, JSON.stringify(deployData, null, 4))
-            console.log('CollateralManager is deployed', collateralManager.address)
+            console.log('collateralManager is deployed', collateralManager.address)
         }
     }
     if (deployData.collateralManager.address == undefined || deployData.collateralManager.address == '') {
@@ -54,7 +54,7 @@ async function main() {
         {
             deployData.collateralManager.address = transparentUpgradeableProxy.address;
             await fs.writeFileSync(fileName, JSON.stringify(deployData, null, 4))
-            console.log('CollateralManager TransparentUpgradeableProxy is deployed', transparentUpgradeableProxy.address)
+            console.log('collateralManager TransparentUpgradeableProxy is deployed', transparentUpgradeableProxy.address)
         }
     }
     {
