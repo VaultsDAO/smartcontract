@@ -9,17 +9,27 @@ const res = {
         const ethersSigners = await Promise.all(await ethers.getSigners());
         return ethersSigners[0];
     },
-    waitForDeploy: async (contract: BaseContract): Promise<BaseContract> => {
+    waitForDeploy: async (contract: BaseContract, note: string = ''): Promise<BaseContract> => {
         var tx: ContractTransaction = contract.deployTransaction
-        console.log('deploy contract', contract.address, 'at', tx.hash, 'waiting...')
+        console.log(note, 'deploy contract', contract.address, 'at', tx.hash, 'waiting...')
         await tx.wait(1)
-        console.log('deploy contract', contract.address, 'at', tx.hash, 'confirmed')
+        console.log(note, 'deploy contract', contract.address, 'at', tx.hash, 'confirmed')
         return contract
     },
-    waitForTx: async (tx: ContractTransaction) => {
-        console.log('contract call method at', tx.hash, 'waiting...')
+    waitForTx: async (tx: ContractTransaction, note: string = '') => {
+        console.log(note, 'contract call method at', tx.hash, 'waiting...')
         await tx.wait(1)
-        console.log('contract call method at', tx.hash, 'confirmed')
+        console.log(note, 'contract call method at', tx.hash, 'confirmed')
+    },
+    tryWaitForTx: async (tx: ContractTransaction, note: string = '') => {
+        console.log(note, 'contract call method at', tx.hash, 'waiting...')
+        try {
+            await tx.wait(1)
+        } catch (ex) {
+            console.log(note, 'contract call method at', tx.hash, 'error', ex)
+            return
+        }
+        console.log(note, 'contract call method at', tx.hash, 'confirmed')
     },
     sleep: (ms: number) => {
         return new Promise(resolve => setTimeout(resolve, ms));

@@ -1,12 +1,12 @@
 import fs from "fs";
 
-import hre, { ethers, waffle } from "hardhat";
+import hre, { ethers } from "hardhat";
 
-import { UniswapV3Pool } from "../typechain/UniswapV3Pool";
-import { formatEther, parseEther, parseUnits } from "ethers/lib/utils";
-import { encodePriceSqrt } from "../test/shared/utilities";
-import { AccountBalance, BaseToken, ClearingHouse, MarketRegistry, OrderBook, TestERC20 } from "../typechain";
-import { getMaxTickRange } from "../test/helper/number";
+import { parseEther } from "ethers/lib/utils";
+import { ClearingHouse, OrderBook, TestERC20, Vault } from "../typechain";
+
+import helpers from "./helpers";
+const { waitForTx } = helpers;
 
 
 async function main() {
@@ -21,46 +21,37 @@ async function main() {
     // 
 
     if (network == 'local') {
-        const [admin] = await ethers.getSigners()
+        const [admin, maker, trader, liquidator, priceAdmin, platformFund] = await ethers.getSigners()
 
-        const QuoteToken = await hre.ethers.getContractFactory("QuoteToken");
-        const BaseToken = await hre.ethers.getContractFactory("BaseToken");
 
         // deploy UniV3 factory
-        var uniswapV3Factory = await hre.ethers.getContractAt('UniswapV3Factory', deployData.uniswapV3Factory.address);
-        var clearingHouseConfig = await hre.ethers.getContractAt('ClearingHouseConfig', deployData.clearingHouseConfig.address);
-        var marketRegistry = (await hre.ethers.getContractAt('MarketRegistry', deployData.marketRegistry.address)) as MarketRegistry;
         var orderBook = (await hre.ethers.getContractAt('OrderBook', deployData.orderBook.address)) as OrderBook;
-        var accountBalance = (await hre.ethers.getContractAt('AccountBalance', deployData.accountBalance.address)) as AccountBalance;
-        var exchange = await hre.ethers.getContractAt('Exchange', deployData.exchange.address);
-        var insuranceFund = await hre.ethers.getContractAt('InsuranceFund', deployData.insuranceFund.address);
-        var vault = await hre.ethers.getContractAt('Vault', deployData.vault.address);
-        var collateralManager = await hre.ethers.getContractAt('CollateralManager', deployData.collateralManager.address);
+        var vault = (await hre.ethers.getContractAt('Vault', deployData.vault.address)) as Vault;
         var clearingHouse = (await hre.ethers.getContractAt('ClearingHouse', deployData.clearingHouse.address)) as ClearingHouse;
 
         var wETH = (await hre.ethers.getContractAt('TestERC20', deployData.wETH.address)) as TestERC20;
 
-        const vUSD = (await ethers.getContractAt('QuoteToken', deployData.vUSD.address)) as BaseToken;
         const vBAYC = await hre.ethers.getContractAt('BaseToken', deployData.vBAYC.address);
-        const vMAYC = await hre.ethers.getContractAt('BaseToken', deployData.vBAYC.address);
 
         {
             var priceFeed = await hre.ethers.getContractAt('NftPriceFeed', deployData.nftPriceFeedBAYC.address);
-            await priceFeed.setPrice(parseEther('100'))
-            console.log('uniPool.setPrice is deployed', priceFeed.address)
+            await waitForTx (
+                await priceFeed.setPrice(parseEther('100'))
+            )
         }
         {
             var priceFeed = await hre.ethers.getContractAt('NftPriceFeed', deployData.nftPriceFeedMAYC.address);
-            await priceFeed.setPrice(parseEther('100'))
-            console.log('uniPool.setPrice is deployed', priceFeed.address)
+            await waitForTx (
+                await priceFeed.setPrice(parseEther('100'))
+            )
         }
 
         const lowerTick: number = 45780
         const upperTick: number = 46440
 
         if (!deployData.testCheck.addLiquidity) {
-            await (
-                await clearingHouse.addLiquidity({
+            await waitForTx(
+                await clearingHouse.connect(maker).addLiquidity({
                     baseToken: vBAYC.address,
                     base: parseEther("100"),
                     quote: parseEther("10000"),
@@ -71,51 +62,74 @@ async function main() {
                     useTakerBalance: false,
                     deadline: ethers.constants.MaxUint256,
                 })
-            ).wait()
+            )
             deployData.testCheck.addLiquidity = true
             await fs.writeFileSync(fileName, JSON.stringify(deployData, null, 4))
-            console.log('clearingHouse.addLiquidity is deployed', clearingHouse.address)
         }
-        // if (!deployData.testCheck.deposit) {
-        //     await wETH.mint(admin.address, parseUnits("10", await wETH.decimals()))
+        if (!deployData.testCheck.deposit) {
+            await waitForTx(
+                await wETH.mint(trader.address, parseEther('1000'))
+            )
+            await waitForTx(
+                await wETH.connect(trader).approve(vault.address, ethers.constants.MaxUint256)
+            )
+            await waitForTx(
+                await vault.connect(trader).deposit(wETH.address, parseEther('1000'))
+            )
+            deployData.testCheck.deposit = true
+            await fs.writeFileSync(fileName, JSON.stringify(deployData, null, 4))
+        }
+        if (!deployData.testCheck.openPosition) {
+            await waitForTx(
+                await clearingHouse.connect(trader).openPosition({
+                    baseToken: vBAYC.address,
+                    isBaseToQuote: true,
+                    isExactInput: true,
+                    oppositeAmountBound: 0,
+                    amount: parseEther("0.5"),
+                    sqrtPriceLimitX96: 0,
+                    deadline: ethers.constants.MaxUint256,
+                    referralCode: ethers.constants.HashZero,
+                })
+            )
+            deployData.testCheck.openPosition = true
+            await fs.writeFileSync(fileName, JSON.stringify(deployData, null, 4))
+        }
 
-        //     deployData.testCheck.deposit = true
-        //     await fs.writeFileSync(fileName, JSON.stringify(deployData, null, 4))
-        //     console.log('wETH.mint is deployed', wETH.address)
-        // }
-        // if (!deployData.testCheck.openPosition) {
+        if (!deployData.testCheck.closePosition) {
+            await waitForTx(
+                await clearingHouse.connect(trader).openPosition({
+                    baseToken: vBAYC.address,
+                    isBaseToQuote: false,
+                    isExactInput: false,
+                    oppositeAmountBound: 0,
+                    amount: parseEther("0.5"),
+                    sqrtPriceLimitX96: 0,
+                    deadline: ethers.constants.MaxUint256,
+                    referralCode: ethers.constants.HashZero,
+                })
+            )
+            deployData.testCheck.closePosition = true
+            await fs.writeFileSync(fileName, JSON.stringify(deployData, null, 4))
+        }
 
-        //     deployData.testCheck.openPosition = true
-        //     await fs.writeFileSync(fileName, JSON.stringify(deployData, null, 4))
-        //     console.log('clearingHouse.openPosition is deployed', clearingHouse.address)
-        // }
-
-        // if (!deployData.testCheck.closePosition) {
-
-        //     deployData.testCheck.closePosition = true
-        //     await fs.writeFileSync(fileName, JSON.stringify(deployData, null, 4))
-        //     console.log('clearingHouse.closePosition is deployed', clearingHouse.address)
-        // }
-
-        // if (!deployData.testCheck.removeLiquidity) {
-        //     await (
-        //         await clearingHouse.removeLiquidity({
-        //             baseToken: vBAYC.address,
-        //             lowerTick,
-        //             upperTick,
-        //             liquidity: (
-        //                 await orderBook.getOpenOrder(admin.address, wETH.address, lowerTick, upperTick)
-        //             ).liquidity,
-        //             minBase: parseEther("0"),
-        //             minQuote: parseEther("0"),
-        //             deadline: ethers.constants.MaxUint256,
-        //         })
-        //     ).wait()
-
-        //     deployData.testCheck.removeLiquidity = true
-        //     await fs.writeFileSync(fileName, JSON.stringify(deployData, null, 4))
-        //     console.log('clearingHouse.removeLiquidity is deployed', clearingHouse.address)
-        // }
+        if (!deployData.testCheck.removeLiquidity) {
+            await waitForTx(
+                await clearingHouse.connect(maker).removeLiquidity({
+                    baseToken: vBAYC.address,
+                    lowerTick,
+                    upperTick,
+                    liquidity: (
+                        await orderBook.getOpenOrder(admin.address, wETH.address, lowerTick, upperTick)
+                    ).liquidity,
+                    minBase: parseEther("0"),
+                    minQuote: parseEther("0"),
+                    deadline: ethers.constants.MaxUint256,
+                })
+            )
+            deployData.testCheck.removeLiquidity = true
+            await fs.writeFileSync(fileName, JSON.stringify(deployData, null, 4))
+        }
     }
 }
 

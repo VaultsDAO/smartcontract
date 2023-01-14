@@ -40,12 +40,12 @@ describe("ClearingHouse liquidate trader", () => {
     let baseToken: BaseToken
     let mockedNFTPriceFeed: MockContract
     let collateralDecimals: number
-    const lowerTick: number = 45800
-    const upperTick: number = 46400
+    const lowerTick: number = 45780
+    const upperTick: number = 46440
     const initPrice = "100"
 
     beforeEach(async () => {
-        fixture = await loadFixture(createClearingHouseFixture())
+        fixture = await loadFixture(createClearingHouseFixture(true, 3000))
         clearingHouse = fixture.clearingHouse as TestClearingHouse
         orderBook = fixture.orderBook
         accountBalance = fixture.accountBalance
@@ -132,23 +132,23 @@ describe("ClearingHouse liquidate trader", () => {
             console.log('liquidatorOwedRealizedPnl', formatEther(liquidatorOwedRealizedPnl.toString()))
 
         }
-        await clearingHouse.connect(liquidator).openPosition({
-            baseToken: baseToken.address,
-            isBaseToQuote: true,
-            isExactInput: true,
-            oppositeAmountBound: 0,
-            amount: parseEther("0.5"),
-            sqrtPriceLimitX96: 0,
-            deadline: ethers.constants.MaxUint256,
-            referralCode: ethers.constants.HashZero,
-        })
-        {
-            const liquidatorTotalPositionSize = await accountBalance.getTotalPositionSize(liquidator.address, baseToken.address)
-            console.log('liquidatorTotalPositionSize', formatEther(liquidatorTotalPositionSize.toString()))
+        // await clearingHouse.connect(liquidator).openPosition({
+        //     baseToken: baseToken.address,
+        //     isBaseToQuote: true,
+        //     isExactInput: true,
+        //     oppositeAmountBound: 0,
+        //     amount: parseEther("0.5"),
+        //     sqrtPriceLimitX96: 0,
+        //     deadline: ethers.constants.MaxUint256,
+        //     referralCode: ethers.constants.HashZero,
+        // })
+        // {
+        //     const liquidatorTotalPositionSize = await accountBalance.getTotalPositionSize(liquidator.address, baseToken.address)
+        //     console.log('liquidatorTotalPositionSize', formatEther(liquidatorTotalPositionSize.toString()))
 
-            const [liquidatorOwedRealizedPnl, ,] = await accountBalance.getPnlAndPendingFee(liquidator.address)
-            console.log('liquidatorOwedRealizedPnl', formatEther(liquidatorOwedRealizedPnl.toString()))
-        }
+        //     const [liquidatorOwedRealizedPnl, ,] = await accountBalance.getPnlAndPendingFee(liquidator.address)
+        //     console.log('liquidatorOwedRealizedPnl', formatEther(liquidatorOwedRealizedPnl.toString()))
+        // }
     })
 
     // it("short liquidate", async () => {

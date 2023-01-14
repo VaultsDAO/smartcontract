@@ -22,9 +22,9 @@ async function main() {
     // 
     var proxyAdmin = await hre.ethers.getContractAt('ProxyAdmin', deployData.proxyAdminAddress);
     if (network == 'local') {
-        const [admin] = await hre.ethers.getSigners()
-        deployData.platformFundAddress = admin.address
-        deployData.makerFundAddress = admin.address
+        const [admin, maker, trader, liquidator, priceAdmin, platformFund] = await hre.ethers.getSigners()
+        deployData.platformFundAddress = platformFund.address
+        deployData.makerFundAddress = maker.address
     }
     //
     if (deployData.genericLogic.address == undefined || deployData.genericLogic.address == '') {
@@ -54,7 +54,7 @@ async function main() {
             console.log('LiquidityLogic is deployed', liquidityLogic.address)
         }
     }
-    if (deployData.exchangeLogic.address == undefined || deployData.liquidityLogic.address == '') {
+    if (deployData.exchangeLogic.address == undefined || deployData.exchangeLogic.address == '') {
         const exchangeLogic = await waitForDeploy(await ExchangeLogic.deploy())
         {
             deployData.exchangeLogic.address = exchangeLogic.address;
@@ -64,7 +64,7 @@ async function main() {
     }
     if (deployData.clearingHouse.implAddress == undefined || deployData.clearingHouse.implAddress == '') {
         var liquidityLogic = await hre.ethers.getContractAt('LiquidityLogic', deployData.liquidityLogic.address);
-        var exchangeLogic = await hre.ethers.getContractAt('ExchangeLogic', deployData.liquidityLogic.address);
+        var exchangeLogic = await hre.ethers.getContractAt('ExchangeLogic', deployData.exchangeLogic.address);
         let ClearingHouse = await hre.ethers.getContractFactory("ClearingHouse", {
             libraries: {
                 LiquidityLogic: liquidityLogic.address,
