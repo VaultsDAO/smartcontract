@@ -32,16 +32,17 @@ async function main() {
         var wETH = (await hre.ethers.getContractAt('TestERC20', deployData.wETH.address)) as TestERC20;
 
         const vBAYC = await hre.ethers.getContractAt('BaseToken', deployData.vBAYC.address);
+        const vMAYC = await hre.ethers.getContractAt('BaseToken', deployData.vMAYC.address);
 
         {
             var priceFeed = await hre.ethers.getContractAt('NftPriceFeed', deployData.nftPriceFeedBAYC.address);
-            await waitForTx (
+            await waitForTx(
                 await priceFeed.setPrice(parseEther('100'))
             )
         }
         {
             var priceFeed = await hre.ethers.getContractAt('NftPriceFeed', deployData.nftPriceFeedMAYC.address);
-            await waitForTx (
+            await waitForTx(
                 await priceFeed.setPrice(parseEther('100'))
             )
         }
@@ -49,10 +50,12 @@ async function main() {
         const lowerTick: number = 45780
         const upperTick: number = 46440
 
+        var baseToken = vBAYC
+
         if (!deployData.testCheck.addLiquidity) {
             await waitForTx(
                 await clearingHouse.connect(maker).addLiquidity({
-                    baseToken: vBAYC.address,
+                    baseToken: baseToken.address,
                     base: parseEther("100"),
                     quote: parseEther("10000"),
                     lowerTick,
@@ -61,20 +64,24 @@ async function main() {
                     minQuote: 0,
                     useTakerBalance: false,
                     deadline: ethers.constants.MaxUint256,
-                })
+                }),
+                'clearingHouse.connect(maker).addLiquidity'
             )
             deployData.testCheck.addLiquidity = true
             await fs.writeFileSync(fileName, JSON.stringify(deployData, null, 4))
         }
         if (!deployData.testCheck.deposit) {
             await waitForTx(
-                await wETH.mint(trader.address, parseEther('1000'))
+                await wETH.mint(trader.address, parseEther('1000')),
+                'wETH.mint(trader.address, parseEther(1000))'
             )
             await waitForTx(
-                await wETH.connect(trader).approve(vault.address, ethers.constants.MaxUint256)
+                await wETH.connect(trader).approve(vault.address, ethers.constants.MaxUint256),
+                'wETH.connect(trader).approve(vault.address, ethers.constants.MaxUint256)'
             )
             await waitForTx(
-                await vault.connect(trader).deposit(wETH.address, parseEther('1000'))
+                await vault.connect(trader).deposit(wETH.address, parseEther('1000')),
+                'vault.connect(trader).deposit(wETH.address, parseEther(1000))'
             )
             deployData.testCheck.deposit = true
             await fs.writeFileSync(fileName, JSON.stringify(deployData, null, 4))
@@ -82,7 +89,7 @@ async function main() {
         if (!deployData.testCheck.openPosition) {
             await waitForTx(
                 await clearingHouse.connect(trader).openPosition({
-                    baseToken: vBAYC.address,
+                    baseToken: baseToken.address,
                     isBaseToQuote: true,
                     isExactInput: true,
                     oppositeAmountBound: 0,
@@ -90,7 +97,8 @@ async function main() {
                     sqrtPriceLimitX96: 0,
                     deadline: ethers.constants.MaxUint256,
                     referralCode: ethers.constants.HashZero,
-                })
+                }),
+                'clearingHouse.connect(trader).openPosition'
             )
             deployData.testCheck.openPosition = true
             await fs.writeFileSync(fileName, JSON.stringify(deployData, null, 4))
@@ -98,16 +106,14 @@ async function main() {
 
         if (!deployData.testCheck.closePosition) {
             await waitForTx(
-                await clearingHouse.connect(trader).openPosition({
-                    baseToken: vBAYC.address,
-                    isBaseToQuote: false,
-                    isExactInput: false,
-                    oppositeAmountBound: 0,
-                    amount: parseEther("0.5"),
-                    sqrtPriceLimitX96: 0,
+                await clearingHouse.connect(trader).closePosition({
+                    baseToken: baseToken.address,
+                    sqrtPriceLimitX96: parseEther("0"),
+                    oppositeAmountBound: parseEther("0"),
                     deadline: ethers.constants.MaxUint256,
                     referralCode: ethers.constants.HashZero,
-                })
+                }),
+                'clearingHouse.connect(trader).closePosition'
             )
             deployData.testCheck.closePosition = true
             await fs.writeFileSync(fileName, JSON.stringify(deployData, null, 4))
@@ -116,7 +122,7 @@ async function main() {
         if (!deployData.testCheck.removeLiquidity) {
             await waitForTx(
                 await clearingHouse.connect(maker).removeLiquidity({
-                    baseToken: vBAYC.address,
+                    baseToken: baseToken.address,
                     lowerTick,
                     upperTick,
                     liquidity: (
@@ -125,7 +131,8 @@ async function main() {
                     minBase: parseEther("0"),
                     minQuote: parseEther("0"),
                     deadline: ethers.constants.MaxUint256,
-                })
+                }),
+                'clearingHouse.connect(maker).removeLiquidity'
             )
             deployData.testCheck.removeLiquidity = true
             await fs.writeFileSync(fileName, JSON.stringify(deployData, null, 4))

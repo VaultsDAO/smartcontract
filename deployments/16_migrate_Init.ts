@@ -66,9 +66,9 @@ async function main() {
     if (network == 'arbitrum') {
         await waitForTx(await vault.setWETH9(deployData.wETH.address))
     }
-
+    // setting pool
     {
-        let poolBAYCAddr = uniswapV3Factory.getPool(vBAYC.address, vUSD.address, uniFeeTier)
+        let poolBAYCAddr = await uniswapV3Factory.getPool(vBAYC.address, vUSD.address, uniFeeTier)
         if (poolBAYCAddr == ethers.constants.AddressZero) {
             await waitForTx(await uniswapV3Factory.createPool(deployData.vBAYC.address, deployData.vUSD.address, uniFeeTier), 'uniswapV3Factory.createPool(deployData.vBAYC.address, deployData.vUSD.address, uniFeeTier)')
         }
@@ -97,9 +97,15 @@ async function main() {
     }
 
     // deploy clearingHouse
-    await waitForTx(await vUSD.addWhitelist(clearingHouse.address), 'vUSD.addWhitelist(clearingHouse.address)')
-    await waitForTx(await vBAYC.addWhitelist(clearingHouse.address), 'vBAYC.addWhitelist(clearingHouse.address)')
-    await waitForTx(await vMAYC.addWhitelist(clearingHouse.address), 'vMAYC.addWhitelist(clearingHouse.address)')
+    if (!(await vUSD.isInWhitelist(clearingHouse.address))) {
+        await waitForTx(await vUSD.addWhitelist(clearingHouse.address), 'vUSD.addWhitelist(clearingHouse.address)')
+    }
+    if (!(await vBAYC.isInWhitelist(clearingHouse.address))) {
+        await waitForTx(await vBAYC.addWhitelist(clearingHouse.address), 'vBAYC.addWhitelist(clearingHouse.address)')
+    }
+    if (!(await vMAYC.isInWhitelist(clearingHouse.address))) {
+        await waitForTx(await vMAYC.addWhitelist(clearingHouse.address), 'vMAYC.addWhitelist(clearingHouse.address)')
+    }
 
     if (!(await vUSD.totalSupply()).eq(ethers.constants.MaxUint256)) {
         await waitForTx(await vUSD.mintMaximumTo(clearingHouse.address), 'vMAYC.mintMaximumTo(clearingHouse.address)')
@@ -117,17 +123,14 @@ async function main() {
     {
         const poolAddr = await uniswapV3Factory.getPool(vBAYC.address, vUSD.address, uniFeeTier)
         const uniPool = (await ethers.getContractAt('UniswapV3Pool', poolAddr) as UniswapV3Pool);
-        if ((await uniPool.slot0()).sqrtPriceX96.eq(0)) {
-            if (network == 'local') {
-                await waitForTx(await uniPool.initialize(encodePriceSqrt("100", "1")), 'uniPool.initialize(encodePriceSqrt("100", "1"))')
-            } else {
-                await waitForTx(await uniPool.initialize(encodePriceSqrt("80", "1")), 'uniPool.initialize(encodePriceSqrt("80", "1"))')
-            }
-
+        if (network == 'local') {
+            await tryWaitForTx(await uniPool.initialize(encodePriceSqrt("100", "1")), 'uniPool.initialize(encodePriceSqrt("100", "1"))')
+        } else {
+            await tryWaitForTx(await uniPool.initialize(encodePriceSqrt("80", "1")), 'uniPool.initialize(encodePriceSqrt("80", "1"))')
         }
-        const uniFeeRatio = await uniPool.fee()
         await tryWaitForTx(await uniPool.increaseObservationCardinalityNext(500), 'uniPool.increaseObservationCardinalityNext(500)')
         if (!(await marketRegistry.hasPool(vBAYC.address))) {
+            const uniFeeRatio = await uniPool.fee()
             await tryWaitForTx(await marketRegistry.addPool(vBAYC.address, uniFeeRatio), 'marketRegistry.addPool(vBAYC.address, uniFeeRatio)')
         }
         await tryWaitForTx(await exchange.setMaxTickCrossedWithinBlock(vBAYC.address, maxTickCrossedWithinBlock), 'exchange.setMaxTickCrossedWithinBlock(vBAYC.address, maxTickCrossedWithinBlock)')
@@ -135,17 +138,15 @@ async function main() {
     // vMAYC
     {
         const poolAddr = await uniswapV3Factory.getPool(vMAYC.address, vUSD.address, uniFeeTier)
-        const uniPool = await ethers.getContractAt('UniswapV3Pool', poolAddr);
-        if ((await uniPool.slot0()).sqrtPriceX96.eq(0)) {
-            if (network == 'local') {
-                await waitForTx(await uniPool.initialize(encodePriceSqrt("100", "1")), 'uniPool.initialize(encodePriceSqrt("100", "1"))')
-            } else {
-                await waitForTx(await uniPool.initialize(encodePriceSqrt("80", "1")), 'uniPool.initialize(encodePriceSqrt("80", "1"))')
-            }
+        const uniPool = (await ethers.getContractAt('UniswapV3Pool', poolAddr) as UniswapV3Pool);
+        if (network == 'local') {
+            await tryWaitForTx(await uniPool.initialize(encodePriceSqrt("100", "1")), 'uniPool.initialize(encodePriceSqrt("100", "1"))')
+        } else {
+            await tryWaitForTx(await uniPool.initialize(encodePriceSqrt("80", "1")), 'uniPool.initialize(encodePriceSqrt("80", "1"))')
         }
-        const uniFeeRatio = await uniPool.fee()
         await tryWaitForTx(await uniPool.increaseObservationCardinalityNext(500), 'uniPool.increaseObservationCardinalityNext')
         if (!(await marketRegistry.hasPool(vMAYC.address))) {
+            const uniFeeRatio = await uniPool.fee()
             await waitForTx(await marketRegistry.addPool(vMAYC.address, uniFeeRatio), 'marketRegistry.addPool(vMAYC.address, uniFeeRatio)')
         }
         await tryWaitForTx(await exchange.setMaxTickCrossedWithinBlock(vMAYC.address, maxTickCrossedWithinBlock), 'exchange.setMaxTickCrossedWithinBlock(vMAYC.address, maxTickCrossedWithinBlock)')

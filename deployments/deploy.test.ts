@@ -459,7 +459,7 @@ describe("Deployment check", () => {
             const vBAYC = await ethers.getContractAt('BaseToken', deployData.vBAYC.address);
             {
                 await uniswapV3Factory.createPool(deployData.vBAYC.address, deployData.vUSD.address, uniFeeTier)
-                const poolBAYCAddr = uniswapV3Factory.getPool(vBAYC.address, vUSD.address, uniFeeTier)
+                const poolBAYCAddr = await uniswapV3Factory.getPool(vBAYC.address, vUSD.address, uniFeeTier)
                 const poolBAYC = await ethers.getContractAt('UniswapV3Pool', poolBAYCAddr);
                 await vBAYC.addWhitelist(poolBAYC.address)
                 await vUSD.addWhitelist(poolBAYC.address)
@@ -537,74 +537,74 @@ describe("Deployment check", () => {
             }
             const lowerTick: number = 45780
             const upperTick: number = 46440
-            {
-                await waitForTx(
-                    await clearingHouse.connect(maker).addLiquidity({
-                        baseToken: vBAYC.address,
-                        base: parseEther("100"),
-                        quote: parseEther("10000"),
-                        lowerTick,
-                        upperTick,
-                        minBase: 0,
-                        minQuote: 0,
-                        useTakerBalance: false,
-                        deadline: ethers.constants.MaxUint256,
-                    })
-                )
-            }
-            {
-                await waitForTx(
-                    await wETH.mint(trader.address, parseEther('1000'))
-                )
-                await waitForTx(
-                    await wETH.connect(trader).approve(vault.address, ethers.constants.MaxUint256)
-                )
-                await waitForTx(
-                    await vault.connect(trader).deposit(wETH.address, parseEther('1000'))
-                )
-            }
-            {
-                await waitForTx(
-                    await clearingHouse.connect(trader).openPosition({
-                        baseToken: vBAYC.address,
-                        isBaseToQuote: true,
-                        isExactInput: true,
-                        oppositeAmountBound: 0,
-                        amount: parseEther("0.5"),
-                        sqrtPriceLimitX96: 0,
-                        deadline: ethers.constants.MaxUint256,
-                        referralCode: ethers.constants.HashZero,
-                    })
-                )
-            }
-            {
-                await waitForTx(
-                    await clearingHouse.connect(trader).openPosition({
-                        baseToken: vBAYC.address,
-                        isBaseToQuote: false,
-                        isExactInput: false,
-                        oppositeAmountBound: 0,
-                        amount: parseEther("0.5"),
-                        sqrtPriceLimitX96: 0,
-                        deadline: ethers.constants.MaxUint256,
-                        referralCode: ethers.constants.HashZero,
-                    })
-                )
-            }
-            {
-                await waitForTx(
-                    await clearingHouse.connect(maker).removeLiquidity({
-                        baseToken: vBAYC.address,
-                        lowerTick,
-                        upperTick,
-                        liquidity: (
-                            await orderBook.getOpenOrder(admin.address, wETH.address, lowerTick, upperTick)
-                        ).liquidity,
-                        minBase: parseEther("0"),
-                        minQuote: parseEther("0"),
-                        deadline: ethers.constants.MaxUint256,
-                    })
-                )
+            for (var baseToken of [vBAYC, vMAYC]) {
+                {
+                    await waitForTx(
+                        await clearingHouse.connect(maker).addLiquidity({
+                            baseToken: baseToken.address,
+                            base: parseEther("100"),
+                            quote: parseEther("10000"),
+                            lowerTick,
+                            upperTick,
+                            minBase: 0,
+                            minQuote: 0,
+                            useTakerBalance: false,
+                            deadline: ethers.constants.MaxUint256,
+                        })
+                    )
+                }
+                {
+                    await waitForTx(
+                        await wETH.mint(trader.address, parseEther('1000'))
+                    )
+                    await waitForTx(
+                        await wETH.connect(trader).approve(vault.address, ethers.constants.MaxUint256)
+                    )
+                    await waitForTx(
+                        await vault.connect(trader).deposit(wETH.address, parseEther('1000'))
+                    )
+                }
+                {
+                    await waitForTx(
+                        await clearingHouse.connect(trader).openPosition({
+                            baseToken: baseToken.address,
+                            isBaseToQuote: true,
+                            isExactInput: true,
+                            oppositeAmountBound: 0,
+                            amount: parseEther("0.5"),
+                            sqrtPriceLimitX96: 0,
+                            deadline: ethers.constants.MaxUint256,
+                            referralCode: ethers.constants.HashZero,
+                        })
+                    )
+                }
+                {
+                    await waitForTx(
+                        await clearingHouse.connect(trader).closePosition({
+                            baseToken: baseToken.address,
+                            sqrtPriceLimitX96: parseEther("0"),
+                            oppositeAmountBound: parseEther("0"),
+                            deadline: ethers.constants.MaxUint256,
+                            referralCode: ethers.constants.HashZero,
+                        }),
+                        'clearingHouse.connect(trader).closePosition'
+                    )
+                }
+                {
+                    await waitForTx(
+                        await clearingHouse.connect(maker).removeLiquidity({
+                            baseToken: baseToken.address,
+                            lowerTick,
+                            upperTick,
+                            liquidity: (
+                                await orderBook.getOpenOrder(admin.address, wETH.address, lowerTick, upperTick)
+                            ).liquidity,
+                            minBase: parseEther("0"),
+                            minQuote: parseEther("0"),
+                            deadline: ethers.constants.MaxUint256,
+                        })
+                    )
+                }
             }
         }
     })
