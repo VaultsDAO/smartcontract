@@ -15,6 +15,8 @@ dotenv.config();
 const INFURA_KEY = process.env.INFURA_KEY ?? '';
 const ARBISCAN_API_KEY = process.env.ARBISCAN_API_KEY ?? '';
 const PRIVATE_KEY = process.env.PRIVATE_KEY ?? '';
+const MAKER_ADMIN_KEY = process.env.MAKER_ADMIN_KEY ?? '';
+const PRICE_ADMIN_KEY = process.env.PRICE_ADMIN_KEY ?? '';
 
 const config: HardhatUserConfig = {
     solidity: {
@@ -47,7 +49,7 @@ const config: HardhatUserConfig = {
             url: "https://arbitrum-goerli.infura.io/v3/" + INFURA_KEY,
             chainId: 421613,
             gas: 8000000,
-            accounts: [PRIVATE_KEY],
+            accounts: [PRIVATE_KEY, MAKER_ADMIN_KEY, PRICE_ADMIN_KEY],
         },
     },
     dependencyCompiler: {

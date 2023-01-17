@@ -3,9 +3,10 @@ import fs from "fs";
 import hre, { ethers } from "hardhat";
 
 import { encodePriceSqrt } from "../test/shared/utilities";
-import { AccountBalance, BaseToken, MarketRegistry, OrderBook, QuoteToken, UniswapV3Pool } from "../typechain";
+import { AccountBalance, BaseToken, MarketRegistry, NftPriceFeed, OrderBook, QuoteToken, UniswapV3Pool } from "../typechain";
 import { getMaxTickRange } from "../test/helper/number";
 import helpers from "./helpers";
+import { parseEther } from "ethers/lib/utils";
 const { waitForTx, tryWaitForTx } = helpers;
 
 
@@ -19,6 +20,8 @@ async function main() {
     let dataText = await fs.readFileSync(fileName)
     deployData = JSON.parse(dataText.toString())
     // 
+
+    const [admin, maker, priceAdmin, trader, liquidator, platformFund] = await ethers.getSigners()
 
     // deploy UniV3 factory
     var uniswapV3Factory = await hre.ethers.getContractAt('UniswapV3Factory', deployData.uniswapV3Factory.address);
@@ -95,7 +98,6 @@ async function main() {
             await waitForTx(await vUSD.addWhitelist(poolMAYC.address), 'vUSD.addWhitelist(poolMAYC.address)')
         }
     }
-
     // deploy clearingHouse
     if (!(await vUSD.isInWhitelist(clearingHouse.address))) {
         await waitForTx(await vUSD.addWhitelist(clearingHouse.address), 'vUSD.addWhitelist(clearingHouse.address)')
@@ -126,7 +128,7 @@ async function main() {
         if (network == 'local') {
             await tryWaitForTx(await uniPool.initialize(encodePriceSqrt("100", "1")), 'uniPool.initialize(encodePriceSqrt("100", "1"))')
         } else {
-            await tryWaitForTx(await uniPool.initialize(encodePriceSqrt("80", "1")), 'uniPool.initialize(encodePriceSqrt("80", "1"))')
+            await tryWaitForTx(await uniPool.initialize(encodePriceSqrt("73.8388", "1")), 'uniPool.initialize(encodePriceSqrt("73.8388", "1"))')
         }
         await tryWaitForTx(await uniPool.increaseObservationCardinalityNext(500), 'uniPool.increaseObservationCardinalityNext(500)')
         if (!(await marketRegistry.hasPool(vBAYC.address))) {
@@ -142,7 +144,7 @@ async function main() {
         if (network == 'local') {
             await tryWaitForTx(await uniPool.initialize(encodePriceSqrt("100", "1")), 'uniPool.initialize(encodePriceSqrt("100", "1"))')
         } else {
-            await tryWaitForTx(await uniPool.initialize(encodePriceSqrt("80", "1")), 'uniPool.initialize(encodePriceSqrt("80", "1"))')
+            await tryWaitForTx(await uniPool.initialize(encodePriceSqrt("15.899", "1")), 'uniPool.initialize(encodePriceSqrt("15.899", "1"))')
         }
         await tryWaitForTx(await uniPool.increaseObservationCardinalityNext(500), 'uniPool.increaseObservationCardinalityNext')
         if (!(await marketRegistry.hasPool(vMAYC.address))) {
@@ -150,6 +152,25 @@ async function main() {
             await waitForTx(await marketRegistry.addPool(vMAYC.address, uniFeeRatio), 'marketRegistry.addPool(vMAYC.address, uniFeeRatio)')
         }
         await tryWaitForTx(await exchange.setMaxTickCrossedWithinBlock(vMAYC.address, maxTickCrossedWithinBlock), 'exchange.setMaxTickCrossedWithinBlock(vMAYC.address, maxTickCrossedWithinBlock)')
+    }
+    // oracle price
+    {
+        var priceFeed = (await hre.ethers.getContractAt('NftPriceFeed', deployData.nftPriceFeedBAYC.address)) as NftPriceFeed;
+        await waitForTx(
+            await priceFeed.setPriceFeedAdmin(priceAdmin.address)
+        )
+        await waitForTx(
+            await priceFeed.connect(priceAdmin).setPrice(parseEther('73.8388'))
+        )
+    }
+    {
+        var priceFeed = (await hre.ethers.getContractAt('NftPriceFeed', deployData.nftPriceFeedMAYC.address)) as NftPriceFeed;
+        await waitForTx(
+            await priceFeed.setPriceFeedAdmin(priceAdmin.address)
+        )
+        await waitForTx(
+            await priceFeed.connect(priceAdmin).setPrice(parseEther('15.899'))
+        )
     }
 }
 

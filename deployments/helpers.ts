@@ -35,6 +35,7 @@ const res = {
         return new Promise(resolve => setTimeout(resolve, ms));
     },
     verifyContract: async (deployData: DeployData, network: string, address: string, constructorArguments: any, libraries: any, contract: string) => {
+        return
         if (network != 'local') {
             var verified = deployData.verifiedContracts[address]
             if (verified == undefined || verified == false) {

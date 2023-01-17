@@ -21,7 +21,7 @@ async function main() {
     // 
 
     if (network == 'local') {
-        const [admin, maker, trader, liquidator, priceAdmin, platformFund] = await ethers.getSigners()
+        const [admin, maker, priceAdmin, trader, liquidator, platformFund] = await ethers.getSigners()
 
 
         // deploy UniV3 factory

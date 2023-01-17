@@ -1,15 +1,15 @@
 {
     "verifiedContracts": {},
     "nftPriceFeedBAYC": {
-        "address": "",
+        "address": "0x46Ecf2bBB368876Ae5030556186D8302f718C77d",
         "symbol": "BAYC_ETH"
     },
     "nftPriceFeedMAYC": {
-        "address": "",
+        "address": "0x4c290B3E87Eee7bCA4e5F255DA78263F4CED32DF",
         "symbol": "MAYC_ETH"
     },
     "wETH": {
-        "address": "",
+        "address": "0xEa34f4E154d138d9137B5fe8A28fd06ee17688E9",
         "name": "Wrapped Ether",
         "symbol": "WETH",
         "decimals": 18
@@ -18,69 +18,81 @@
         "name": "vUSD",
         "symbol": "vUSD",
         "decimals": 18,
-        "address": "",
-        "implAddress": ""
+        "address": "0xf84FDEe377314E44474424AbfE113ebE83AeCB0B",
+        "implAddress": "0x6EE63FB721C317489A5A6Eb38653ce31e9CbF0cA"
     },
     "baseToken": {
-        "implAddress": ""
+        "implAddress": "0xCbc8708De1BcD668daD0BFb7868F8Cb3b49DC8d7"
     },
     "vBAYC": {
-        "address": "",
+        "address": "0xCD46B3959B45910b4eC76aD5cB74Cdd972073Dde",
         "name": "BoredApeYachtClub",
         "symbol": "vBAYC",
         "decimals": 18
     },
     "vMAYC": {
-        "address": "",
+        "address": "0x4B63c1C276234458F31071FA15f0D86b0FF0Ae51",
         "name": "MutantApeYachtClub",
         "symbol": "vMAYC",
         "decimals": 18
     },
     "priceAdminAddress": "0x9686203be0cae320bb4Dee971BB8a530A15EF489",
     "platformFundAddress": "0x9686203be0cae320bb4Dee971BB8a530A15EF489",
-    "makerFundAddress": "0x9686203be0cae320bb4Dee971BB8a530A15EF489",
-    "proxyAdminAddress": "",
+    "makerFundAddress": "0x9cEDf5C18B8c93E4DE45A446C9caDFF98DB1a756",
+    "proxyAdminAddress": "0x7D28E9a84771CF2E6700716EE75FE3fE3a14A1fE",
     "uniswapV3Factory": {
         "address": "0x4893376342d5D7b3e31d4184c08b265e5aB2A3f6"
     },
     "clearingHouseConfig": {
-        "address": "",
-        "implAddress": ""
+        "address": "0x4d5b423E915243f9Dda634B18648841698bD4Cfd",
+        "implAddress": "0x5186BD7B9c0417AA17998F5aD48cCF8a16dD0BBB"
     },
     "marketRegistry": {
-        "address": "",
-        "implAddress": ""
+        "address": "0xCe0783C19f2Fa6776D7376Ce74DD297Ea849bFa5",
+        "implAddress": "0x697ECe72Ec9ddF42073D1dC4e7A26E2070Ed3BcD"
     },
     "orderBook": {
-        "address": "",
-        "implAddress": ""
+        "address": "0x879645e57160bfE21A8797a19dA80FaE8aF9AE39",
+        "implAddress": "0x94C85Fa7BC87360872B969BD57e1745ce102c509"
     },
     "accountBalance": {
-        "address": "",
-        "implAddress": ""
+        "address": "0x743853e5D6e7dA53e3191fD7F42cBE315E247dD4",
+        "implAddress": "0xf42324EB2bfBf27Ec23696d028969BA4bA452577"
     },
     "exchange": {
-        "address": "",
-        "implAddress": ""
+        "address": "0x8299F2515c997639473e1286b1c69A1baCD1281f",
+        "implAddress": "0x5703ffa99ec1F22b8ab7525ce0f20364E592e8d9"
     },
     "insuranceFund": {
-        "address": "",
-        "implAddress": ""
+        "address": "0xFfF53AAF5C995e62d5514776f1cA9440b562D1e0",
+        "implAddress": "0x0865e495EC69b31D68cA97f5F405c50ef585e64f"
     },
     "vault": {
-        "address": "",
-        "implAddress": ""
+        "address": "0xba77A410639AD7D7D1aad0340823DD055A9Ef3b7",
+        "implAddress": "0xA4d36504C8104EEb54BfE9DBd36Ff04cb14c1AEa"
     },
     "collateralManager": {
-        "address": "",
-        "implAddress": ""
+        "address": "0x59bD16C3b9A50F15952f8cbc1118f83f365c5FDD",
+        "implAddress": "0xe70F97A4A473cA62903B696D860Fb034D3Cd4b07"
+    },
+    "genericLogic": {
+        "address": "0x6057181A5A52e29383C7e51675F43192e1a62306"
     },
     "liquidityLogic": {
-        "address": "",
-        "implAddress": ""
+        "address": "0x673dAc599fCb03E18e39c62eB8C0529645522c03"
+    },
+    "exchangeLogic": {
+        "address": "0x4980d4E960bab957961D2D1BB89C958BCaD03ebD"
     },
     "clearingHouse": {
-        "address": "",
-        "implAddress": ""
+        "address": "0x7d034098afc2f4C656A7ee904891f9E743652C2b",
+        "implAddress": "0x82816E64F37D0D24A58869100417ec56563A4D6C"
+    },
+    "testCheck": {
+        "addLiquidity": true,
+        "deposit": false,
+        "openPosition": false,
+        "closePosition": false,
+        "removeLiquidity": false
     }
 }
