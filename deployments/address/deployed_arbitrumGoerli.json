@@ -1,5 +1,9 @@
 {
-    "verifiedContracts": {},
+    "verifiedContracts": {
+        "0xEa34f4E154d138d9137B5fe8A28fd06ee17688E9": true,
+        "0x46Ecf2bBB368876Ae5030556186D8302f718C77d": true,
+        "0x4c290B3E87Eee7bCA4e5F255DA78263F4CED32DF": true
+    },
     "nftPriceFeedBAYC": {
         "address": "0x46Ecf2bBB368876Ae5030556186D8302f718C77d",
         "symbol": "BAYC_ETH"

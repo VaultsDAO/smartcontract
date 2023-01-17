@@ -16,7 +16,8 @@ contract NftPriceFeed is IPriceFeedV2, Ownable, BlockContext {
     event FeedAdminUpdated(address indexed admin);
     event PriceUpdated(uint256 price);
 
-    constructor(string memory symbol) {
+    constructor(string memory symbolArg) {
+        symbol = symbolArg;
         priceFeedAdmin = msg.sender;
     }
 
@@ -39,10 +40,10 @@ contract NftPriceFeed is IPriceFeedV2, Ownable, BlockContext {
         return 18;
     }
 
-    function setPrice(uint256 _price) external onlyAdmin {
-        require(_price > 0, "NPF_IP");
-        latestPrice = _price;
-        emit PriceUpdated(_price);
+    function setPrice(uint256 priceArg) external onlyAdmin {
+        require(priceArg > 0, "NPF_IP");
+        latestPrice = priceArg;
+        emit PriceUpdated(priceArg);
     }
 
     function getPrice(uint256 interval) external view override returns (uint256) {
