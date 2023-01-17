@@ -21,7 +21,7 @@ async function main() {
     deployData = JSON.parse(dataText.toString())
     // 
 
-    const [admin, maker, priceAdmin, trader, liquidator, platformFund] = await ethers.getSigners()
+    const [admin, maker, priceAdmin, platformFund, trader, liquidator] = await ethers.getSigners()
 
     // deploy UniV3 factory
     var uniswapV3Factory = await hre.ethers.getContractAt('UniswapV3Factory', deployData.uniswapV3Factory.address);
@@ -156,18 +156,22 @@ async function main() {
     // oracle price
     {
         var priceFeed = (await hre.ethers.getContractAt('NftPriceFeed', deployData.nftPriceFeedBAYC.address)) as NftPriceFeed;
-        await waitForTx(
-            await priceFeed.setPriceFeedAdmin(priceAdmin.address)
-        )
+        if ((await priceFeed.priceFeedAdmin()).toLowerCase() != priceAdmin.address.toLowerCase()) {
+            await waitForTx(
+                await priceFeed.setPriceFeedAdmin(priceAdmin.address)
+            )
+        }
         await waitForTx(
             await priceFeed.connect(priceAdmin).setPrice(parseEther('73.8388'))
         )
     }
     {
         var priceFeed = (await hre.ethers.getContractAt('NftPriceFeed', deployData.nftPriceFeedMAYC.address)) as NftPriceFeed;
-        await waitForTx(
-            await priceFeed.setPriceFeedAdmin(priceAdmin.address)
-        )
+        if ((await priceFeed.priceFeedAdmin()).toLowerCase() != priceAdmin.address.toLowerCase()) {
+            await waitForTx(
+                await priceFeed.setPriceFeedAdmin(priceAdmin.address)
+            )
+        }
         await waitForTx(
             await priceFeed.connect(priceAdmin).setPrice(parseEther('15.899'))
         )

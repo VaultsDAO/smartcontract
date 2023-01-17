@@ -8,7 +8,7 @@ import { BaseContract } from "ethers";
 import { isAscendingTokenOrder } from "../test/shared/utilities";
 import { BaseToken } from "../typechain";
 
-const { waitForDeploy, verifyContract, upgradeContract } = helpers;
+const { waitForDeploy, waitForTx, verifyContract, upgradeContract } = helpers;
 
 async function main() {
     const network = hre.network.name;
@@ -74,6 +74,23 @@ async function main() {
     {
         await upgradeContract(proxyAdmin as ProxyAdmin, deployData.vBAYC.address, deployData.baseToken.implAddress)
         await upgradeContract(proxyAdmin as ProxyAdmin, deployData.vMAYC.address, deployData.baseToken.implAddress)
+    }
+    // upgrade NftPriceFeed
+    {
+        {
+            const vBAYC = (await hre.ethers.getContractAt('BaseToken', deployData.vBAYC.address)) as BaseToken;
+            if ((await vBAYC.getPriceFeed()) != deployData.nftPriceFeedBAYC.address) {
+                waitForTx(await vBAYC.setPriceFeed(deployData.nftPriceFeedBAYC.address))
+                console.log('vMAYC setPriceFeed is deployed', vBAYC.address)
+            }
+        }
+        {
+            const vMAYC = (await hre.ethers.getContractAt('BaseToken', deployData.vMAYC.address)) as BaseToken;
+            if ((await vMAYC.getPriceFeed()) != deployData.nftPriceFeedMAYC.address) {
+                waitForTx(await vMAYC.setPriceFeed(deployData.nftPriceFeedMAYC.address))
+                console.log('vMAYC setPriceFeed is deployed', vMAYC.address)
+            }
+        }
     }
     {
         await verifyContract(

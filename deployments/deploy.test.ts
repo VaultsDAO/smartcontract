@@ -86,16 +86,16 @@ describe("Deployment check", () => {
         const TransparentUpgradeableProxy = await ethers.getContractFactory('TransparentUpgradeableProxy');
         const BaseToken = await ethers.getContractFactory("BaseToken");
 
-        let proxyAdmin = await ProxyAdmin.deploy();
+        let proxyAdmin = await waitForDeploy(await ProxyAdmin.deploy());
         deployData.proxyAdminAddress = proxyAdmin.address
         {
             const NftPriceFeed = await ethers.getContractFactory("NftPriceFeed")
-            const priceFeed = (await (await NftPriceFeed.deploy('BAYC_ETH'))) as NftPriceFeed
+            const priceFeed = (await waitForDeploy(await NftPriceFeed.deploy('BAYC_ETH'))) as NftPriceFeed
             deployData.nftPriceFeedBAYC.address = priceFeed.address
         }
         {
             const NftPriceFeed = await ethers.getContractFactory("NftPriceFeed")
-            const priceFeed = (await (await NftPriceFeed.deploy('BAYC_ETH'))) as NftPriceFeed
+            const priceFeed = (await waitForDeploy(await NftPriceFeed.deploy('BAYC_ETH'))) as NftPriceFeed
             deployData.nftPriceFeedMAYC.address = priceFeed.address
         }
         {
@@ -115,7 +115,7 @@ describe("Deployment check", () => {
         {
             var quoteToken = await ethers.getContractAt('QuoteToken', deployData.vETH.implAddress);
             var initializeData = quoteToken.interface.encodeFunctionData('initialize', [deployData.vETH.name, deployData.vETH.symbol]);
-            for (let i = 0; i < 20; i++) {
+            for (let i = 0; i < 32; i++) {
                 var transparentUpgradeableProxy = await waitForDeploy(
                     await TransparentUpgradeableProxy.deploy(
                         quoteToken.address,
@@ -127,6 +127,10 @@ describe("Deployment check", () => {
                     deployData.vETH.address == '' ||
                     isAscendingTokenOrder(deployData.vETH.address, transparentUpgradeableProxy.address.toString())) {
                     deployData.vETH.address = transparentUpgradeableProxy.address;
+                    if (deployData.vETH.address.toLowerCase().startsWith("0xf")) {
+                        console.log('OK vETH')
+                        break
+                    }
                 }
             }
         }

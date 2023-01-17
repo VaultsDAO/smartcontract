@@ -20,7 +20,7 @@ async function main() {
     deployData = JSON.parse(dataText.toString())
     // 
 
-    const [admin, maker, priceAdmin] = await ethers.getSigners()
+    const [admin, maker, priceAdmin, platformFund, trader, liquidator] = await ethers.getSigners()
 
 
     // deploy UniV3 factory

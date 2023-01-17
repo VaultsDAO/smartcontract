@@ -21,7 +21,6 @@ type ContractData = {
 
 type DeployData = {
     verifiedContracts: any,
-    priceAdminAddress: string,
     platformFundAddress: string,
     makerFundAddress: string,
     wETH: TokenData,
