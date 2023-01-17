@@ -429,20 +429,29 @@ contract AccountBalance is IAccountBalance, BlockContext, ClearingHouseCallee, A
             //long => short
             if (accountInfo.takerPositionSize >= 0) {
                 //new short <= old long
-                _marketMap[baseToken].longPositionSize -= base.abs();
+                _marketMap[baseToken].longPositionSize = _marketMap[baseToken].longPositionSize > base.abs()
+                    ? _marketMap[baseToken].longPositionSize - base.abs()
+                    : 0;
             } else {
                 //new short > old long
-                _marketMap[baseToken].longPositionSize -= oldPos.abs();
+                _marketMap[baseToken].longPositionSize = _marketMap[baseToken].longPositionSize > oldPos.abs()
+                    ? _marketMap[baseToken].longPositionSize - oldPos.abs()
+                    : 0;
+
                 _marketMap[baseToken].shortPositionSize += accountInfo.takerPositionSize.abs();
             }
         } else {
             //short => long
             if (accountInfo.takerPositionSize <= 0) {
                 //new long <= old short
-                _marketMap[baseToken].shortPositionSize -= base.abs();
+                _marketMap[baseToken].shortPositionSize = _marketMap[baseToken].shortPositionSize > base.abs()
+                    ? _marketMap[baseToken].shortPositionSize - base.abs()
+                    : 0;
             } else {
                 //new long > old short
-                _marketMap[baseToken].shortPositionSize -= oldPos.abs();
+                _marketMap[baseToken].shortPositionSize = _marketMap[baseToken].shortPositionSize > oldPos.abs()
+                    ? _marketMap[baseToken].shortPositionSize - oldPos.abs()
+                    : 0;
                 _marketMap[baseToken].longPositionSize += accountInfo.takerPositionSize.abs();
             }
         }
@@ -481,6 +490,22 @@ contract AccountBalance is IAccountBalance, BlockContext, ClearingHouseCallee, A
     }
 
     function _deleteBaseToken(address trader, address baseToken) internal {
+        DataTypes.AccountMarketInfo memory info = _accountMarketMap[trader][baseToken];
+        if (info.takerPositionSize.abs() > 0 && info.takerPositionSize.abs() < _DUST) {
+            if (info.takerPositionSize < 0) {
+                //update total short
+                _marketMap[baseToken].shortPositionSize = _marketMap[baseToken].shortPositionSize >
+                    info.takerPositionSize.abs()
+                    ? _marketMap[baseToken].shortPositionSize - info.takerPositionSize.abs()
+                    : 0;
+            } else {
+                //update total long
+                _marketMap[baseToken].longPositionSize = _marketMap[baseToken].longPositionSize >
+                    info.takerPositionSize.abs()
+                    ? _marketMap[baseToken].longPositionSize - info.takerPositionSize.abs()
+                    : 0;
+            }
+        }
         delete _accountMarketMap[trader][baseToken];
 
         address[] storage tokensStorage = _baseTokensMap[trader];
