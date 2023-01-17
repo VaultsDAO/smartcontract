@@ -53,9 +53,9 @@ describe("Deployment check", () => {
             name: 'WETH',
             decimals: 18,
         } as TokenData
-        deployData.vUSD = {
-            symbol: "vUSD",
-            name: "vUSD",
+        deployData.vETH = {
+            symbol: "vETH",
+            name: "vETH",
         } as TokenData
         deployData.baseToken = {} as TokenData
         deployData.vBAYC = {
@@ -105,15 +105,15 @@ describe("Deployment check", () => {
             await wETH.__TestERC20_init(deployData.wETH.name, deployData.wETH.symbol, deployData.wETH.decimals)
         }
         let QuoteToken = await ethers.getContractFactory("QuoteToken");
-        if (deployData.vUSD.implAddress == undefined || deployData.vUSD.implAddress == '') {
+        if (deployData.vETH.implAddress == undefined || deployData.vETH.implAddress == '') {
             let quoteToken = await waitForDeploy(await QuoteToken.deploy());
             {
-                deployData.vUSD.implAddress = quoteToken.address;
+                deployData.vETH.implAddress = quoteToken.address;
             }
         }
         {
-            var quoteToken = await ethers.getContractAt('QuoteToken', deployData.vUSD.implAddress);
-            var initializeData = quoteToken.interface.encodeFunctionData('initialize', [deployData.vUSD.name, deployData.vUSD.symbol]);
+            var quoteToken = await ethers.getContractAt('QuoteToken', deployData.vETH.implAddress);
+            var initializeData = quoteToken.interface.encodeFunctionData('initialize', [deployData.vETH.name, deployData.vETH.symbol]);
             for (let i = 0; i < 20; i++) {
                 var transparentUpgradeableProxy = await waitForDeploy(
                     await TransparentUpgradeableProxy.deploy(
@@ -122,14 +122,14 @@ describe("Deployment check", () => {
                         initializeData,
                     )
                 );
-                if (deployData.vUSD.address == undefined ||
-                    deployData.vUSD.address == '' ||
-                    isAscendingTokenOrder(deployData.vUSD.address, transparentUpgradeableProxy.address.toString())) {
-                    deployData.vUSD.address = transparentUpgradeableProxy.address;
+                if (deployData.vETH.address == undefined ||
+                    deployData.vETH.address == '' ||
+                    isAscendingTokenOrder(deployData.vETH.address, transparentUpgradeableProxy.address.toString())) {
+                    deployData.vETH.address = transparentUpgradeableProxy.address;
                 }
             }
         }
-        const vUSD = (await ethers.getContractAt('QuoteToken', deployData.vUSD.address)) as BaseToken;
+        const vETH = (await ethers.getContractAt('QuoteToken', deployData.vETH.address)) as BaseToken;
         {
             let baseToken = await waitForDeploy(await BaseToken.deploy());
             {
@@ -148,7 +148,7 @@ describe("Deployment check", () => {
                         initializeData,
                     )
                 ) as BaseContract;
-            } while (!isAscendingTokenOrder(transparentUpgradeableProxy.address.toString(), vUSD.address))
+            } while (!isAscendingTokenOrder(transparentUpgradeableProxy.address.toString(), vETH.address))
             {
                 deployData.vBAYC.address = transparentUpgradeableProxy.address;
             }
@@ -164,7 +164,7 @@ describe("Deployment check", () => {
                         initializeData,
                     )
                 ) as BaseContract;
-            } while (!isAscendingTokenOrder(transparentUpgradeableProxy.address.toString(), vUSD.address))
+            } while (!isAscendingTokenOrder(transparentUpgradeableProxy.address.toString(), vETH.address))
             {
                 deployData.vMAYC.address = transparentUpgradeableProxy.address;
             }
@@ -183,36 +183,36 @@ describe("Deployment check", () => {
             const vBAYC = (await ethers.getContractAt('BaseToken', deployData.vBAYC.address)) as BaseToken;
             const vMAYC = (await ethers.getContractAt('BaseToken', deployData.vMAYC.address)) as BaseToken;
 
-            await vUSD.mintMaximumTo(admin.address)
+            await vETH.mintMaximumTo(admin.address)
             await vBAYC.mintMaximumTo(admin.address)
             await vMAYC.mintMaximumTo(admin.address)
 
             {
-                await uniswapV3Factory.createPool(deployData.vBAYC.address, deployData.vUSD.address, uniFeeTier)
-                const poolBAYCAddr = uniswapV3Factory.getPool(vBAYC.address, vUSD.address, uniFeeTier)
+                await uniswapV3Factory.createPool(deployData.vBAYC.address, deployData.vETH.address, uniFeeTier)
+                const poolBAYCAddr = uniswapV3Factory.getPool(vBAYC.address, vETH.address, uniFeeTier)
                 const poolBAYC = await ethers.getContractAt('UniswapV3Pool', poolBAYCAddr);
                 await vBAYC.addWhitelist(poolBAYC.address)
-                await vUSD.addWhitelist(poolBAYC.address)
+                await vETH.addWhitelist(poolBAYC.address)
             }
 
             {
-                await uniswapV3Factory.createPool(deployData.vMAYC.address, deployData.vUSD.address, uniFeeTier)
-                const poolMAYCAddr = await uniswapV3Factory.getPool(vMAYC.address, vUSD.address, uniFeeTier)
+                await uniswapV3Factory.createPool(deployData.vMAYC.address, deployData.vETH.address, uniFeeTier)
+                const poolMAYCAddr = await uniswapV3Factory.getPool(vMAYC.address, vETH.address, uniFeeTier)
                 const poolMAYC = await ethers.getContractAt('UniswapV3Pool', poolMAYCAddr);
                 await vMAYC.addWhitelist(poolMAYC.address)
-                await vUSD.addWhitelist(poolMAYC.address)
+                await vETH.addWhitelist(poolMAYC.address)
             }
 
             // vBAYC
             {
-                const poolAddr = await uniswapV3Factory.getPool(vBAYC.address, vUSD.address, uniFeeTier)
+                const poolAddr = await uniswapV3Factory.getPool(vBAYC.address, vETH.address, uniFeeTier)
                 const uniPool = (await ethers.getContractAt('UniswapV3Pool', poolAddr)) as UniswapV3Pool;
                 await uniPool.initialize(encodePriceSqrt("100", "1"))
                 await uniPool.increaseObservationCardinalityNext(500)
             }
             // vMAYC
             {
-                const poolAddr = await uniswapV3Factory.getPool(vMAYC.address, vUSD.address, uniFeeTier)
+                const poolAddr = await uniswapV3Factory.getPool(vMAYC.address, vETH.address, uniFeeTier)
                 const uniPool = (await ethers.getContractAt('UniswapV3Pool', poolAddr)) as UniswapV3Pool;
                 await uniPool.initialize(encodePriceSqrt("100", "1"))
                 await uniPool.increaseObservationCardinalityNext(500)
@@ -222,7 +222,7 @@ describe("Deployment check", () => {
                 const lowerTick: number = 45800
                 const upperTick: number = 46400
 
-                const poolAddr = await uniswapV3Factory.getPool(vBAYC.address, vUSD.address, uniFeeTier)
+                const poolAddr = await uniswapV3Factory.getPool(vBAYC.address, vETH.address, uniFeeTier)
                 const uniPool = (await ethers.getContractAt('UniswapV3Pool', poolAddr)) as UniswapV3Pool;
 
                 await uniPool.mint(

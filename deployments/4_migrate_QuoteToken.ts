@@ -23,58 +23,58 @@ async function main() {
     // 
     var proxyAdmin = await hre.ethers.getContractAt('ProxyAdmin', deployData.proxyAdminAddress);
     // 
-    if (deployData.vUSD.implAddress == undefined || deployData.vUSD.implAddress == '') {
+    if (deployData.vETH.implAddress == undefined || deployData.vETH.implAddress == '') {
         let quoteToken = await waitForDeploy(await QuoteToken.deploy());
         {
-            deployData.vUSD.implAddress = quoteToken.address;
+            deployData.vETH.implAddress = quoteToken.address;
             await fs.writeFileSync(fileName, JSON.stringify(deployData, null, 4))
             console.log('quoteToken is deployed', quoteToken.address)
         }
     }
     // 
-    if (deployData.vUSD.address == undefined || deployData.vUSD.address == '') {
-        var quoteToken = await hre.ethers.getContractAt('QuoteToken', deployData.vUSD.implAddress);
-        var initializeData = quoteToken.interface.encodeFunctionData('initialize', [deployData.vUSD.name, deployData.vUSD.symbol]);
+    if (deployData.vETH.address == undefined || deployData.vETH.address == '') {
+        var quoteToken = await hre.ethers.getContractAt('QuoteToken', deployData.vETH.implAddress);
+        var initializeData = quoteToken.interface.encodeFunctionData('initialize', [deployData.vETH.name, deployData.vETH.symbol]);
         for (let i = 0; i < 20; i++) {
             var transparentUpgradeableProxy = await waitForDeploy(
                 await TransparentUpgradeableProxy.deploy(
-                    deployData.vUSD.implAddress,
+                    deployData.vETH.implAddress,
                     proxyAdmin.address,
                     initializeData,
                 )
             )
-            if (deployData.vUSD.address == undefined ||
-                deployData.vUSD.address == '' ||
-                isAscendingTokenOrder(deployData.vUSD.address, transparentUpgradeableProxy.address.toString())) {
-                deployData.vUSD.address = transparentUpgradeableProxy.address;
+            if (deployData.vETH.address == undefined ||
+                deployData.vETH.address == '' ||
+                isAscendingTokenOrder(deployData.vETH.address, transparentUpgradeableProxy.address.toString())) {
+                deployData.vETH.address = transparentUpgradeableProxy.address;
                 await fs.writeFileSync(fileName, JSON.stringify(deployData, null, 4))
-                console.log('vUSD TransparentUpgradeableProxy is deployed', transparentUpgradeableProxy.address)
+                console.log('vETH TransparentUpgradeableProxy is deployed', transparentUpgradeableProxy.address)
             }
         }
     }
     {
-        await upgradeContract(proxyAdmin as ProxyAdmin, deployData.vUSD.address, deployData.vUSD.implAddress)
+        await upgradeContract(proxyAdmin as ProxyAdmin, deployData.vETH.address, deployData.vETH.implAddress)
     }
     // 
     {
         await verifyContract(
             deployData,
             network,
-            deployData.vUSD.implAddress,
+            deployData.vETH.implAddress,
             [],
             {},
             "contracts/QuoteToken.sol:QuoteToken",
         )
     }
     {
-        var quoteToken = await hre.ethers.getContractAt('QuoteToken', deployData.vUSD.implAddress);
-        var initializeData = quoteToken.interface.encodeFunctionData('initialize', [deployData.vUSD.name, deployData.vUSD.symbol]);
+        var quoteToken = await hre.ethers.getContractAt('QuoteToken', deployData.vETH.implAddress);
+        var initializeData = quoteToken.interface.encodeFunctionData('initialize', [deployData.vETH.name, deployData.vETH.symbol]);
         await verifyContract(
             deployData,
             network,
-            deployData.vUSD.address,
+            deployData.vETH.address,
             [
-                deployData.vUSD.implAddress,
+                deployData.vETH.implAddress,
                 proxyAdmin.address,
                 initializeData,
             ],

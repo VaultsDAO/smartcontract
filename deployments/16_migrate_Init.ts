@@ -51,7 +51,7 @@ async function main() {
     //     depositCap: parseUnits("1000", deployData.wBTC.decimals),
     // })
 
-    const vUSD = (await ethers.getContractAt('QuoteToken', deployData.vUSD.address)) as QuoteToken;
+    const vETH = (await ethers.getContractAt('QuoteToken', deployData.vETH.address)) as QuoteToken;
     const vBAYC = (await ethers.getContractAt('BaseToken', deployData.vBAYC.address)) as BaseToken;
     const vMAYC = (await ethers.getContractAt('BaseToken', deployData.vMAYC.address)) as BaseToken;
 
@@ -71,36 +71,36 @@ async function main() {
     }
     // setting pool
     {
-        let poolBAYCAddr = await uniswapV3Factory.getPool(vBAYC.address, vUSD.address, uniFeeTier)
+        let poolBAYCAddr = await uniswapV3Factory.getPool(vBAYC.address, vETH.address, uniFeeTier)
         if (poolBAYCAddr == ethers.constants.AddressZero) {
-            await waitForTx(await uniswapV3Factory.createPool(deployData.vBAYC.address, deployData.vUSD.address, uniFeeTier), 'uniswapV3Factory.createPool(deployData.vBAYC.address, deployData.vUSD.address, uniFeeTier)')
+            await waitForTx(await uniswapV3Factory.createPool(deployData.vBAYC.address, deployData.vETH.address, uniFeeTier), 'uniswapV3Factory.createPool(deployData.vBAYC.address, deployData.vETH.address, uniFeeTier)')
         }
-        poolBAYCAddr = uniswapV3Factory.getPool(vBAYC.address, vUSD.address, uniFeeTier)
+        poolBAYCAddr = uniswapV3Factory.getPool(vBAYC.address, vETH.address, uniFeeTier)
         const poolBAYC = await ethers.getContractAt('UniswapV3Pool', poolBAYCAddr);
         if (!(await vBAYC.isInWhitelist(poolBAYC.address))) {
             await waitForTx(await vBAYC.addWhitelist(poolBAYC.address), 'vBAYC.addWhitelist(poolBAYC.address)')
         }
-        if (!(await vUSD.isInWhitelist(poolBAYC.address))) {
-            await waitForTx(await vUSD.addWhitelist(poolBAYC.address), 'vUSD.addWhitelist(poolBAYC.address)')
+        if (!(await vETH.isInWhitelist(poolBAYC.address))) {
+            await waitForTx(await vETH.addWhitelist(poolBAYC.address), 'vETH.addWhitelist(poolBAYC.address)')
         }
     }
     {
-        let poolMAYCAddr = await uniswapV3Factory.getPool(vMAYC.address, vUSD.address, uniFeeTier)
+        let poolMAYCAddr = await uniswapV3Factory.getPool(vMAYC.address, vETH.address, uniFeeTier)
         if (poolMAYCAddr == ethers.constants.AddressZero) {
-            await waitForTx(await uniswapV3Factory.createPool(deployData.vMAYC.address, deployData.vUSD.address, uniFeeTier), 'uniswapV3Factory.createPool(deployData.vMAYC.address, deployData.vUSD.address, uniFeeTier)')
+            await waitForTx(await uniswapV3Factory.createPool(deployData.vMAYC.address, deployData.vETH.address, uniFeeTier), 'uniswapV3Factory.createPool(deployData.vMAYC.address, deployData.vETH.address, uniFeeTier)')
         }
-        poolMAYCAddr = await uniswapV3Factory.getPool(vMAYC.address, vUSD.address, uniFeeTier)
+        poolMAYCAddr = await uniswapV3Factory.getPool(vMAYC.address, vETH.address, uniFeeTier)
         const poolMAYC = await ethers.getContractAt('UniswapV3Pool', poolMAYCAddr);
         if (!(await vMAYC.isInWhitelist(poolMAYC.address))) {
             await waitForTx(await vMAYC.addWhitelist(poolMAYC.address), 'vMAYC.addWhitelist(poolMAYC.address)')
         }
-        if (!(await vUSD.isInWhitelist(poolMAYC.address))) {
-            await waitForTx(await vUSD.addWhitelist(poolMAYC.address), 'vUSD.addWhitelist(poolMAYC.address)')
+        if (!(await vETH.isInWhitelist(poolMAYC.address))) {
+            await waitForTx(await vETH.addWhitelist(poolMAYC.address), 'vETH.addWhitelist(poolMAYC.address)')
         }
     }
     // deploy clearingHouse
-    if (!(await vUSD.isInWhitelist(clearingHouse.address))) {
-        await waitForTx(await vUSD.addWhitelist(clearingHouse.address), 'vUSD.addWhitelist(clearingHouse.address)')
+    if (!(await vETH.isInWhitelist(clearingHouse.address))) {
+        await waitForTx(await vETH.addWhitelist(clearingHouse.address), 'vETH.addWhitelist(clearingHouse.address)')
     }
     if (!(await vBAYC.isInWhitelist(clearingHouse.address))) {
         await waitForTx(await vBAYC.addWhitelist(clearingHouse.address), 'vBAYC.addWhitelist(clearingHouse.address)')
@@ -109,8 +109,8 @@ async function main() {
         await waitForTx(await vMAYC.addWhitelist(clearingHouse.address), 'vMAYC.addWhitelist(clearingHouse.address)')
     }
 
-    if (!(await vUSD.totalSupply()).eq(ethers.constants.MaxUint256)) {
-        await waitForTx(await vUSD.mintMaximumTo(clearingHouse.address), 'vMAYC.mintMaximumTo(clearingHouse.address)')
+    if (!(await vETH.totalSupply()).eq(ethers.constants.MaxUint256)) {
+        await waitForTx(await vETH.mintMaximumTo(clearingHouse.address), 'vMAYC.mintMaximumTo(clearingHouse.address)')
     }
     if (!(await vBAYC.totalSupply()).eq(ethers.constants.MaxUint256)) {
         await waitForTx(await vBAYC.mintMaximumTo(clearingHouse.address), 'vMAYC.mintMaximumTo(clearingHouse.address)')
@@ -123,7 +123,7 @@ async function main() {
     var maxTickCrossedWithinBlock: number = getMaxTickRange()
     // vBAYC
     {
-        const poolAddr = await uniswapV3Factory.getPool(vBAYC.address, vUSD.address, uniFeeTier)
+        const poolAddr = await uniswapV3Factory.getPool(vBAYC.address, vETH.address, uniFeeTier)
         const uniPool = (await ethers.getContractAt('UniswapV3Pool', poolAddr) as UniswapV3Pool);
         if (network == 'local') {
             await tryWaitForTx(await uniPool.initialize(encodePriceSqrt("100", "1")), 'uniPool.initialize(encodePriceSqrt("100", "1"))')
@@ -139,7 +139,7 @@ async function main() {
     }
     // vMAYC
     {
-        const poolAddr = await uniswapV3Factory.getPool(vMAYC.address, vUSD.address, uniFeeTier)
+        const poolAddr = await uniswapV3Factory.getPool(vMAYC.address, vETH.address, uniFeeTier)
         const uniPool = (await ethers.getContractAt('UniswapV3Pool', poolAddr) as UniswapV3Pool);
         if (network == 'local') {
             await tryWaitForTx(await uniPool.initialize(encodePriceSqrt("100", "1")), 'uniPool.initialize(encodePriceSqrt("100", "1"))')

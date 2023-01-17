@@ -32,7 +32,7 @@ async function main() {
     }
     if (deployData.marketRegistry.address == undefined || deployData.marketRegistry.address == '') {
         var marketRegistry = await hre.ethers.getContractAt('MarketRegistry', deployData.marketRegistry.implAddress);
-        var initializeData = marketRegistry.interface.encodeFunctionData('initialize', [deployData.uniswapV3Factory.address, deployData.vUSD.address]);
+        var initializeData = marketRegistry.interface.encodeFunctionData('initialize', [deployData.uniswapV3Factory.address, deployData.vETH.address]);
         var transparentUpgradeableProxy = await waitForDeploy(
             await TransparentUpgradeableProxy.deploy(
                 deployData.marketRegistry.implAddress,
@@ -61,7 +61,7 @@ async function main() {
     }
     {
         var marketRegistry = await hre.ethers.getContractAt('MarketRegistry', deployData.marketRegistry.implAddress);
-        var initializeData = marketRegistry.interface.encodeFunctionData('initialize', [deployData.uniswapV3Factory.address, deployData.vUSD.address]);
+        var initializeData = marketRegistry.interface.encodeFunctionData('initialize', [deployData.uniswapV3Factory.address, deployData.vETH.address]);
         await verifyContract(
             deployData,
             network,

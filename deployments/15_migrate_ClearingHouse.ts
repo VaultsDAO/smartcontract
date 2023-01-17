@@ -83,7 +83,7 @@ async function main() {
         var initializeData = clearingHouse.interface.encodeFunctionData('initialize', [
             deployData.clearingHouseConfig.address,
             deployData.vault.address,
-            deployData.vUSD.address,
+            deployData.vETH.address,
             deployData.uniswapV3Factory.address,
             deployData.exchange.address,
             deployData.accountBalance.address,
@@ -164,7 +164,7 @@ async function main() {
         var initializeData = clearingHouse.interface.encodeFunctionData('initialize', [
             deployData.clearingHouseConfig.address,
             deployData.vault.address,
-            deployData.vUSD.address,
+            deployData.vETH.address,
             deployData.uniswapV3Factory.address,
             deployData.exchange.address,
             deployData.accountBalance.address,

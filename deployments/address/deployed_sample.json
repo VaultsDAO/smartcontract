@@ -14,9 +14,9 @@
         "symbol": "WETH",
         "decimals": 18
     },
-    "vUSD": {
-        "name": "vUSD",
-        "symbol": "vUSD",
+    "vETH": {
+        "name": "vETH",
+        "symbol": "vETH",
         "decimals": 18,
         "address": "",
         "implAddress": ""

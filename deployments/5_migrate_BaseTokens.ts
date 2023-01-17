@@ -24,7 +24,7 @@ async function main() {
     const BaseToken = await hre.ethers.getContractFactory("BaseToken");
     // 
     var proxyAdmin = await hre.ethers.getContractAt('ProxyAdmin', deployData.proxyAdminAddress);
-    const vUSD = (await hre.ethers.getContractAt('QuoteToken', deployData.vUSD.address)) as BaseToken;
+    const vETH = (await hre.ethers.getContractAt('QuoteToken', deployData.vETH.address)) as BaseToken;
     // 
     if (deployData.baseToken.implAddress == undefined || deployData.baseToken.implAddress == '') {
         let baseToken = await waitForDeploy(await BaseToken.deploy());
@@ -46,7 +46,7 @@ async function main() {
                     initializeData,
                 )
             ) as BaseContract;
-        } while (!isAscendingTokenOrder(transparentUpgradeableProxy.address.toString(), vUSD.address))
+        } while (!isAscendingTokenOrder(transparentUpgradeableProxy.address.toString(), vETH.address))
         {
             deployData.vBAYC.address = transparentUpgradeableProxy.address;
             await fs.writeFileSync(fileName, JSON.stringify(deployData, null, 4))
@@ -64,7 +64,7 @@ async function main() {
                     initializeData,
                 )
             ) as BaseContract;
-        } while (!isAscendingTokenOrder(transparentUpgradeableProxy.address.toString(), vUSD.address))
+        } while (!isAscendingTokenOrder(transparentUpgradeableProxy.address.toString(), vETH.address))
         {
             deployData.vMAYC.address = transparentUpgradeableProxy.address;
             await fs.writeFileSync(fileName, JSON.stringify(deployData, null, 4))

@@ -25,7 +25,7 @@ type DeployData = {
     platformFundAddress: string,
     makerFundAddress: string,
     wETH: TokenData,
-    vUSD: TokenData,
+    vETH: TokenData,
     nftPriceFeedBAYC: TokenData,
     nftPriceFeedMAYC: TokenData,
     baseToken: ContractData,
