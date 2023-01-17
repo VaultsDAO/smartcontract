@@ -522,55 +522,55 @@ contract ClearingHouse is
         return fundingGrowthGlobal;
     }
 
-    function _registerBaseToken(address trader, address baseToken) internal {
-        IAccountBalance(_accountBalance).registerBaseToken(trader, baseToken);
-    }
+    // function _registerBaseToken(address trader, address baseToken) internal {
+    //     IAccountBalance(_accountBalance).registerBaseToken(trader, baseToken);
+    // }
 
     function _modifyOwedRealizedPnl(address trader, int256 amount) internal {
         IAccountBalance(_accountBalance).modifyOwedRealizedPnl(trader, amount);
     }
 
-    function _emitPositionChanged(
-        address trader,
-        address baseToken,
-        int256 exchangedPositionSize,
-        int256 exchangedPositionNotional,
-        uint256 fee,
-        int256 openNotional,
-        int256 realizedPnl,
-        uint256 sqrtPriceAfterX96
-    ) internal {
-        emit PositionChanged(
-            trader,
-            baseToken,
-            exchangedPositionSize,
-            exchangedPositionNotional,
-            fee,
-            openNotional,
-            realizedPnl,
-            sqrtPriceAfterX96
-        );
-    }
+    // function _emitPositionChanged(
+    //     address trader,
+    //     address baseToken,
+    //     int256 exchangedPositionSize,
+    //     int256 exchangedPositionNotional,
+    //     uint256 fee,
+    //     int256 openNotional,
+    //     int256 realizedPnl,
+    //     uint256 sqrtPriceAfterX96
+    // ) internal {
+    //     emit PositionChanged(
+    //         trader,
+    //         baseToken,
+    //         exchangedPositionSize,
+    //         exchangedPositionNotional,
+    //         fee,
+    //         openNotional,
+    //         realizedPnl,
+    //         sqrtPriceAfterX96
+    //     );
+    // }
 
-    function _emitLiquidityChanged(
-        address maker,
-        address baseToken,
-        address quoteToken,
-        int24 lowerTick,
-        int24 upperTick,
-        int256 base,
-        int256 quote,
-        int128 liquidity,
-        uint256 quoteFee
-    ) internal {
-        emit LiquidityChanged(maker, baseToken, quoteToken, lowerTick, upperTick, base, quote, liquidity, quoteFee);
-    }
+    // function _emitLiquidityChanged(
+    //     address maker,
+    //     address baseToken,
+    //     address quoteToken,
+    //     int24 lowerTick,
+    //     int24 upperTick,
+    //     int256 base,
+    //     int256 quote,
+    //     int128 liquidity,
+    //     uint256 quoteFee
+    // ) internal {
+    //     emit LiquidityChanged(maker, baseToken, quoteToken, lowerTick, upperTick, base, quote, liquidity, quoteFee);
+    // }
 
-    function _referredPositionChanged(bytes32 referralCode) internal {
-        if (referralCode != 0) {
-            emit ReferredPositionChanged(referralCode);
-        }
-    }
+    // function _referredPositionChanged(bytes32 referralCode) internal {
+    //     if (referralCode != 0) {
+    //         emit ReferredPositionChanged(referralCode);
+    //     }
+    // }
 
     function _settleBadDebt(address trader) internal {
         IVault(_vault).settleBadDebt(trader);
@@ -635,23 +635,23 @@ contract ClearingHouse is
         return getAccountValue(trader) < _getMarginRequirementForLiquidation(trader);
     }
 
-    function _settleBalanceAndDeregister(
-        address trader,
-        address baseToken,
-        int256 takerBase,
-        int256 takerQuote,
-        int256 realizedPnl,
-        int256 makerFee
-    ) internal {
-        IAccountBalance(_accountBalance).settleBalanceAndDeregister(
-            trader,
-            baseToken,
-            takerBase,
-            takerQuote,
-            realizedPnl,
-            makerFee
-        );
-    }
+    // function _settleBalanceAndDeregister(
+    //     address trader,
+    //     address baseToken,
+    //     int256 takerBase,
+    //     int256 takerQuote,
+    //     int256 realizedPnl,
+    //     int256 makerFee
+    // ) internal {
+    //     IAccountBalance(_accountBalance).settleBalanceAndDeregister(
+    //         trader,
+    //         baseToken,
+    //         takerBase,
+    //         takerQuote,
+    //         realizedPnl,
+    //         makerFee
+    //     );
+    // }
 
     function _checkMarketOpen(address baseToken) internal view {
         // CH_MNO: Market not opened
@@ -666,49 +666,49 @@ contract ClearingHouse is
     // INTERNAL PURE
     //
 
-    function _getOppositeAmount(uint256 oppositeAmountBound, bool isPartialClose) internal view returns (uint256) {
-        return
-            isPartialClose
-                ? oppositeAmountBound.mulRatio(IClearingHouseConfig(_clearingHouseConfig).getPartialCloseRatio())
-                : oppositeAmountBound;
-    }
+    // function _getOppositeAmount(uint256 oppositeAmountBound, bool isPartialClose) internal view returns (uint256) {
+    //     return
+    //         isPartialClose
+    //             ? oppositeAmountBound.mulRatio(IClearingHouseConfig(_clearingHouseConfig).getPartialCloseRatio())
+    //             : oppositeAmountBound;
+    // }
 
-    function _checkSlippage(InternalCheckSlippageParams memory params) internal pure {
-        // skip when params.oppositeAmountBound is zero
-        if (params.oppositeAmountBound == 0) {
-            return;
-        }
+    // function _checkSlippage(InternalCheckSlippageParams memory params) internal pure {
+    //     // skip when params.oppositeAmountBound is zero
+    //     if (params.oppositeAmountBound == 0) {
+    //         return;
+    //     }
 
-        // B2Q + exact input, want more output quote as possible, so we set a lower bound of output quote
-        // B2Q + exact output, want less input base as possible, so we set a upper bound of input base
-        // Q2B + exact input, want more output base as possible, so we set a lower bound of output base
-        // Q2B + exact output, want less input quote as possible, so we set a upper bound of input quote
-        if (params.isBaseToQuote) {
-            if (params.isExactInput) {
-                // too little received when short
-                require(params.quote >= params.oppositeAmountBound, "CH_TLRS");
-            } else {
-                // too much requested when short
-                require(params.base <= params.oppositeAmountBound, "CH_TMRS");
-            }
-        } else {
-            if (params.isExactInput) {
-                // too little received when long
-                require(params.base >= params.oppositeAmountBound, "CH_TLRL");
-            } else {
-                // too much requested when long
-                require(params.quote <= params.oppositeAmountBound, "CH_TMRL");
-            }
-        }
-    }
+    //     // B2Q + exact input, want more output quote as possible, so we set a lower bound of output quote
+    //     // B2Q + exact output, want less input base as possible, so we set a upper bound of input base
+    //     // Q2B + exact input, want more output base as possible, so we set a lower bound of output base
+    //     // Q2B + exact output, want less input quote as possible, so we set a upper bound of input quote
+    //     if (params.isBaseToQuote) {
+    //         if (params.isExactInput) {
+    //             // too little received when short
+    //             require(params.quote >= params.oppositeAmountBound, "CH_TLRS");
+    //         } else {
+    //             // too much requested when short
+    //             require(params.base <= params.oppositeAmountBound, "CH_TMRS");
+    //         }
+    //     } else {
+    //         if (params.isExactInput) {
+    //             // too little received when long
+    //             require(params.base >= params.oppositeAmountBound, "CH_TLRL");
+    //         } else {
+    //             // too much requested when long
+    //             require(params.quote <= params.oppositeAmountBound, "CH_TMRL");
+    //         }
+    //     }
+    // }
 
-    function _checkSlippageAfterLiquidityChange(
-        uint256 base,
-        uint256 minBase,
-        uint256 quote,
-        uint256 minQuote
-    ) internal pure {
-        // CH_PSCF: price slippage check fails
-        require(base >= minBase && quote >= minQuote, "CH_PSCF");
-    }
+    // function _checkSlippageAfterLiquidityChange(
+    //     uint256 base,
+    //     uint256 minBase,
+    //     uint256 quote,
+    //     uint256 minQuote
+    // ) internal pure {
+    //     // CH_PSCF: price slippage check fails
+    //     require(base >= minBase && quote >= minQuote, "CH_PSCF");
+    // }
 }
