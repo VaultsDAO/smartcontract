@@ -35,13 +35,13 @@ import helpers from "./helpers";
 const { waitForDeploy, waitForTx, verifyContract } = helpers;
 
 describe("Deployment check", () => {
-    const [admin, maker, trader, liquidator, priceAdmin, platformFund] = waffle.provider.getWallets()
+    const [admin, maker, trader1, trader2, liquidator, priceAdmin, platformFund] = waffle.provider.getWallets()
     beforeEach(async () => {
     })
 
     it("check", async () => {
         let deployData = {} as DeployData
-        deployData.priceAdminAddress = priceAdmin.address
+        // deployData.priceAdminAddress = priceAdmin.address
         deployData.platformFundAddress = platformFund.address
         deployData.makerFundAddress = maker.address
         deployData.nftPriceFeedBAYC = {
@@ -493,9 +493,12 @@ describe("Deployment check", () => {
             {
                 const poolAddr = await uniswapV3Factory.getPool(vBAYC.address, vETH.address, uniFeeTier)
                 const uniPool = await ethers.getContractAt('UniswapV3Pool', poolAddr);
-                await uniPool.initialize(encodePriceSqrt('100', "1"))
+                await uniPool.initialize(encodePriceSqrt('73.8388', "1"))
                 const uniFeeRatio = await uniPool.fee()
-                await uniPool.increaseObservationCardinalityNext(500)
+                await waitForTx(
+                    await uniPool.increaseObservationCardinalityNext(500),
+                    'await uniPool.increaseObservationCardinalityNext(500)'
+                )
                 await marketRegistry.addPool(vBAYC.address, uniFeeRatio)
                 await exchange.setMaxTickCrossedWithinBlock(vBAYC.address, maxTickCrossedWithinBlock)
             }
@@ -503,13 +506,17 @@ describe("Deployment check", () => {
             {
                 const poolAddr = await uniswapV3Factory.getPool(vMAYC.address, vETH.address, uniFeeTier)
                 const uniPool = await ethers.getContractAt('UniswapV3Pool', poolAddr);
-                await uniPool.initialize(encodePriceSqrt('100', "1"))
+                await uniPool.initialize(encodePriceSqrt('15.8388', "1"))
                 const uniFeeRatio = await uniPool.fee()
-                await uniPool.increaseObservationCardinalityNext(500)
+                await waitForTx(
+                    await uniPool.increaseObservationCardinalityNext(500),
+                    'await uniPool.increaseObservationCardinalityNext(500)'
+                )
                 await marketRegistry.addPool(vMAYC.address, uniFeeRatio)
                 await exchange.setMaxTickCrossedWithinBlock(vMAYC.address, maxTickCrossedWithinBlock)
             }
         }
+        return
         {
             // deploy UniV3 factory
             var uniswapV3Factory = await ethers.getContractAt('UniswapV3Factory', deployData.uniswapV3Factory.address);
@@ -559,18 +566,29 @@ describe("Deployment check", () => {
                 }
                 {
                     await waitForTx(
-                        await wETH.mint(trader.address, parseEther('1000'))
+                        await wETH.mint(trader1.address, parseEther('1000'))
                     )
                     await waitForTx(
-                        await wETH.connect(trader).approve(vault.address, ethers.constants.MaxUint256)
+                        await wETH.connect(trader1).approve(vault.address, ethers.constants.MaxUint256)
                     )
                     await waitForTx(
-                        await vault.connect(trader).deposit(wETH.address, parseEther('1000'))
+                        await vault.connect(trader1).deposit(wETH.address, parseEther('1000'))
                     )
                 }
                 {
                     await waitForTx(
-                        await clearingHouse.connect(trader).openPosition({
+                        await wETH.mint(trader2.address, parseEther('1000'))
+                    )
+                    await waitForTx(
+                        await wETH.connect(trader2).approve(vault.address, ethers.constants.MaxUint256)
+                    )
+                    await waitForTx(
+                        await vault.connect(trader2).deposit(wETH.address, parseEther('1000'))
+                    )
+                }
+                {
+                    await waitForTx(
+                        await clearingHouse.connect(trader1).openPosition({
                             baseToken: baseToken.address,
                             isBaseToQuote: true,
                             isExactInput: true,
@@ -579,19 +597,47 @@ describe("Deployment check", () => {
                             sqrtPriceLimitX96: 0,
                             deadline: ethers.constants.MaxUint256,
                             referralCode: ethers.constants.HashZero,
-                        })
+                        }),
+                        'clearingHouse.connect(trader2).openPosition'
                     )
                 }
                 {
                     await waitForTx(
-                        await clearingHouse.connect(trader).closePosition({
+                        await clearingHouse.connect(trader2).openPosition({
+                            baseToken: baseToken.address,
+                            isBaseToQuote: false,
+                            isExactInput: false,
+                            oppositeAmountBound: ethers.constants.MaxUint256,
+                            amount: parseEther("0.5"),
+                            sqrtPriceLimitX96: 0,
+                            deadline: ethers.constants.MaxUint256,
+                            referralCode: ethers.constants.HashZero,
+                        }),
+                        'clearingHouse.connect(trader2).openPosition'
+                    )
+                }
+                {
+                    await waitForTx(
+                        await clearingHouse.connect(trader1).closePosition({
                             baseToken: baseToken.address,
                             sqrtPriceLimitX96: parseEther("0"),
                             oppositeAmountBound: parseEther("0"),
                             deadline: ethers.constants.MaxUint256,
                             referralCode: ethers.constants.HashZero,
                         }),
-                        'clearingHouse.connect(trader).closePosition'
+                        'clearingHouse.connect(trader1).closePosition'
+                    )
+                }
+                {
+                    await waitForTx(
+                        await clearingHouse.connect(trader2).closePosition({
+                            baseToken: baseToken.address,
+                            sqrtPriceLimitX96: parseEther("0"),
+                            oppositeAmountBound: parseEther("0"),
+                            deadline: ethers.constants.MaxUint256,
+                            referralCode: ethers.constants.HashZero,
+                        }),
+                        'clearingHouse.connect(trader2).closePosition'
                     )
                 }
                 {

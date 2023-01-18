@@ -130,7 +130,10 @@ async function main() {
         } else {
             await tryWaitForTx(await uniPool.initialize(encodePriceSqrt("73.8388", "1")), 'uniPool.initialize(encodePriceSqrt("73.8388", "1"))')
         }
-        await tryWaitForTx(await uniPool.increaseObservationCardinalityNext(500), 'uniPool.increaseObservationCardinalityNext(500)')
+        await tryWaitForTx(
+            await uniPool.increaseObservationCardinalityNext((2 ^ 16) - 1),
+            'uniPool.increaseObservationCardinalityNext((2 ^ 16) - 1)'
+        )
         if (!(await marketRegistry.hasPool(vBAYC.address))) {
             const uniFeeRatio = await uniPool.fee()
             await tryWaitForTx(await marketRegistry.addPool(vBAYC.address, uniFeeRatio), 'marketRegistry.addPool(vBAYC.address, uniFeeRatio)')
@@ -146,7 +149,10 @@ async function main() {
         } else {
             await tryWaitForTx(await uniPool.initialize(encodePriceSqrt("15.899", "1")), 'uniPool.initialize(encodePriceSqrt("15.899", "1"))')
         }
-        await tryWaitForTx(await uniPool.increaseObservationCardinalityNext(500), 'uniPool.increaseObservationCardinalityNext')
+        await tryWaitForTx(
+            await uniPool.increaseObservationCardinalityNext((2 ^ 16) - 1),
+            'uniPool.increaseObservationCardinalityNext((2 ^ 16) - 1)'
+        )
         if (!(await marketRegistry.hasPool(vMAYC.address))) {
             const uniFeeRatio = await uniPool.fee()
             await waitForTx(await marketRegistry.addPool(vMAYC.address, uniFeeRatio), 'marketRegistry.addPool(vMAYC.address, uniFeeRatio)')

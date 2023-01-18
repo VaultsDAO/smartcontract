@@ -847,4 +847,17 @@ contract Exchange is
         // 5% < delta
         return exchangedPositionNotional.abs().mul(deltaTwapRatio.abs()).div(1e6);
     }
+
+    function getGlobalFundingGrowthInfo(
+        address baseToken
+    ) public view returns (uint256 lastSettledTimestamp, DataTypes.Growth memory fundingGrowthGlobal) {
+        lastSettledTimestamp = _lastSettledTimestampMap[baseToken];
+        fundingGrowthGlobal = _globalFundingGrowthX96Map[baseToken];
+    }
+
+    function getFundingGrowthGlobalAndTwaps(
+        address baseToken
+    ) public view returns (DataTypes.Growth memory fundingGrowthGlobal, uint256 markTwap, uint256 indexTwap) {
+        (fundingGrowthGlobal, markTwap, indexTwap) = _getFundingGrowthGlobalAndTwaps(baseToken);
+    }
 }

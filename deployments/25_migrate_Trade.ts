@@ -10,6 +10,7 @@ import { getMaxTickRange } from "../test/helper/number";
 import helpers from "./helpers";
 import { formatEther, formatUnits, parseEther } from "ethers/lib/utils";
 import BigNumber from "bignumber.js";
+import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 const { waitForTx, tryWaitForTx } = helpers;
 
 
@@ -93,15 +94,84 @@ async function main() {
     //     formatEther(unrealizedPnl2),
     // )
 
-    for (var trader of [trader1, trader2]) {
-        let [realizedPnl, unrealizedPnl] = await accountBalance.getPnlAndPendingFee(trader.address)
+    // for (var trader of [trader1, trader2]) {
+    //     let [realizedPnl, unrealizedPnl] = await accountBalance.getPnlAndPendingFee(trader.address)
+    //     console.log(
+    //         trader.address,
+    //         'getPnlAndPendingFee',
+    //         formatEther(realizedPnl),
+    //         formatEther(unrealizedPnl),
+    //     )
+    // }
+
+    // for (var trader of [trader1, trader2]) {
+    //     await waitForTx(
+    //         await vault.connect(trader).deposit(wETH.address, parseEther('990')),
+    //         'await vault.connect(trader).deposit(wETH.address, parseEther(990))'
+    //     )
+    // }
+
+    for (var baseToken of [vBAYC, vMAYC]) {
+        let markTwapX96 = await exchange.getSqrtMarkTwapX96(baseToken.address, 0)
+        let markTwap = new bn(formatSqrtPriceX96ToPrice(markTwapX96, 18))
+        let indexPrice = new bn(formatEther((await baseToken.getIndexPrice(0))))
+        let deltaPrice = markTwap.minus(indexPrice).abs()
+        let tradeAmount = deltaPrice.div(indexPrice).multipliedBy(1000).div(indexPrice).div(4)
         console.log(
-            trader.address,
-            'getPnlAndPendingFee',
-            formatEther(realizedPnl),
-            formatEther(unrealizedPnl),
+            baseToken.address,
+            markTwap.toString(),
+            indexPrice.toString(),
+            deltaPrice.toString(),
+            tradeAmount.toString(),
+        )
+        let trader: SignerWithAddress
+        let idx = Math.random() % 2
+        if (idx == 0) {
+            trader = trader1
+        } else {
+            trader = trader2
+        }
+        if (markTwap.gt(indexPrice)) {
+            await waitForTx(
+                await clearingHouse.connect(trader).openPosition({
+                    baseToken: baseToken.address,
+                    isBaseToQuote: true,
+                    isExactInput: true,
+                    oppositeAmountBound: 0,
+                    amount: parseEther(tradeAmount.toFixed(18).toString()),
+                    sqrtPriceLimitX96: 0,
+                    deadline: ethers.constants.MaxUint256,
+                    referralCode: ethers.constants.HashZero,
+                }),
+                'clearingHouse.connect(trader).openPosition short'
+            )
+        } else {
+            await waitForTx(
+                await clearingHouse.connect(trader).openPosition({
+                    baseToken: baseToken.address,
+                    isBaseToQuote: false,
+                    isExactInput: false,
+                    oppositeAmountBound: 0,
+                    amount: parseEther(tradeAmount.toFixed(18).toString()),
+                    sqrtPriceLimitX96: 0,
+                    deadline: ethers.constants.MaxUint256,
+                    referralCode: ethers.constants.HashZero,
+                }),
+                'clearingHouse.connect(trader).openPosition long'
+            )
+        }
+        markTwapX96 = await exchange.getSqrtMarkTwapX96(baseToken.address, 0)
+        markTwap = new bn(formatSqrtPriceX96ToPrice(markTwapX96, 18))
+        indexPrice = new bn(formatEther((await baseToken.getIndexPrice(0))))
+        deltaPrice = markTwap.minus(indexPrice).abs()
+        console.log(
+            baseToken.address,
+            markTwap.toString(),
+            indexPrice.toString(),
+            deltaPrice.toString(),
         )
     }
+
 
     // let [lastSettledTimestamp, fundingGrowth] = (await exchange.getGlobalFundingGrowthInfo(vBAYC.address))
     // console.log(
