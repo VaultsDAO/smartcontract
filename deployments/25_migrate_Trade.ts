@@ -125,8 +125,12 @@ async function main() {
             tradeAmount.toString(),
         )
         let trader: SignerWithAddress
-        let idx = Math.random() % 2
-        if (idx == 0) {
+        const rndInt = Math.floor(Math.random() * 1000000) % 2
+        console.log(
+            'rndInt',
+            rndInt
+        )
+        if (rndInt == 0) {
             trader = trader1
         } else {
             trader = trader2
