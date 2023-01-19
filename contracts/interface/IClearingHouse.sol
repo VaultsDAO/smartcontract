@@ -80,6 +80,8 @@ interface IClearingHouse {
         int24 upperTick;
     }
 
+    event PlatformFundChanged(address indexed platformFundArg);
+
     /// @notice Emitted when open position with non-zero referral code
     /// @param referralCode The referral code by partners
     event ReferredPositionChanged(bytes32 indexed referralCode);

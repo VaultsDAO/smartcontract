@@ -183,6 +183,11 @@ contract ClearingHouse is
         emit DelegateApprovalChanged(delegateApprovalArg);
     }
 
+    function setPlatformFund(address platformFundArg) external onlyOwner {
+        _platformFund = platformFundArg;
+        emit PlatformFundChanged(platformFundArg);
+    }
+
     /// @inheritdoc IClearingHouse
     function addLiquidity(
         DataTypes.AddLiquidityParams calldata params

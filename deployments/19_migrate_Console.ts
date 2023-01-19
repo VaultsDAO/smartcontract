@@ -5,7 +5,7 @@ import hre, { ethers } from "hardhat";
 import bn from "bignumber.js"
 
 import { encodePriceSqrt, formatSqrtPriceX96ToPrice } from "../test/shared/utilities";
-import { AccountBalance, BaseToken, Exchange, MarketRegistry, NftPriceFeed, OrderBook, QuoteToken, TestERC20, UniswapV3Pool, Vault } from "../typechain";
+import { AccountBalance, BaseToken, ClearingHouse, Exchange, MarketRegistry, NftPriceFeed, OrderBook, QuoteToken, TestERC20, UniswapV3Pool, Vault } from "../typechain";
 import { getMaxTickRange } from "../test/helper/number";
 import helpers from "./helpers";
 import { formatEther, formatUnits, parseEther } from "ethers/lib/utils";
@@ -36,7 +36,7 @@ async function main() {
     var insuranceFund = await hre.ethers.getContractAt('InsuranceFund', deployData.insuranceFund.address);
     var vault = (await hre.ethers.getContractAt('Vault', deployData.vault.address)) as Vault;
     var collateralManager = await hre.ethers.getContractAt('CollateralManager', deployData.collateralManager.address);
-    var clearingHouse = await hre.ethers.getContractAt('ClearingHouse', deployData.clearingHouse.address);
+    var clearingHouse = (await hre.ethers.getContractAt('ClearingHouse', deployData.clearingHouse.address)) as ClearingHouse;
 
     var wETH = (await hre.ethers.getContractAt('TestERC20', deployData.wETH.address)) as TestERC20;
 
@@ -93,28 +93,52 @@ async function main() {
     //     formatEther(unrealizedPnl2),
     // )
 
-    for (var trader of [trader1]) {
-        let [realizedPnl, unrealizedPnl] = await accountBalance.getPnlAndPendingFee(trader.address)
-        let totalDebtValue = await accountBalance.getTotalDebtValue(trader.address)
-        console.log(
-            trader.address,
-            'accountBalance',
-            formatEther(realizedPnl),
-            formatEther(unrealizedPnl),
-            formatEther(totalDebtValue),
-        )
-        for (var baseToken of [vBAYC, vMAYC]) {
-            let totalPositionSize = await accountBalance.getTotalPositionSize(trader.address, baseToken.address)
-            let totalOpenNotional = await accountBalance.getTotalOpenNotional(trader.address, baseToken.address)
-            console.log(
-                trader.address,
-                baseToken.address,
-                'accountPosition',
-                formatEther(totalPositionSize),
-                formatEther(totalOpenNotional),
-            )
-        }
-    }
+    // for (var trader of [trader1]) {
+    //     let [realizedPnl, unrealizedPnl] = await accountBalance.getPnlAndPendingFee(trader.address)
+    //     let totalDebtValue = await accountBalance.getTotalDebtValue(trader.address)
+    //     console.log(
+    //         trader.address,
+    //         'accountBalance',
+    //         formatEther(realizedPnl),
+    //         formatEther(unrealizedPnl),
+    //         formatEther(totalDebtValue),
+    //     )
+    //     for (var baseToken of [vBAYC, vMAYC]) {
+    //         let totalPositionSize = await accountBalance.getTotalPositionSize(trader.address, baseToken.address)
+    //         let totalOpenNotional = await accountBalance.getTotalOpenNotional(trader.address, baseToken.address)
+    //         console.log(
+    //             trader.address,
+    //             baseToken.address,
+    //             'accountPosition',
+    //             formatEther(totalPositionSize),
+    //             formatEther(totalOpenNotional),
+    //         )
+    //     }
+    // }
+
+    // {
+    //     let pfAddr = (await clearingHouse.getPlatformFund())
+    //     let [realizedPnl, unrealizedPnl] = await accountBalance.getPnlAndPendingFee(pfAddr)
+    //     console.log(
+    //         'platformFund',
+    //         pfAddr,
+    //         'accountBalance',
+    //         formatEther(realizedPnl),
+    //         formatEther(unrealizedPnl),
+    //     )
+    // }
+
+    // {
+    //     let pfAddr = (await clearingHouse.getInsuranceFund())
+    //     let [realizedPnl, unrealizedPnl] = await accountBalance.getPnlAndPendingFee(pfAddr)
+    //     console.log(
+    //         'insuranceFund',
+    //         pfAddr,
+    //         'accountBalance',
+    //         formatEther(realizedPnl),
+    //         formatEther(unrealizedPnl),
+    //     )
+    // }
 
     
 
