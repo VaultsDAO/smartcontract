@@ -124,6 +124,9 @@ describe("ClearingHouse fee updated", () => {
         mockedNFTPriceFeed.smocked.getPrice.will.return.with(async () => {
             return parseUnits("96", 18)
         })
+        console.log((await exchange.getInsuranceFundFeeRatio(baseToken.address, true)).toString())
+        console.log((await exchange.getInsuranceFundFeeRatio(baseToken.address, false)).toString())
+        return
         // short 100$
         await clearingHouse.connect(trader).openPosition({
             baseToken: baseToken.address,

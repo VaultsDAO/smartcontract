@@ -93,15 +93,30 @@ async function main() {
     //     formatEther(unrealizedPnl2),
     // )
 
-    // for (var trader of [trader1, trader2]) {
-    //     let [realizedPnl, unrealizedPnl] = await accountBalance.getPnlAndPendingFee(trader.address)
-    //     console.log(
-    //         trader.address,
-    //         'getPnlAndPendingFee',
-    //         formatEther(realizedPnl),
-    //         formatEther(unrealizedPnl),
-    //     )
-    // }
+    for (var trader of [trader1]) {
+        let [realizedPnl, unrealizedPnl] = await accountBalance.getPnlAndPendingFee(trader.address)
+        let totalDebtValue = await accountBalance.getTotalDebtValue(trader.address)
+        console.log(
+            trader.address,
+            'accountBalance',
+            formatEther(realizedPnl),
+            formatEther(unrealizedPnl),
+            formatEther(totalDebtValue),
+        )
+        for (var baseToken of [vBAYC, vMAYC]) {
+            let totalPositionSize = await accountBalance.getTotalPositionSize(trader.address, baseToken.address)
+            let totalOpenNotional = await accountBalance.getTotalOpenNotional(trader.address, baseToken.address)
+            console.log(
+                trader.address,
+                baseToken.address,
+                'accountPosition',
+                formatEther(totalPositionSize),
+                formatEther(totalOpenNotional),
+            )
+        }
+    }
+
+    
 
     // let [lastSettledTimestamp, fundingGrowth] = (await exchange.getGlobalFundingGrowthInfo(vBAYC.address))
     // console.log(
@@ -155,9 +170,9 @@ async function main() {
     //     console.log(formatEther((await vMAYC.getIndexPrice(0))))
     // }
 
-    await wETH.connect(trader4).approve(vault.address, ethers.constants.MaxUint256);
+    // await wETH.connect(trader4).approve(vault.address, ethers.constants.MaxUint256);
 
-    await vault.connect(trader4).deposit(wETH.address, parseEther('1000'));
+    // await vault.connect(trader4).deposit(wETH.address, parseEther('1000'));
 
     // await waitForTx(
     //     await clearingHouse.connect(trader1).openPosition({

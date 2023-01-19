@@ -196,7 +196,8 @@ contract Exchange is
             // EX_OPLBS: over price limit before swap
             require(!isOverPriceLimit, "EX_OPLBS");
         }
-
+        // check fee ratio before swap
+        uint256 insuranceFundFeeRatio = getInsuranceFundFeeRatio(params.baseToken, params.isBaseToQuote);
         // get openNotional before swap
         int256 oldTakerOpenNotional = IAccountBalance(_accountBalance).getTakerOpenNotional(
             params.trader,
@@ -239,8 +240,11 @@ contract Exchange is
             1e6
         );
         // insuranceFundFee
-        uint256 insuranceFundFee = getDetalTawpInsuranceFundFee(params.baseToken, response.exchangedPositionNotional);
-
+        uint256 insuranceFundFee = FullMath.mulDiv(
+            response.exchangedPositionNotional.abs(),
+            insuranceFundFeeRatio,
+            1e6
+        );
         return
             SwapResponse({
                 base: response.base.abs(),
@@ -817,18 +821,15 @@ contract Exchange is
         return _MAX_TICK_CROSSED_WITHIN_BLOCK_CAP;
     }
 
-    function getDetalTawpInsuranceFundFee(
-        address baseToken,
-        int256 exchangedPositionNotional
-    ) public view returns (uint256) {
+    function getInsuranceFundFeeRatio(address baseToken, bool isBaseToQuote) public view returns (uint256) {
         (, uint256 markTwap, uint256 indexTwap) = _getFundingGrowthGlobalAndTwaps(baseToken);
         int256 deltaTwapRatio = (markTwap.toInt256().sub(indexTwap.toInt256())).mulDiv(1e6, indexTwap);
         IMarketRegistry.MarketInfo memory marketInfo = IMarketRegistry(_marketRegistry).getMarketInfo(baseToken);
         // delta <= 2.5%
         if (deltaTwapRatio.abs() <= marketInfo.optimalDeltaTwapRatio) {
-            return exchangedPositionNotional.abs().mul(marketInfo.insuranceFundFeeRatio).div(1e6);
+            return marketInfo.insuranceFundFeeRatio;
         }
-        if (exchangedPositionNotional.mul(deltaTwapRatio) < 0) {
+        if ((isBaseToQuote && deltaTwapRatio > 0) || (!isBaseToQuote && deltaTwapRatio < 0)) {
             return 0;
         }
         // 2.5% < delta <= 5%
@@ -836,16 +837,10 @@ contract Exchange is
             marketInfo.optimalDeltaTwapRatio < deltaTwapRatio.abs() &&
             deltaTwapRatio.abs() <= marketInfo.unhealthyDeltaTwapRatio
         ) {
-            return
-                exchangedPositionNotional
-                    .abs()
-                    .mul(deltaTwapRatio.abs())
-                    .div(1e6)
-                    .mul(marketInfo.optimalFundingRatio)
-                    .div(1e6);
+            return deltaTwapRatio.abs().mul(marketInfo.optimalFundingRatio).div(1e6);
         }
         // 5% < delta
-        return exchangedPositionNotional.abs().mul(deltaTwapRatio.abs()).div(1e6);
+        return deltaTwapRatio.abs();
     }
 
     function getGlobalFundingGrowthInfo(
