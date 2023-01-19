@@ -49,7 +49,13 @@ interface IExchange {
     /// @param baseToken Address of the base token
     /// @param markTwap The market twap price when the funding growth is updated
     /// @param indexTwap The index twap price when the funding growth is updated
-    event FundingUpdated(address indexed baseToken, uint256 markTwap, uint256 indexTwap);
+    event FundingUpdated(
+        address indexed baseToken,
+        uint256 markTwap,
+        uint256 indexTwap,
+        uint256 longPositionSize,
+        uint256 shortPositionSize
+    );
 
     /// @notice Emitted when maxTickCrossedWithinBlock is updated
     /// @param baseToken Address of the base token
@@ -128,5 +134,4 @@ interface IExchange {
     /// @notice Get `ClearingHouseConfig` contract address
     /// @return clearingHouse `ClearingHouseConfig` contract address
     function getClearingHouseConfig() external view returns (address clearingHouse);
-
 }

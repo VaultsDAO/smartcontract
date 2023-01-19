@@ -117,7 +117,7 @@ async function main() {
         let indexPrice = new bn(formatEther((await baseToken.getIndexPrice(0))))
         // let deltaPrice = markTwap.minus(indexPrice).abs()
         let rndInt
-        rndInt = Math.floor(Math.random() * 1000000) % 8 + 2
+        rndInt = Math.floor(Math.random() * 1000000) % 5 + 5
         let deltaPrice = (indexPrice.multipliedBy(0.005 * rndInt))
         let tradeAmount = deltaPrice.div(indexPrice).multipliedBy(1000).div(indexPrice).div(2)
         console.log(
@@ -129,10 +129,6 @@ async function main() {
         )
         let trader: SignerWithAddress
         rndInt = Math.floor(Math.random() * 1000000) % 4 + 1
-        console.log(
-            'rndInt',
-            rndInt
-        )
         if (rndInt == 1) {
             trader = trader1
         } else if (rndInt == 2) {

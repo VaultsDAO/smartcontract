@@ -307,7 +307,10 @@ contract Exchange is
                 fundingGrowthGlobal.twShortPremiumDivBySqrtPriceX96
             );
 
-            emit FundingUpdated(baseToken, markTwap, indexTwap);
+            (uint256 longPositionSize, uint256 shortPositionSize) = IAccountBalance(_accountBalance)
+                .getMarketPositionSize(baseToken);
+                
+            emit FundingUpdated(baseToken, markTwap, indexTwap, longPositionSize, shortPositionSize);
 
             // update tick for price limit checks
             _lastUpdatedTickMap[baseToken] = _getTick(baseToken);
