@@ -24,7 +24,7 @@ async function main() {
     deployData = JSON.parse(dataText.toString())
     // 
 
-    const [admin, maker, priceAdmin, platformFund, trader1, trader2] = await ethers.getSigners()
+    const [admin, maker, priceAdmin, platformFund, trader1, trader2, trader3, trader4] = await ethers.getSigners()
 
     // deploy UniV3 factory
     var uniswapV3Factory = await hre.ethers.getContractAt('UniswapV3Factory', deployData.uniswapV3Factory.address);
@@ -93,15 +93,15 @@ async function main() {
     //     formatEther(unrealizedPnl2),
     // )
 
-    for (var trader of [trader1, trader2]) {
-        let [realizedPnl, unrealizedPnl] = await accountBalance.getPnlAndPendingFee(trader.address)
-        console.log(
-            trader.address,
-            'getPnlAndPendingFee',
-            formatEther(realizedPnl),
-            formatEther(unrealizedPnl),
-        )
-    }
+    // for (var trader of [trader1, trader2]) {
+    //     let [realizedPnl, unrealizedPnl] = await accountBalance.getPnlAndPendingFee(trader.address)
+    //     console.log(
+    //         trader.address,
+    //         'getPnlAndPendingFee',
+    //         formatEther(realizedPnl),
+    //         formatEther(unrealizedPnl),
+    //     )
+    // }
 
     // let [lastSettledTimestamp, fundingGrowth] = (await exchange.getGlobalFundingGrowthInfo(vBAYC.address))
     // console.log(
@@ -155,9 +155,9 @@ async function main() {
     //     console.log(formatEther((await vMAYC.getIndexPrice(0))))
     // }
 
-    // await wETH.connect(trader).approve(vault.address, ethers.constants.MaxUint256);
+    await wETH.connect(trader4).approve(vault.address, ethers.constants.MaxUint256);
 
-    // await vault.connect(trader).deposit(wETH.address, parseEther('10'));
+    await vault.connect(trader4).deposit(wETH.address, parseEther('1000'));
 
     // await waitForTx(
     //     await clearingHouse.connect(trader1).openPosition({

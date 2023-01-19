@@ -25,7 +25,7 @@ async function main() {
     deployData = JSON.parse(dataText.toString())
     // 
 
-    const [admin, maker, priceAdmin, platformFund, trader1, trader2] = await ethers.getSigners()
+    const [admin, maker, priceAdmin, platformFund, trader1, trader2, trader3, trader4] = await ethers.getSigners()
 
     // deploy UniV3 factory
     var uniswapV3Factory = await hre.ethers.getContractAt('UniswapV3Factory', deployData.uniswapV3Factory.address);
@@ -127,15 +127,19 @@ async function main() {
             tradeAmount.toString(),
         )
         let trader: SignerWithAddress
-        rndInt = Math.floor(Math.random() * 1000000) % 2
+        rndInt = Math.floor(Math.random() * 1000000) % 4 + 1
         console.log(
             'rndInt',
             rndInt
         )
-        if (rndInt == 0) {
+        if (rndInt == 1) {
             trader = trader1
-        } else {
+        } else if (rndInt == 2) {
             trader = trader2
+        } else if (rndInt == 3) {
+            trader = trader3
+        } else if (rndInt == 4) {
+            trader = trader4
         }
         if (markTwap.gt(indexPrice)) {
             await waitForTx(
