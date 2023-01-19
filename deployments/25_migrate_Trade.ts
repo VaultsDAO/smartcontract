@@ -115,8 +115,10 @@ async function main() {
         let markTwapX96 = await exchange.getSqrtMarkTwapX96(baseToken.address, 0)
         let markTwap = new bn(formatSqrtPriceX96ToPrice(markTwapX96, 18))
         let indexPrice = new bn(formatEther((await baseToken.getIndexPrice(0))))
-        let deltaPrice = markTwap.minus(indexPrice).abs()
-        let tradeAmount = deltaPrice.div(indexPrice).multipliedBy(1000).div(indexPrice).div(4)
+        // let deltaPrice = markTwap.minus(indexPrice).abs()
+        let rndInt = Math.floor(Math.random() * 1000000) % 5 + 1
+        let deltaPrice = (indexPrice.multipliedBy(0.008 * rndInt))
+        let tradeAmount = deltaPrice.div(indexPrice).multipliedBy(1000).div(indexPrice).div(2)
         console.log(
             baseToken.address,
             markTwap.toString(),
@@ -125,7 +127,7 @@ async function main() {
             tradeAmount.toString(),
         )
         let trader: SignerWithAddress
-        const rndInt = Math.floor(Math.random() * 1000000) % 2
+        rndInt = Math.floor(Math.random() * 1000000) % 2
         console.log(
             'rndInt',
             rndInt
