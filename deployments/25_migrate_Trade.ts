@@ -119,7 +119,7 @@ async function main() {
         let rndInt
         rndInt = Math.floor(Math.random() * 1000000) % 5 + 5
         let deltaPrice = (indexPrice.multipliedBy(0.005 * rndInt))
-        let tradeAmount = deltaPrice.div(indexPrice).multipliedBy(1000).div(indexPrice).div(2)
+        let tradeAmount = deltaPrice.div(indexPrice).multipliedBy(1000).div(indexPrice)
         console.log(
             baseToken.address,
             markTwap.toString(),
