@@ -117,7 +117,7 @@ async function main() {
         let indexPrice = new bn(formatEther((await baseToken.getIndexPrice(0))))
         // let deltaPrice = markTwap.minus(indexPrice).abs()
         let rndInt
-        rndInt = Math.floor(Math.random() * 1000000) % 5 + 5
+        rndInt = (Math.floor(Math.random() * 1000000) % 5) + 5
         let deltaPrice = (indexPrice.multipliedBy(0.005 * rndInt))
         let tradeAmount = deltaPrice.div(indexPrice).multipliedBy(1000).div(indexPrice)
         console.log(
