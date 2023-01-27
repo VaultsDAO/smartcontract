@@ -88,6 +88,10 @@
         "address": "",
         "implAddress": ""
     },
+    "testFaucet": {
+        "address": "",
+        "implAddress": ""
+    },
     "testCheck": {
         "addLiquidity": false,
         "deposit": false,

@@ -44,6 +44,7 @@ type DeployData = {
     liquidityLogic: ContractData,
     exchangeLogic: ContractData,
     clearingHouse: ContractData,
+    testFaucet: ContractData,
     testCheck: {
         addLiquidity: boolean,
         deposit: boolean,

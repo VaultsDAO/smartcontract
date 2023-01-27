@@ -18,3 +18,4 @@ npx hardhat run deployments/15_migrate_ClearingHouse.ts --network arbitrumGoerli
 # npx hardhat run deployments/17_migrate_AddLiquidity.ts --network arbitrumGoerli --no-compile
 # npx hardhat run deployments/19_migrate_Console.ts --network arbitrumGoerli --no-compile
 # npx hardhat run deployments/20_migrate_Test.ts --network arbitrumGoerli --no-compile
+npx hardhat run deployments/22_migrate_Faucet.ts --network arbitrumGoerli --no-compile

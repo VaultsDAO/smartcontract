@@ -88,6 +88,10 @@
         "address": "0xd7D8E25f5317B931E72BdB5aF42758D3d3e5d6F0",
         "implAddress": "0x8671C1232ca2C12Ab56D2b8a05B44b233689A505"
     },
+    "testFaucet": {
+        "address": "",
+        "implAddress": ""
+    },
     "testCheck": {
         "addLiquidity": true,
         "deposit": true,

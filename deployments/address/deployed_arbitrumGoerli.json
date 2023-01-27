@@ -2,7 +2,9 @@
     "verifiedContracts": {
         "0xEa34f4E154d138d9137B5fe8A28fd06ee17688E9": true,
         "0x46Ecf2bBB368876Ae5030556186D8302f718C77d": true,
-        "0x4c290B3E87Eee7bCA4e5F255DA78263F4CED32DF": true
+        "0x4c290B3E87Eee7bCA4e5F255DA78263F4CED32DF": true,
+        "0xeb3DF155B1dC83D8774F099caDC1CE6147315850": true,
+        "0xA4d92cf13312Ed26a00bdCE6505f72b7F588658e": true
     },
     "nftPriceFeedBAYC": {
         "address": "0x46Ecf2bBB368876Ae5030556186D8302f718C77d",
@@ -91,6 +93,10 @@
     "clearingHouse": {
         "address": "0x7d034098afc2f4C656A7ee904891f9E743652C2b",
         "implAddress": "0x82816E64F37D0D24A58869100417ec56563A4D6C"
+    },
+    "testFaucet": {
+        "address": "0xA4d92cf13312Ed26a00bdCE6505f72b7F588658e",
+        "implAddress": "0xeb3DF155B1dC83D8774F099caDC1CE6147315850"
     },
     "testCheck": {
         "addLiquidity": true,
