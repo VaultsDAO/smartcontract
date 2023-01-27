@@ -22,38 +22,18 @@ async function main() {
 
     const [admin, maker, priceAdmin, platformFund, trader, liquidator] = await ethers.getSigners()
 
-
     // deploy UniV3 factory
     var clearingHouse = (await hre.ethers.getContractAt('ClearingHouse', deployData.clearingHouse.address)) as ClearingHouse;
 
-    const vBAYC = await hre.ethers.getContractAt('BaseToken', deployData.vBAYC.address);
+    var baseTokenAddress = deployData.vBAYC.address
+    const lowerTick: number = 4620
+    const upperTick: number = 50700
+
+    const baseToken = await hre.ethers.getContractAt('BaseToken', baseTokenAddress);
     {
-        const lowerTick: number = 19980
-        const upperTick: number = 66000
         await waitForTx(
             await clearingHouse.connect(maker).addLiquidity({
-                baseToken: vBAYC.address,
-                base: parseEther("13.5"),
-                quote: parseEther("1000"),
-                lowerTick,
-                upperTick,
-                minBase: 0,
-                minQuote: 0,
-                useTakerBalance: false,
-                deadline: ethers.constants.MaxUint256,
-            }),
-            'clearingHouse.connect(maker).addLiquidity'
-        )
-        deployData.testCheck.addLiquidity = true
-        await fs.writeFileSync(fileName, JSON.stringify(deployData, null, 4))
-    }
-    const vMAYC = await hre.ethers.getContractAt('BaseToken', deployData.vMAYC.address);
-    {
-        const lowerTick: number = 4620
-        const upperTick: number = 50700
-        await waitForTx(
-            await clearingHouse.connect(maker).addLiquidity({
-                baseToken: vMAYC.address,
+                baseToken: baseToken.address,
                 base: parseEther("63.5"),
                 quote: parseEther("1000"),
                 lowerTick,

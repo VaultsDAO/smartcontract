@@ -21,27 +21,15 @@ async function main() {
     deployData = JSON.parse(dataText.toString())
     // 
     const [admin, maker, priceAdmin, platformFund, trader, liquidator] = await ethers.getSigners()
+
+    var nftPriceFeedAddress = deployData.nftPriceFeedBAYC.address
+    var price = '70'
+
     // oracle price
     {
-        var priceFeed = (await hre.ethers.getContractAt('NftPriceFeed', deployData.nftPriceFeedBAYC.address)) as NftPriceFeed;
-        if ((await priceFeed.priceFeedAdmin()).toLowerCase() != priceAdmin.address.toLowerCase()) {
-            await waitForTx(
-                await priceFeed.setPriceFeedAdmin(priceAdmin.address)
-            )
-        } 
+        var priceFeed = (await hre.ethers.getContractAt('NftPriceFeed', nftPriceFeedAddress)) as NftPriceFeed;
         await waitForTx(
-            await priceFeed.connect(priceAdmin).setPrice(parseEther('73.8388'))
-        )
-    }
-    {
-        var priceFeed = (await hre.ethers.getContractAt('NftPriceFeed', deployData.nftPriceFeedMAYC.address)) as NftPriceFeed;
-        if ((await priceFeed.priceFeedAdmin()).toLowerCase() != priceAdmin.address.toLowerCase()) {
-            await waitForTx(
-                await priceFeed.setPriceFeedAdmin(priceAdmin.address)
-            )
-        }
-        await waitForTx(
-            await priceFeed.connect(priceAdmin).setPrice(parseEther('15.899'))
+            await priceFeed.connect(priceAdmin).setPrice(parseEther(price))
         )
     }
 }

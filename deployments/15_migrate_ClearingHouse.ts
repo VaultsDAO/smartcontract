@@ -1,6 +1,6 @@
 import fs from "fs";
 
-import hre from "hardhat";
+import hre, { ethers } from "hardhat";
 import helpers from "./helpers";
 
 import { ProxyAdmin } from "../typechain/openzeppelin/ProxyAdmin";
@@ -16,13 +16,14 @@ async function main() {
     }
     let dataText = await fs.readFileSync(fileName)
     deployData = JSON.parse(dataText.toString())
+
     // 
     const TransparentUpgradeableProxy = await hre.ethers.getContractFactory('TransparentUpgradeableProxy');
     const GenericLogic = await hre.ethers.getContractFactory("GenericLogic");
     // 
     var proxyAdmin = await hre.ethers.getContractAt('ProxyAdmin', deployData.proxyAdminAddress);
     if (network == 'local') {
-        const [admin, maker, trader, liquidator, priceAdmin, platformFund] = await hre.ethers.getSigners()
+        const [admin, maker, priceAdmin, platformFund, trader, liquidator] = await ethers.getSigners()
         deployData.platformFundAddress = platformFund.address
         deployData.makerFundAddress = maker.address
     }
