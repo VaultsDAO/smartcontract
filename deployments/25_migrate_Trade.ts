@@ -128,17 +128,23 @@ async function main() {
             tradeAmount.toString(),
         )
         let trader: SignerWithAddress
-        rndInt = Math.floor(Math.random() * 1000000) % 4 + 1
-        if (rndInt == 1) {
-            trader = trader1
-        } else if (rndInt == 2) {
-            trader = trader2
-        } else if (rndInt == 3) {
-            trader = trader3
-        } else if (rndInt == 4) {
-            trader = trader4
-        }
         if (markTwap.gt(indexPrice)) {
+            for (let idx = 0; idx < 10; idx++) {
+                rndInt = Math.floor(Math.random() * 1000000) % 4 + 1
+                if (rndInt == 1) {
+                    trader = trader1
+                } else if (rndInt == 2) {
+                    trader = trader2
+                } else if (rndInt == 3) {
+                    trader = trader3
+                } else if (rndInt == 4) {
+                    trader = trader4
+                }
+                let takerOpenNotional = await accountBalance.getTakerOpenNotional(trader.address, baseToken.address)
+                if (takerOpenNotional.gt(parseEther('100'))) {
+                    continue
+                }
+            }
             await waitForTx(
                 await clearingHouse.connect(trader).openPosition({
                     baseToken: baseToken.address,
@@ -153,6 +159,22 @@ async function main() {
                 'clearingHouse.connect(trader).openPosition short'
             )
         } else {
+            for (let idx = 0; idx < 10; idx++) {
+                rndInt = Math.floor(Math.random() * 1000000) % 4 + 1
+                if (rndInt == 1) {
+                    trader = trader1
+                } else if (rndInt == 2) {
+                    trader = trader2
+                } else if (rndInt == 3) {
+                    trader = trader3
+                } else if (rndInt == 4) {
+                    trader = trader4
+                }
+                let takerOpenNotional = await accountBalance.getTakerOpenNotional(trader.address, baseToken.address)
+                if (takerOpenNotional.lt(parseEther('-100'))) {
+                    continue
+                }
+            }
             await waitForTx(
                 await clearingHouse.connect(trader).openPosition({
                     baseToken: baseToken.address,
