@@ -24,7 +24,7 @@ async function main() {
     deployData = JSON.parse(dataText.toString())
     // 
 
-    const [admin, maker, priceAdmin, platformFund, trader1, trader2, trader3, trader4] = await ethers.getSigners()
+    const [admin, maker, priceAdmin, platformFund, trader1, trader2, trader3, trader4, hieuq] = await ethers.getSigners()
 
     // deploy UniV3 factory
     var uniswapV3Factory = await hre.ethers.getContractAt('UniswapV3Factory', deployData.uniswapV3Factory.address);
@@ -48,6 +48,20 @@ async function main() {
     var priceFeedMAYC = (await hre.ethers.getContractAt('NftPriceFeed', deployData.nftPriceFeedMAYC.address)) as NftPriceFeed;
 
     var uniFeeTier = 3000 // 0.3%
+
+    await waitForTx(
+        await clearingHouse.connect(hieuq).openPosition({
+            baseToken: vMAYC.address,
+            isBaseToQuote: false,
+            isExactInput: true,
+            oppositeAmountBound: 0,
+            amount: parseEther('20'),
+            sqrtPriceLimitX96: 0,
+            deadline: ethers.constants.MaxUint256,
+            referralCode: ethers.constants.HashZero,
+        }),
+        'clearingHouse.connect(hieuq).openPosition long'
+    )
 
     // let marketInfo = await exchange.getDetalTawpInsuranceFundFee
 
@@ -140,7 +154,7 @@ async function main() {
     //     )
     // }
 
-    
+
 
     // let [lastSettledTimestamp, fundingGrowth] = (await exchange.getGlobalFundingGrowthInfo(vBAYC.address))
     // console.log(
