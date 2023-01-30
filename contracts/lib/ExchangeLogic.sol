@@ -89,15 +89,19 @@ library ExchangeLogic {
             response.platformFundFee.toInt256()
         );
 
-        // sum fee
+        // sum fee, sub direct balance
         uint256 fee = response.insuranceFundFee.add(response.platformFundFee);
+        IAccountBalance(IClearingHouse(chAddress).getAccountBalance()).modifyOwedRealizedPnl(
+            params.trader,
+            fee.toInt256().neg256()
+        );
         // examples:
         // https://www.figma.com/file/xuue5qGH4RalX7uAbbzgP3/swap-accounting-and-events?node-id=0%3A1
         IAccountBalance(IClearingHouse(chAddress).getAccountBalance()).settleBalanceAndDeregister(
             params.trader,
             params.baseToken,
             response.exchangedPositionSize,
-            response.exchangedPositionNotional.sub(fee.toInt256()),
+            response.exchangedPositionNotional,
             response.pnlToBeRealized,
             0
         );
