@@ -142,7 +142,7 @@ async function main() {
                 }
                 let takerOpenNotional = await accountBalance.getTakerOpenNotional(trader.address, baseToken.address)
                 console.log('takerOpenNotional short', trader.address, formatEther(takerOpenNotional))
-                if (takerOpenNotional.gt(parseEther('100'))) {
+                if (takerOpenNotional.gt(parseEther('500'))) {
                     continue
                 }
                 break
@@ -174,7 +174,7 @@ async function main() {
                 }
                 let takerOpenNotional = await accountBalance.getTakerOpenNotional(trader.address, baseToken.address)
                 console.log('takerOpenNotional long', trader.address, formatEther(takerOpenNotional))
-                if (takerOpenNotional.lt(parseEther('-100'))) {
+                if (takerOpenNotional.lt(parseEther('-500'))) {
                     continue
                 }
                 break
