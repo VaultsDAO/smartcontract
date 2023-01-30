@@ -104,104 +104,151 @@ describe("ClearingHouse fee updated", () => {
             deadline: ethers.constants.MaxUint256,
         })
         // 
+        // {
+        //     {
+        //         await clearingHouse.connect(trader1).openPosition({
+        //             baseToken: baseToken.address,
+        //             isBaseToQuote: true,
+        //             isExactInput: false,
+        //             oppositeAmountBound: 0,
+        //             amount: parseEther("100"),
+        //             sqrtPriceLimitX96: 0,
+        //             deadline: ethers.constants.MaxUint256,
+        //             referralCode: ethers.constants.HashZero,
+        //         })
+        //     }
+        //     {
+        //         await clearingHouse.connect(trader2).openPosition({
+        //             baseToken: baseToken.address,
+        //             isBaseToQuote: true,
+        //             isExactInput: false,
+        //             oppositeAmountBound: 0,
+        //             amount: parseEther("100"),
+        //             sqrtPriceLimitX96: 0,
+        //             deadline: ethers.constants.MaxUint256,
+        //             referralCode: ethers.constants.HashZero,
+        //         })
+        //     }
+        //     {
+        //         let r = await (
+        //             await clearingHouse.connect(trader1).closePosition({
+        //                 baseToken: baseToken.address,
+        //                 sqrtPriceLimitX96: parseEther("0"),
+        //                 oppositeAmountBound: parseEther("0"),
+        //                 deadline: ethers.constants.MaxUint256,
+        //                 referralCode: ethers.constants.HashZero,
+        //             })
+        //         ).wait()
+        //         let [realizedPnl, fees] = await getTakerRealizedPnlAndFees(r)
+        //         console.log('realizedPnl1', formatEther(realizedPnl), formatEther(fees))
+        //     }
+        //     {
+        //         let r = await (
+        //             await clearingHouse.connect(trader2).closePosition({
+        //                 baseToken: baseToken.address,
+        //                 sqrtPriceLimitX96: parseEther("0"),
+        //                 oppositeAmountBound: parseEther("0"),
+        //                 deadline: ethers.constants.MaxUint256,
+        //                 referralCode: ethers.constants.HashZero,
+        //             })
+        //         ).wait()
+        //         let [realizedPnl, fees] = await getTakerRealizedPnlAndFees(r)
+        //         console.log('realizedPnl2', formatEther(realizedPnl), formatEther(fees))
+        //     }
+        // }
+        // {
+        //     await clearingHouse.connect(trader).openPosition({
+        //         baseToken: baseToken.address,
+        //         isBaseToQuote: true,
+        //         isExactInput: false,
+        //         oppositeAmountBound: 0,
+        //         amount: parseEther("100"),
+        //         sqrtPriceLimitX96: 0,
+        //         deadline: ethers.constants.MaxUint256,
+        //         referralCode: ethers.constants.HashZero,
+        //     })
+        //     let r = await (
+        //         await clearingHouse.connect(trader).closePosition({
+        //             baseToken: baseToken.address,
+        //             sqrtPriceLimitX96: parseEther("0"),
+        //             oppositeAmountBound: parseEther("0"),
+        //             deadline: ethers.constants.MaxUint256,
+        //             referralCode: ethers.constants.HashZero,
+        //         })
+        //     ).wait()
+        //     let [realizedPnl, fees] = await getTakerRealizedPnlAndFees(r)
+        //     console.log('realizedPnl', formatEther(realizedPnl), formatEther(fees))
+        // }
         {
-            {
-                await clearingHouse.connect(trader1).openPosition({
+            await clearingHouse.connect(trader1).openPosition({
+                baseToken: baseToken.address,
+                isBaseToQuote: false,
+                isExactInput: true,
+                oppositeAmountBound: 0,
+                amount: parseEther("100"),
+                sqrtPriceLimitX96: 0,
+                deadline: ethers.constants.MaxUint256,
+                referralCode: ethers.constants.HashZero,
+            })
+            await clearingHouse.connect(trader2).openPosition({
+                baseToken: baseToken.address,
+                isBaseToQuote: false,
+                isExactInput: true,
+                oppositeAmountBound: 0,
+                amount: parseEther("100"),
+                sqrtPriceLimitX96: 0,
+                deadline: ethers.constants.MaxUint256,
+                referralCode: ethers.constants.HashZero,
+            })
+            let r = await (
+                await clearingHouse.connect(trader1).closePosition({
                     baseToken: baseToken.address,
-                    isBaseToQuote: true,
-                    isExactInput: false,
-                    oppositeAmountBound: 0,
-                    amount: parseEther("100"),
-                    sqrtPriceLimitX96: 0,
+                    sqrtPriceLimitX96: parseEther("0"),
+                    oppositeAmountBound: parseEther("0"),
                     deadline: ethers.constants.MaxUint256,
                     referralCode: ethers.constants.HashZero,
                 })
-            }
-            {
-                await clearingHouse.connect(trader2).openPosition({
-                    baseToken: baseToken.address,
-                    isBaseToQuote: true,
-                    isExactInput: false,
-                    oppositeAmountBound: 0,
-                    amount: parseEther("100"),
-                    sqrtPriceLimitX96: 0,
-                    deadline: ethers.constants.MaxUint256,
-                    referralCode: ethers.constants.HashZero,
-                })
-            }
-            {
-                let r = await (
-                    await clearingHouse.connect(trader1).closePosition({
-                        baseToken: baseToken.address,
-                        sqrtPriceLimitX96: parseEther("0"),
-                        oppositeAmountBound: parseEther("0"),
-                        deadline: ethers.constants.MaxUint256,
-                        referralCode: ethers.constants.HashZero,
-                    })
-                ).wait()
-                let [realizedPnl, fees] = await getTakerRealizedPnlAndFees(r)
-                console.log('realizedPnl1', formatEther(realizedPnl), formatEther(fees))
-            }
-            {
-                let r = await (
-                    await clearingHouse.connect(trader2).closePosition({
-                        baseToken: baseToken.address,
-                        sqrtPriceLimitX96: parseEther("0"),
-                        oppositeAmountBound: parseEther("0"),
-                        deadline: ethers.constants.MaxUint256,
-                        referralCode: ethers.constants.HashZero,
-                    })
-                ).wait()
-                let [realizedPnl, fees] = await getTakerRealizedPnlAndFees(r)
-                console.log('realizedPnl2', formatEther(realizedPnl), formatEther(fees))
-            }
+            ).wait()
+            let [txRealizedPnl, fees] = await getTakerRealizedPnlAndFees(r)
+            let takerOpenNotional = await accountBalance.getTakerOpenNotional(trader1.address, baseToken.address)
+            let [owedRealizedPnl, realizedPnl,] = await accountBalance.getPnlAndPendingFee(trader1.address)
+            console.log('accountBalance trader1', formatEther(owedRealizedPnl), formatEther(realizedPnl), formatEther(txRealizedPnl), formatEther(takerOpenNotional))
         }
-        // {
-        //     await clearingHouse.connect(trader).openPosition({
-        //         baseToken: baseToken.address,
-        //         isBaseToQuote: true,
-        //         isExactInput: false,
-        //         oppositeAmountBound: 0,
-        //         amount: parseEther("100"),
-        //         sqrtPriceLimitX96: 0,
-        //         deadline: ethers.constants.MaxUint256,
-        //         referralCode: ethers.constants.HashZero,
-        //     })
-        //     let r = await (
-        //         await clearingHouse.connect(trader).closePosition({
-        //             baseToken: baseToken.address,
-        //             sqrtPriceLimitX96: parseEther("0"),
-        //             oppositeAmountBound: parseEther("0"),
-        //             deadline: ethers.constants.MaxUint256,
-        //             referralCode: ethers.constants.HashZero,
-        //         })
-        //     ).wait()
-        //     let [realizedPnl, fees] = await getTakerRealizedPnlAndFees(r)
-        //     console.log('realizedPnl', formatEther(realizedPnl), formatEther(fees))
-        // }
-        // {
-        //     await clearingHouse.connect(trader).openPosition({
-        //         baseToken: baseToken.address,
-        //         isBaseToQuote: true,
-        //         isExactInput: false,
-        //         oppositeAmountBound: 0,
-        //         amount: parseEther("100"),
-        //         sqrtPriceLimitX96: 0,
-        //         deadline: ethers.constants.MaxUint256,
-        //         referralCode: ethers.constants.HashZero,
-        //     })
-        //     let r = await (
-        //         await clearingHouse.connect(trader).closePosition({
-        //             baseToken: baseToken.address,
-        //             sqrtPriceLimitX96: parseEther("0"),
-        //             oppositeAmountBound: parseEther("0"),
-        //             deadline: ethers.constants.MaxUint256,
-        //             referralCode: ethers.constants.HashZero,
-        //         })
-        //     ).wait()
-        //     let [realizedPnl, fees] = await getTakerRealizedPnlAndFees(r)
-        //     console.log('realizedPnl', formatEther(realizedPnl), formatEther(fees))
-        // }
+        {
+            await clearingHouse.connect(trader1).openPosition({
+                baseToken: baseToken.address,
+                isBaseToQuote: false,
+                isExactInput: true,
+                oppositeAmountBound: 0,
+                amount: parseEther("100"),
+                sqrtPriceLimitX96: 0,
+                deadline: ethers.constants.MaxUint256,
+                referralCode: ethers.constants.HashZero,
+            })
+            await clearingHouse.connect(trader2).openPosition({
+                baseToken: baseToken.address,
+                isBaseToQuote: false,
+                isExactInput: true,
+                oppositeAmountBound: 0,
+                amount: parseEther("100"),
+                sqrtPriceLimitX96: 0,
+                deadline: ethers.constants.MaxUint256,
+                referralCode: ethers.constants.HashZero,
+            })
+            let r = await (
+                await clearingHouse.connect(trader1).closePosition({
+                    baseToken: baseToken.address,
+                    sqrtPriceLimitX96: parseEther("0"),
+                    oppositeAmountBound: parseEther("0"),
+                    deadline: ethers.constants.MaxUint256,
+                    referralCode: ethers.constants.HashZero,
+                })
+            ).wait()
+            let [txRealizedPnl, fees] = await getTakerRealizedPnlAndFees(r)
+            let takerOpenNotional = await accountBalance.getTakerOpenNotional(trader1.address, baseToken.address)
+            let [owedRealizedPnl, realizedPnl,] = await accountBalance.getPnlAndPendingFee(trader1.address)
+            console.log('accountBalance trader1', formatEther(owedRealizedPnl), formatEther(realizedPnl), formatEther(txRealizedPnl), formatEther(takerOpenNotional))
+        }
         // {
         //     await clearingHouse.connect(trader).openPosition({
         //         baseToken: baseToken.address,

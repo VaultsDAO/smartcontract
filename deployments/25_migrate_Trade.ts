@@ -141,9 +141,11 @@ async function main() {
                     trader = trader4
                 }
                 let takerOpenNotional = await accountBalance.getTakerOpenNotional(trader.address, baseToken.address)
+                console.log('takerOpenNotional short', trader.address, formatEther(takerOpenNotional))
                 if (takerOpenNotional.gt(parseEther('100'))) {
                     continue
                 }
+                break
             }
             await waitForTx(
                 await clearingHouse.connect(trader).openPosition({
@@ -171,9 +173,11 @@ async function main() {
                     trader = trader4
                 }
                 let takerOpenNotional = await accountBalance.getTakerOpenNotional(trader.address, baseToken.address)
+                console.log('takerOpenNotional long', trader.address, formatEther(takerOpenNotional))
                 if (takerOpenNotional.lt(parseEther('-100'))) {
                     continue
                 }
+                break
             }
             await waitForTx(
                 await clearingHouse.connect(trader).openPosition({

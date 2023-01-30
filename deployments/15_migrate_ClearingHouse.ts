@@ -60,7 +60,7 @@ async function main() {
         {
             deployData.exchangeLogic.address = exchangeLogic.address;
             await fs.writeFileSync(fileName, JSON.stringify(deployData, null, 4))
-            console.log('LiquidityLogic is deployed', exchangeLogic.address)
+            console.log('ExchangeLogic is deployed', exchangeLogic.address)
         }
     }
     if (deployData.clearingHouse.implAddress == undefined || deployData.clearingHouse.implAddress == '') {

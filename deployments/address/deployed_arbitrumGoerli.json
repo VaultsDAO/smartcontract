@@ -88,11 +88,11 @@
         "address": "0x673dAc599fCb03E18e39c62eB8C0529645522c03"
     },
     "exchangeLogic": {
-        "address": "0x4980d4E960bab957961D2D1BB89C958BCaD03ebD"
+        "address": "0x9c5AEF1bb07ec6A2f9577b3eFF8834877D3cA2fd"
     },
     "clearingHouse": {
         "address": "0x7d034098afc2f4C656A7ee904891f9E743652C2b",
-        "implAddress": "0x82816E64F37D0D24A58869100417ec56563A4D6C"
+        "implAddress": "0xe587F92f49D31Ed56Ac838B0E9b3347c6059A3bc"
     },
     "testFaucet": {
         "address": "0xA4d92cf13312Ed26a00bdCE6505f72b7F588658e",
