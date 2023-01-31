@@ -26,7 +26,7 @@ import {
     removeOrder,
 } from "../helper/clearingHouseHelper"
 import { initMarket } from "../helper/marketHelper"
-import { IGNORABLE_DUST } from "../helper/number"
+import { IGNORABLE_DUST, priceToTick } from "../helper/number"
 import { deposit } from "../helper/token"
 import { filterLogs } from "../shared/utilities"
 import { ClearingHouseFixture, createClearingHouseFixture } from "./fixtures"
@@ -60,8 +60,8 @@ describe("ClearingHouse fee updated", () => {
     let pool: UniswapV3Pool
     let mockedNFTPriceFeed: MockContract
     let collateralDecimals: number
-    const lowerTick: number = 45800 // ~ 97.4920674557
-    const upperTick: number = 46400 // ~ 103.520329682
+    let lowerTick = priceToTick(1, 60)
+    let upperTick = priceToTick(10000, 60)
     const initPrice = "100"
 
     beforeEach(async () => {
@@ -97,9 +97,9 @@ describe("ClearingHouse fee updated", () => {
     })
 
     it("long fee updated", async () => {
-        // let [amount0, amount1] = await orderBook.getAmount0Amount1ForLiquidity(baseToken.address, lowerTick, upperTick, parseEther('10000'))
-        // console.log(formatEther(amount0), formatEther(amount1))
-        // return
+        let [amount0, amount1] = await orderBook.getAmount0Amount1ForLiquidity(baseToken.address, lowerTick, upperTick, parseEther('2500'))
+        console.log(formatEther(amount0), formatEther(amount1))
+        return
         // maker add liquidity
         await clearingHouse.connect(maker).addLiquidity({
             baseToken: baseToken.address,

@@ -3,7 +3,7 @@ import fs from "fs";
 import hre, { ethers } from "hardhat";
 
 import { encodePriceSqrt } from "../test/shared/utilities";
-import { AccountBalance, BaseToken, MarketRegistry, NftPriceFeed, OrderBook, QuoteToken, UniswapV3Pool } from "../typechain";
+import { AccountBalance, BaseToken, Exchange, MarketRegistry, NftPriceFeed, OrderBook, QuoteToken, UniswapV3Pool } from "../typechain";
 import { getMaxTickRange } from "../test/helper/number";
 import helpers from "./helpers";
 import { parseEther } from "ethers/lib/utils";
@@ -29,7 +29,7 @@ async function main() {
     var marketRegistry = (await hre.ethers.getContractAt('MarketRegistry', deployData.marketRegistry.address)) as MarketRegistry;
     var orderBook = (await hre.ethers.getContractAt('OrderBook', deployData.orderBook.address)) as OrderBook;
     var accountBalance = (await hre.ethers.getContractAt('AccountBalance', deployData.accountBalance.address)) as AccountBalance;
-    var exchange = await hre.ethers.getContractAt('Exchange', deployData.exchange.address);
+    var exchange = (await hre.ethers.getContractAt('Exchange', deployData.exchange.address)) as Exchange;
     var insuranceFund = await hre.ethers.getContractAt('InsuranceFund', deployData.insuranceFund.address);
     var vault = await hre.ethers.getContractAt('Vault', deployData.vault.address);
     var collateralManager = await hre.ethers.getContractAt('CollateralManager', deployData.collateralManager.address);
@@ -83,21 +83,35 @@ async function main() {
         )
         if (!(await marketRegistry.hasPool(baseToken.address))) {
             const uniFeeRatio = await uniPool.fee()
-            await tryWaitForTx(await marketRegistry.addPool(baseToken.address, uniFeeRatio), 'marketRegistry.addPool(baseToken.address, uniFeeRatio)')
+            await tryWaitForTx(
+                await marketRegistry.addPool(baseToken.address, uniFeeRatio), 'marketRegistry.addPool(baseToken.address, uniFeeRatio)'
+            )
         }
-        await tryWaitForTx(await exchange.setMaxTickCrossedWithinBlock(baseToken.address, maxTickCrossedWithinBlock), 'exchange.setMaxTickCrossedWithinBlock(baseToken.address, maxTickCrossedWithinBlock)')
+        if ((await exchange.getMaxTickCrossedWithinBlock(baseToken.address)).toString() != maxTickCrossedWithinBlock.toString()) {
+            await tryWaitForTx(
+                await exchange.setMaxTickCrossedWithinBlock(baseToken.address, maxTickCrossedWithinBlock), 'exchange.setMaxTickCrossedWithinBlock(baseToken.address, maxTickCrossedWithinBlock)'
+            )
+        }
     }
     // oracle price
     {
         var priceFeed = (await hre.ethers.getContractAt('NftPriceFeed', nftPriceFeedAddress)) as NftPriceFeed;
         if ((await priceFeed.priceFeedAdmin()).toLowerCase() != priceAdmin.address.toLowerCase()) {
             await waitForTx(
-                await priceFeed.setPriceFeedAdmin(priceAdmin.address)
+                await priceFeed.setPriceFeedAdmin(priceAdmin.address), 'priceFeed.setPriceFeedAdmin(priceAdmin.address)'
             )
         }
         await waitForTx(
-            await priceFeed.connect(priceAdmin).setPrice(parseEther(price))
+            await priceFeed.connect(priceAdmin).setPrice(parseEther(price)), 'priceFeed.connect(priceAdmin).setPrice(parseEther(price))'
         )
+    }
+    // 
+    {
+        if ((await marketRegistry.getInsuranceFundFeeRatio(baseToken.address)).toString() != '1500') {
+            await waitForTx(
+                await marketRegistry.setInsuranceFundFeeRatio(baseToken.address, '1500'), 'marketRegistry.setInsuranceFundFeeRatio(baseToken.address, 1500)'
+            )
+        }
     }
 }
 

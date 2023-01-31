@@ -84,7 +84,7 @@ contract MarketRegistry is IMarketRegistry, ClearingHouseCallee, MarketRegistryS
 
         _poolMap[baseToken] = pool;
         _uniswapFeeRatioMap[baseToken] = feeRatio;
-        _insuranceFundFeeRatioMap[baseToken] = 1000; // 0.1%
+        _insuranceFundFeeRatioMap[baseToken] = 1500; // 0.15%
         _platformFundFeeRatioMap[baseToken] = 1000; // 0.1%
         _optimalDeltaTwapRatioMap[baseToken] = 25000; // 2.5%
         _unhealthyDeltaTwapRatioMap[baseToken] = 50000; // 5%

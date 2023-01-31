@@ -6,6 +6,7 @@ import { parseEther } from "ethers/lib/utils";
 import { ClearingHouse, OrderBook, TestERC20, Vault } from "../typechain";
 
 import helpers from "./helpers";
+import { priceToTick } from "../test/helper/number";
 const { waitForTx } = helpers;
 
 
@@ -26,21 +27,18 @@ async function main() {
     var clearingHouse = (await hre.ethers.getContractAt('ClearingHouse', deployData.clearingHouse.address)) as ClearingHouse;
 
     var baseTokenAddress = deployData.vBAYC.address
-    const lowerTick: number = 19980
-    const upperTick: number = 66000
+
+    const lowerTick: number = priceToTick(7.0, 60)
+    const upperTick: number = priceToTick(700.0, 60)
 
     const baseToken = await hre.ethers.getContractAt('BaseToken', baseTokenAddress);
     {
         await waitForTx(
             await clearingHouse.connect(maker).addLiquidity({
                 baseToken: baseToken.address,
-                base: parseEther("13.5"),
-                quote: parseEther("1000"),
                 lowerTick,
                 upperTick,
-                minBase: 0,
-                minQuote: 0,
-                useTakerBalance: false,
+                liquidity: '2000',
                 deadline: ethers.constants.MaxUint256,
             }),
             'clearingHouse.connect(maker).addLiquidity'
