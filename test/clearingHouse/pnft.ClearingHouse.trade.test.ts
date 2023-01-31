@@ -108,8 +108,17 @@ describe("ClearingHouse fee updated", () => {
             liquidity: parseEther('10000'),
             deadline: ethers.constants.MaxUint256,
         })
-        console.log(formatEther((await quoteToken.balanceOf(pool.address))))
-        console.log(formatEther((await baseToken.balanceOf(pool.address))))
+        const liquidity = (await orderBook.getOpenOrder(maker.address, baseToken.address, lowerTick, upperTick))
+            .liquidity
+        await clearingHouse.connect(maker).removeLiquidity({
+            baseToken: baseToken.address,
+            lowerTick,
+            upperTick,
+            liquidity,
+            deadline: ethers.constants.MaxUint256,
+        })
+
+        return
 
         // 
         // {

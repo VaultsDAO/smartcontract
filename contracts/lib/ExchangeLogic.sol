@@ -504,51 +504,51 @@ library ExchangeLogic {
         IAccountBalance(IClearingHouse(chAddress).getAccountBalance()).modifyOwedRealizedPnl(trader, amount);
     }
 
-    /// @dev Calculate how much profit/loss we should realize,
-    ///      The profit/loss is calculated by exchangedPositionSize/exchangedPositionNotional amount
-    ///      and existing taker's base/quote amount.
-    function _modifyPositionAndRealizePnl(
-        address chAddress,
-        address trader,
-        address baseToken,
-        int256 exchangedPositionSize,
-        int256 exchangedPositionNotional,
-        uint256 makerFee,
-        uint256 takerFee
-    ) internal {
-        int256 realizedPnl;
-        if (exchangedPositionSize != 0) {
-            realizedPnl = IExchange(IClearingHouse(chAddress).getExchange()).getPnlToBeRealized(
-                IExchange.RealizePnlParams({
-                    trader: trader,
-                    baseToken: baseToken,
-                    base: exchangedPositionSize,
-                    quote: exchangedPositionNotional
-                })
-            );
-        }
+    // /// @dev Calculate how much profit/loss we should realize,
+    // ///      The profit/loss is calculated by exchangedPositionSize/exchangedPositionNotional amount
+    // ///      and existing taker's base/quote amount.
+    // function _modifyPositionAndRealizePnl(
+    //     address chAddress,
+    //     address trader,
+    //     address baseToken,
+    //     int256 exchangedPositionSize,
+    //     int256 exchangedPositionNotional,
+    //     uint256 makerFee,
+    //     uint256 takerFee
+    // ) internal {
+    //     int256 realizedPnl;
+    //     if (exchangedPositionSize != 0) {
+    //         realizedPnl = IExchange(IClearingHouse(chAddress).getExchange()).getPnlToBeRealized(
+    //             IExchange.RealizePnlParams({
+    //                 trader: trader,
+    //                 baseToken: baseToken,
+    //                 base: exchangedPositionSize,
+    //                 quote: exchangedPositionNotional
+    //             })
+    //         );
+    //     }
 
-        // realizedPnl is realized here
-        // will deregister baseToken if there is no position
-        IAccountBalance(IClearingHouse(chAddress).getAccountBalance()).settleBalanceAndDeregister(
-            trader,
-            baseToken,
-            exchangedPositionSize, // takerBase
-            exchangedPositionNotional, // takerQuote
-            realizedPnl,
-            makerFee.toInt256()
-        );
-        int256 openNotional = GenericLogic.getTakerOpenNotional(chAddress, trader, baseToken);
-        uint160 currentPrice = GenericLogic.getSqrtMarkX96(chAddress, baseToken);
-        emit GenericLogic.PositionChanged(
-            trader,
-            baseToken,
-            exchangedPositionSize,
-            exchangedPositionNotional,
-            takerFee, // fee
-            openNotional, // openNotional
-            realizedPnl,
-            currentPrice // sqrtPriceAfterX96: no swap, so market price didn't change
-        );
-    }
+    //     // realizedPnl is realized here
+    //     // will deregister baseToken if there is no position
+    //     IAccountBalance(IClearingHouse(chAddress).getAccountBalance()).settleBalanceAndDeregister(
+    //         trader,
+    //         baseToken,
+    //         exchangedPositionSize, // takerBase
+    //         exchangedPositionNotional, // takerQuote
+    //         realizedPnl,
+    //         makerFee.toInt256()
+    //     );
+    //     int256 openNotional = GenericLogic.getTakerOpenNotional(chAddress, trader, baseToken);
+    //     uint160 currentPrice = GenericLogic.getSqrtMarkX96(chAddress, baseToken);
+    //     emit GenericLogic.PositionChanged(
+    //         trader,
+    //         baseToken,
+    //         exchangedPositionSize,
+    //         exchangedPositionNotional,
+    //         takerFee, // fee
+    //         openNotional, // openNotional
+    //         realizedPnl,
+    //         currentPrice // sqrtPriceAfterX96: no swap, so market price didn't change
+    //     );
+    // }
 }
