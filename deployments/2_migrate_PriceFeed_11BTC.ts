@@ -77,45 +77,6 @@ async function main() {
     //         "@perp/perp-oracle-contract/contracts/ChainlinkPriceFeedV2.sol:ChainlinkPriceFeedV2",
     //     )
     // }
-
-    if (deployData.nftPriceFeedBAYC.address == undefined || deployData.nftPriceFeedBAYC.address == '') {
-        const NftPriceFeed = await hre.ethers.getContractFactory("NftPriceFeed")
-        const priceFeed = (await waitForDeploy(await NftPriceFeed.deploy(deployData.nftPriceFeedBAYC.symbol))) as NftPriceFeed
-        {
-            deployData.nftPriceFeedBAYC.address = priceFeed.address
-            await fs.writeFileSync(fileName, JSON.stringify(deployData, null, 4))
-            console.log('nftPriceFeed is deployed', priceFeed.address)
-        }
-    }
-    if (deployData.nftPriceFeedMAYC.address == undefined || deployData.nftPriceFeedMAYC.address == '') {
-        const NftPriceFeed = await hre.ethers.getContractFactory("NftPriceFeed")
-        const priceFeed = (await waitForDeploy(await NftPriceFeed.deploy(deployData.nftPriceFeedMAYC.symbol))) as NftPriceFeed
-        {
-            deployData.nftPriceFeedMAYC.address = priceFeed.address
-            await fs.writeFileSync(fileName, JSON.stringify(deployData, null, 4))
-            console.log('nftPriceFeed is deployed', priceFeed.address)
-        }
-    }
-    {
-        await verifyContract(
-            deployData,
-            network,
-            deployData.nftPriceFeedBAYC.address,
-            [deployData.nftPriceFeedBAYC.symbol],
-            {},
-            "contracts/oracle/NftPriceFeed.sol:NftPriceFeed",
-        )
-    }
-    {
-        await verifyContract(
-            deployData,
-            network,
-            deployData.nftPriceFeedMAYC.address,
-            [deployData.nftPriceFeedMAYC.symbol],
-            {},
-            "contracts/oracle/NftPriceFeed.sol:NftPriceFeed",
-        )
-    }
 }
 
 // We recommend this pattern to be able to use async/await everywhere
