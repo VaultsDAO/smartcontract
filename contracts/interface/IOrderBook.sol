@@ -9,10 +9,9 @@ interface IOrderBook {
     struct AddLiquidityParams {
         address trader;
         address baseToken;
-        uint256 base;
-        uint256 quote;
         int24 lowerTick;
         int24 upperTick;
+        uint128 liquidity;
         DataTypes.Growth fundingGrowthGlobal;
     }
 

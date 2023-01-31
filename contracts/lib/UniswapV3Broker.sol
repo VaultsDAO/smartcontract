@@ -34,8 +34,7 @@ library UniswapV3Broker {
         address pool;
         int24 lowerTick;
         int24 upperTick;
-        uint256 base;
-        uint256 quote;
+        uint128 liquidity;
         bytes data;
     }
 
@@ -92,29 +91,55 @@ library UniswapV3Broker {
     // INTERNAL NON-VIEW
     //
 
+    function getAmount0Amount1ForLiquidity(
+        address pool,
+        int24 lowerTick,
+        int24 upperTick,
+        uint128 liquidity
+    ) internal view returns (uint256 addedAmount0, uint256 addedAmount1) {
+        (uint160 sqrtRatioX96, , , , , , ) = getSlot0(pool);
+        uint160 sqrtRatioAX96 = TickMath.getSqrtRatioAtTick(lowerTick);
+        uint160 sqrtRatioBX96 = TickMath.getSqrtRatioAtTick(upperTick);
+        if (sqrtRatioX96 <= sqrtRatioAX96) {
+            addedAmount0 = LiquidityAmounts.getAmount0ForLiquidity(sqrtRatioAX96, sqrtRatioBX96, liquidity);
+        } else if (sqrtRatioX96 < sqrtRatioBX96) {
+            addedAmount0 = LiquidityAmounts.getAmount0ForLiquidity(sqrtRatioX96, sqrtRatioBX96, liquidity);
+            addedAmount1 = LiquidityAmounts.getAmount1ForLiquidity(sqrtRatioAX96, sqrtRatioX96, liquidity);
+        } else {
+            addedAmount1 = LiquidityAmounts.getAmount1ForLiquidity(sqrtRatioAX96, sqrtRatioBX96, liquidity);
+        }
+    }
+
     function addLiquidity(AddLiquidityParams memory params) internal returns (AddLiquidityResponse memory) {
-        (uint160 sqrtMarkPrice, , , , , , ) = getSlot0(params.pool);
+        // (uint160 sqrtMarkPrice, , , , , , ) = getSlot0(params.pool);
 
-        // get the equivalent amount of liquidity from amount0 & amount1 with current price
-        uint128 liquidity =
-            LiquidityAmounts.getLiquidityForAmounts(
-                sqrtMarkPrice,
-                TickMath.getSqrtRatioAtTick(params.lowerTick),
-                TickMath.getSqrtRatioAtTick(params.upperTick),
-                params.base,
-                params.quote
-            );
+        // // get the equivalent amount of liquidity from amount0 & amount1 with current price
+        // uint128 liquidity = LiquidityAmounts.getLiquidityForAmounts(
+        //     sqrtMarkPrice,
+        //     TickMath.getSqrtRatioAtTick(params.lowerTick),
+        //     TickMath.getSqrtRatioAtTick(params.upperTick),
+        //     params.base,
+        //     params.quote
+        // );
 
-        (uint256 addedAmount0, uint256 addedAmount1) =
-            IUniswapV3Pool(params.pool).mint(address(this), params.lowerTick, params.upperTick, liquidity, params.data);
+        (uint256 addedAmount0, uint256 addedAmount1) = IUniswapV3Pool(params.pool).mint(
+            address(this),
+            params.lowerTick,
+            params.upperTick,
+            params.liquidity,
+            params.data
+        );
 
-        return AddLiquidityResponse({ base: addedAmount0, quote: addedAmount1, liquidity: liquidity });
+        return AddLiquidityResponse({ base: addedAmount0, quote: addedAmount1, liquidity: params.liquidity });
     }
 
     function removeLiquidity(RemoveLiquidityParams memory params) internal returns (RemoveLiquidityResponse memory) {
         // call burn(), which only updates tokensOwed instead of transferring the tokens
-        (uint256 amount0Burned, uint256 amount1Burned) =
-            IUniswapV3Pool(params.pool).burn(params.lowerTick, params.upperTick, params.liquidity);
+        (uint256 amount0Burned, uint256 amount1Burned) = IUniswapV3Pool(params.pool).burn(
+            params.lowerTick,
+            params.upperTick,
+            params.liquidity
+        );
 
         // call collect() to transfer tokens to CH
         // we don't care about the returned values here as they include:
@@ -138,16 +163,15 @@ library UniswapV3Broker {
         // signedAmount0 & signedAmount1 are delta amounts, in the perspective of the pool
         // > 0: pool gets; user pays
         // < 0: pool provides; user gets
-        (int256 signedAmount0, int256 signedAmount1) =
-            IUniswapV3Pool(params.pool).swap(
-                params.recipient,
-                params.isBaseToQuote,
-                specifiedAmount,
-                params.sqrtPriceLimitX96 == 0
-                    ? (params.isBaseToQuote ? TickMath.MIN_SQRT_RATIO + 1 : TickMath.MAX_SQRT_RATIO - 1)
-                    : params.sqrtPriceLimitX96,
-                params.data
-            );
+        (int256 signedAmount0, int256 signedAmount1) = IUniswapV3Pool(params.pool).swap(
+            params.recipient,
+            params.isBaseToQuote,
+            specifiedAmount,
+            params.sqrtPriceLimitX96 == 0
+                ? (params.isBaseToQuote ? TickMath.MIN_SQRT_RATIO + 1 : TickMath.MAX_SQRT_RATIO - 1)
+                : params.sqrtPriceLimitX96,
+            params.data
+        );
 
         (uint256 amount0, uint256 amount1) = (signedAmount0.abs(), signedAmount1.abs());
 
@@ -188,7 +212,9 @@ library UniswapV3Broker {
         tickSpacing = IUniswapV3Pool(pool).tickSpacing();
     }
 
-    function getSlot0(address pool)
+    function getSlot0(
+        address pool
+    )
         internal
         view
         returns (

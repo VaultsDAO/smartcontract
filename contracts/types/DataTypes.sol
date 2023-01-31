@@ -14,13 +14,9 @@ library DataTypes {
     }
     struct AddLiquidityParams {
         address baseToken;
-        uint256 base;
-        uint256 quote;
         int24 lowerTick;
         int24 upperTick;
-        uint256 minBase;
-        uint256 minQuote;
-        bool useTakerBalance;
+        uint128 liquidity;
         uint256 deadline;
     }
 
@@ -43,8 +39,6 @@ library DataTypes {
         int24 lowerTick;
         int24 upperTick;
         uint128 liquidity;
-        uint256 minBase;
-        uint256 minQuote;
         uint256 deadline;
     }
 

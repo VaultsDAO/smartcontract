@@ -108,8 +108,7 @@ contract OrderBook is
                     pool,
                     params.lowerTick,
                     params.upperTick,
-                    params.base,
-                    params.quote,
+                    params.liquidity,
                     abi.encode(MintCallbackData(params.trader, pool))
                 )
             );
@@ -565,5 +564,15 @@ contract OrderBook is
     function _requireOnlyExchange() internal view {
         // OB_OEX: Only exchange
         require(_msgSender() == _exchange, "OB_OEX");
+    }
+
+    function getAmount0Amount1ForLiquidity(
+        address baseToken,
+        int24 lowerTick,
+        int24 upperTick,
+        uint128 liquidity
+    ) external view returns (uint256 addedAmount0, uint256 addedAmount1) {
+        address pool = IMarketRegistry(_marketRegistry).getPool(baseToken);
+        return UniswapV3Broker.getAmount0Amount1ForLiquidity(pool, lowerTick, upperTick, liquidity);
     }
 }

@@ -11,8 +11,10 @@ import {
     InsuranceFund,
     MarketRegistry,
     OrderBook,
+    QuoteToken,
     TestClearingHouse,
     TestERC20,
+    UniswapV3Pool,
     Vault,
 } from "../../typechain"
 import {
@@ -54,10 +56,12 @@ describe("ClearingHouse fee updated", () => {
     let exchange: Exchange
     let collateral: TestERC20
     let baseToken: BaseToken
+    let quoteToken: QuoteToken
+    let pool: UniswapV3Pool
     let mockedNFTPriceFeed: MockContract
     let collateralDecimals: number
-    const lowerTick: number = 45800
-    const upperTick: number = 46400
+    const lowerTick: number = 45800 // ~ 97.4920674557
+    const upperTick: number = 46400 // ~ 103.520329682
     const initPrice = "100"
 
     beforeEach(async () => {
@@ -69,8 +73,10 @@ describe("ClearingHouse fee updated", () => {
         insuranceFund = fixture.insuranceFund as InsuranceFund
         exchange = fixture.exchange as Exchange
         marketRegistry = fixture.marketRegistry
+        pool = fixture.pool as UniswapV3Pool
         collateral = fixture.WETH
         baseToken = fixture.baseToken
+        quoteToken = fixture.quoteToken
         mockedNFTPriceFeed = fixture.mockedNFTPriceFeed
         collateralDecimals = await collateral.decimals()
 
@@ -91,18 +97,20 @@ describe("ClearingHouse fee updated", () => {
     })
 
     it("long fee updated", async () => {
+        // let [amount0, amount1] = await orderBook.getAmount0Amount1ForLiquidity(baseToken.address, lowerTick, upperTick, parseEther('10000'))
+        // console.log(formatEther(amount0), formatEther(amount1))
+        // return
         // maker add liquidity
         await clearingHouse.connect(maker).addLiquidity({
             baseToken: baseToken.address,
-            base: parseEther("1000"),
-            quote: parseEther("100000"),
             lowerTick,
             upperTick,
-            minBase: 0,
-            minQuote: 0,
-            useTakerBalance: false,
+            liquidity: parseEther('10000'),
             deadline: ethers.constants.MaxUint256,
         })
+        console.log(formatEther((await quoteToken.balanceOf(pool.address))))
+        console.log(formatEther((await baseToken.balanceOf(pool.address))))
+
         // 
         // {
         //     {

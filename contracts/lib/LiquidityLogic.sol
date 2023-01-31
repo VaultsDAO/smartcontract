@@ -55,9 +55,6 @@ library LiquidityLogic {
         // CH_OMPS: Over the maximum price spread
         require(!IExchange(IClearingHouse(chAddress).getExchange()).isOverPriceSpread(params.baseToken), "CH_OMPS");
 
-        // CH_DUTB: Disable useTakerBalance
-        require(!params.useTakerBalance, "CH_DUTB");
-
         // register token if it's the first time
         GenericLogic.registerBaseToken(chAddress, trader, params.baseToken);
 
@@ -70,86 +67,12 @@ library LiquidityLogic {
                 IOrderBook.AddLiquidityParams({
                     trader: trader,
                     baseToken: params.baseToken,
-                    base: params.base,
-                    quote: params.quote,
                     lowerTick: params.lowerTick,
                     upperTick: params.upperTick,
+                    liquidity: params.liquidity,
                     fundingGrowthGlobal: fundingGrowthGlobal
                 })
             );
-
-        GenericLogic.checkSlippageAfterLiquidityChange(response.base, params.minBase, response.quote, params.minQuote);
-
-        // if !useTakerBalance, takerBalance won't change, only need to collects fee to oweRealizedPnl
-        if (params.useTakerBalance) {
-            bool isBaseAdded = response.base != 0;
-
-            // can't add liquidity within range from take position
-            require(isBaseAdded != (response.quote != 0), "CH_CALWRFTP");
-
-            DataTypes.AccountMarketInfo memory accountMarketInfo = IAccountBalance(
-                IClearingHouse(chAddress).getAccountBalance()
-            ).getAccountInfo(trader, params.baseToken);
-
-            // the signs of removedPositionSize and removedOpenNotional are always the opposite.
-            int256 removedPositionSize;
-            int256 removedOpenNotional;
-            if (isBaseAdded) {
-                // taker base not enough
-                require(accountMarketInfo.takerPositionSize >= response.base.toInt256(), "CH_TBNE");
-
-                removedPositionSize = response.base.neg256();
-
-                // move quote debt from taker to maker:
-                // takerOpenNotional(-) * removedPositionSize(-) / takerPositionSize(+)
-
-                // overflow inspection:
-                // Assume collateral is 2.406159692E28 and index price is 1e-18
-                // takerOpenNotional ~= 10 * 2.406159692E28 = 2.406159692E29 --> x
-                // takerPositionSize ~= takerOpenNotional/index price = x * 1e18 = 2.4061597E38
-                // max of removedPositionSize = takerPositionSize = 2.4061597E38
-                // (takerOpenNotional * removedPositionSize) < 2^255
-                // 2.406159692E29 ^2 * 1e18 < 2^255
-                removedOpenNotional = accountMarketInfo.takerOpenNotional.mul(removedPositionSize).div(
-                    accountMarketInfo.takerPositionSize
-                );
-            } else {
-                // taker quote not enough
-                require(accountMarketInfo.takerOpenNotional >= response.quote.toInt256(), "CH_TQNE");
-
-                removedOpenNotional = response.quote.neg256();
-
-                // move base debt from taker to maker:
-                // takerPositionSize(-) * removedOpenNotional(-) / takerOpenNotional(+)
-                // overflow inspection: same as above
-                removedPositionSize = accountMarketInfo.takerPositionSize.mul(removedOpenNotional).div(
-                    accountMarketInfo.takerOpenNotional
-                );
-            }
-
-            // update orderDebt to record the cost of this order
-            IOrderBook(IClearingHouse(chAddress).getOrderBook()).updateOrderDebt(
-                OpenOrder.calcOrderKey(trader, params.baseToken, params.lowerTick, params.upperTick),
-                removedPositionSize,
-                removedOpenNotional
-            );
-
-            // update takerBalances as we're using takerBalances to provide liquidity
-            (, int256 takerOpenNotional) = IAccountBalance(IClearingHouse(chAddress).getAccountBalance())
-                .modifyTakerBalance(trader, params.baseToken, removedPositionSize, removedOpenNotional);
-
-            uint256 sqrtPrice = GenericLogic.getSqrtMarkX96(chAddress, params.baseToken);
-            emit GenericLogic.PositionChanged(
-                trader,
-                params.baseToken,
-                removedPositionSize, // exchangedPositionSize
-                removedOpenNotional, // exchangedPositionNotional
-                0, // fee
-                takerOpenNotional, // openNotional
-                0, // realizedPnl
-                sqrtPrice // sqrtPriceAfterX96
-            );
-        }
 
         // fees always have to be collected to owedRealizedPnl, as long as there is a change in liquidity
         IAccountBalance(IClearingHouse(chAddress).getAccountBalance()).modifyOwedRealizedPnl(
@@ -275,8 +198,6 @@ library LiquidityLogic {
                     liquidity: params.liquidity
                 })
             );
-
-        GenericLogic.checkSlippageAfterLiquidityChange(response.base, params.minBase, response.quote, params.minQuote);
 
         _modifyPositionAndRealizePnl(
             chAddress,

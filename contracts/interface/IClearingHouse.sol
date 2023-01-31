@@ -7,13 +7,9 @@ interface IClearingHouse {
     /// @param useTakerBalance only accept false now
     struct AddLiquidityParams {
         address baseToken;
-        uint256 base;
-        uint256 quote;
+        uint128 liquidity;
         int24 lowerTick;
         int24 upperTick;
-        uint256 minBase;
-        uint256 minQuote;
-        bool useTakerBalance;
         uint256 deadline;
     }
 
@@ -23,8 +19,6 @@ interface IClearingHouse {
         int24 lowerTick;
         int24 upperTick;
         uint128 liquidity;
-        uint256 minBase;
-        uint256 minQuote;
         uint256 deadline;
     }
 
