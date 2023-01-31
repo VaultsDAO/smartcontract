@@ -263,24 +263,6 @@ contract AccountBalance is IAccountBalance, BlockContext, ClearingHouseCallee, A
     }
 
     /// @inheritdoc IAccountBalance
-    function hasOrder(address trader) external view override returns (bool) {
-        uint256 tokenLen = _baseTokensMap[trader].length;
-        address[] memory tokens = new address[](tokenLen);
-
-        uint256 skipped = 0;
-        for (uint256 i = 0; i < tokenLen; i++) {
-            address baseToken = _baseTokensMap[trader][i];
-            if (!IBaseToken(baseToken).isOpen()) {
-                skipped++;
-                continue;
-            }
-            tokens[i - skipped] = baseToken;
-        }
-
-        return IOrderBook(_orderBook).hasOrder(trader, tokens);
-    }
-
-    /// @inheritdoc IAccountBalance
     function getLiquidatablePositionSize(
         address trader,
         address baseToken,
@@ -481,11 +463,6 @@ contract AccountBalance is IAccountBalance, BlockContext, ClearingHouseCallee, A
         if (info.takerPositionSize.abs() >= _DUST || info.takerOpenNotional.abs() >= _DUST) {
             return;
         }
-
-        if (IOrderBook(_orderBook).getOpenOrderIds(trader, baseToken).length > 0) {
-            return;
-        }
-
         _deleteBaseToken(trader, baseToken);
     }
 

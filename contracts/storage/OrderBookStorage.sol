@@ -11,10 +11,7 @@ import { OpenOrder } from "../lib/OpenOrder.sol";
 abstract contract OrderBookStorageV1 {
     address internal _exchange;
 
-    // first key: trader, second key: base token
-    mapping(address => mapping(address => bytes32[])) internal _openOrderIdsMap;
-
-    // key: openOrderId
-    mapping(bytes32 => OpenOrder.Info) internal _openOrderMap;
+    // key: baseToke => info
+    mapping(address => OpenOrder.Info) internal _openOrderMap;
 
 }

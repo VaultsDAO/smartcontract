@@ -171,11 +171,6 @@ interface IAccountBalance {
         address trader
     ) external view returns (int256 owedRealizedPnl, int256 unrealizedPnl, uint256 pendingFee);
 
-    /// @notice Check trader has open order in open/closed market.
-    /// @param trader The address of trader
-    /// @return True of false
-    function hasOrder(address trader) external view returns (bool);
-
     /// @notice Get trader base amount
     /// @dev `base amount = takerPositionSize - orderBaseDebt`
     /// @param trader The address of trader

@@ -203,7 +203,7 @@ contract ClearingHouse is
             DataTypes.AddLiquidityResponse memory
         )
     {
-        return LiquidityLogic.addLiquidity(address(this), _msgSender(), params);
+        return LiquidityLogic.addLiquidity(address(this), params);
     }
 
     /// @inheritdoc IClearingHouse
@@ -218,7 +218,7 @@ contract ClearingHouse is
         onlyMaker
         returns (DataTypes.RemoveLiquidityResponse memory)
     {
-        return LiquidityLogic.removeLiquidity(address(this), _msgSender(), params);
+        return LiquidityLogic.removeLiquidity(address(this), params);
     }
 
     /// @inheritdoc IClearingHouse
@@ -290,21 +290,6 @@ contract ClearingHouse is
 
     /// @inheritdoc IClearingHouse
     function cancelExcessOrders(
-        address maker,
-        address baseToken,
-        bytes32[] calldata orderIds
-    ) external override onlyMaker whenNotPaused nonReentrant {
-        // input requirement checks:
-        //   maker: in _cancelExcessOrders()
-        //   baseToken: in Exchange.settleFunding()
-        //   orderIds: in OrderBook.removeLiquidityByIds()
-
-        _cancelExcessOrders(maker, baseToken, orderIds);
-    }
-
-    /// @inheritdoc IClearingHouse
-    function cancelAllExcessOrders(
-        address maker,
         address baseToken
     ) external override onlyMaker whenNotPaused nonReentrant {
         // input requirement checks:
@@ -312,7 +297,19 @@ contract ClearingHouse is
         //   baseToken: in Exchange.settleFunding()
         //   orderIds: in OrderBook.removeLiquidityByIds()
 
-        _cancelExcessOrders(maker, baseToken, _getOpenOrderIds(maker, baseToken));
+        _cancelExcessOrders(baseToken);
+    }
+
+    /// @inheritdoc IClearingHouse
+    function cancelAllExcessOrders(
+        address baseToken
+    ) external override onlyMaker whenNotPaused nonReentrant {
+        // input requirement checks:
+        //   maker: in _cancelExcessOrders()
+        //   baseToken: in Exchange.settleFunding()
+        //   orderIds: in OrderBook.removeLiquidityByIds()
+
+        _cancelExcessOrders(baseToken);
     }
 
     /// @inheritdoc IClearingHouse
@@ -321,13 +318,6 @@ contract ClearingHouse is
         require(IBaseToken(baseToken).isClosed(), "CH_MNC");
 
         _settleFunding(trader, baseToken);
-
-        bytes32[] memory orderIds = _getOpenOrderIds(trader, baseToken);
-
-        // remove all orders in internal function
-        if (orderIds.length > 0) {
-            LiquidityLogic.removeAllLiquidity(address(this), trader, baseToken, orderIds);
-        }
 
         int256 positionSize = _getTakerPosition(trader, baseToken);
 
@@ -477,25 +467,11 @@ contract ClearingHouse is
 
     /// @dev only cancel open orders if there are not enough free collateral with mmRatio
     /// or account is able to being liquidated.
-    function _cancelExcessOrders(address maker, address baseToken, bytes32[] memory orderIds) internal {
+    function _cancelExcessOrders(address baseToken) internal {
         _checkMarketOpen(baseToken);
 
-        if (orderIds.length == 0) {
-            return;
-        }
-
-        // CH_NEXO: not excess orders
-        require(
-            (_getFreeCollateralByRatio(maker, IClearingHouseConfig(_clearingHouseConfig).getMmRatio()) < 0) ||
-                _isLiquidatable(maker),
-            "CH_NEXO"
-        );
-
-        // must settle funding first
-        _settleFunding(maker, baseToken);
-
         // remove all orders in internal function
-        LiquidityLogic.removeAllLiquidity(address(this), maker, baseToken, orderIds);
+        LiquidityLogic.removeAllLiquidity(address(this), baseToken);
     }
 
     function _openPositionFor(
@@ -628,10 +604,6 @@ contract ClearingHouse is
 
     function _getTotalAbsPositionValue(address trader) internal view returns (uint256) {
         return IAccountBalance(_accountBalance).getTotalAbsPositionValue(trader);
-    }
-
-    function _getOpenOrderIds(address maker, address baseToken) internal view returns (bytes32[] memory) {
-        return IOrderBook(_orderBook).getOpenOrderIds(maker, baseToken);
     }
 
     /// @dev liquidation condition:

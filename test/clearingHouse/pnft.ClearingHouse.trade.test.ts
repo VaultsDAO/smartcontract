@@ -60,8 +60,10 @@ describe("ClearingHouse fee updated", () => {
     let pool: UniswapV3Pool
     let mockedNFTPriceFeed: MockContract
     let collateralDecimals: number
-    let lowerTick = priceToTick(1, 60)
-    let upperTick = priceToTick(10000, 60)
+    // let lowerTick = priceToTick(1, 60)
+    // let upperTick = priceToTick(10000, 60)
+    const lowerTick: number = 45800
+    const upperTick: number = 46400
     const initPrice = "100"
 
     beforeEach(async () => {
@@ -97,43 +99,38 @@ describe("ClearingHouse fee updated", () => {
     })
 
     it("long fee updated", async () => {
-        let [amount0, amount1] = await orderBook.getAmount0Amount1ForLiquidity(baseToken.address, lowerTick, upperTick, parseEther('2500'))
-        console.log(formatEther(amount0), formatEther(amount1))
-        return
+        // let [amount0, amount1] = await orderBook.getAmount0Amount1ForLiquidity(baseToken.address, lowerTick, upperTick, parseEther('2500'))
+        // console.log(formatEther(amount0), formatEther(amount1))
+        // return
         // maker add liquidity
         await clearingHouse.connect(maker).addLiquidity({
             baseToken: baseToken.address,
-            lowerTick,
-            upperTick,
             liquidity: parseEther('10000'),
             deadline: ethers.constants.MaxUint256,
         })
-        const liquidity = (await orderBook.getOpenOrder(maker.address, baseToken.address, lowerTick, upperTick))
-            .liquidity
-        await clearingHouse.connect(maker).removeLiquidity({
-            baseToken: baseToken.address,
-            lowerTick,
-            upperTick,
-            liquidity,
-            deadline: ethers.constants.MaxUint256,
-        })
 
-        return
+        // const liquidity = (await orderBook.getOpenOrder(baseToken.address))
+        //     .liquidity
+        // await clearingHouse.connect(maker).removeLiquidity({
+        //     baseToken: baseToken.address,
+        //     liquidity,
+        //     deadline: ethers.constants.MaxUint256,
+        // })
 
         // 
         // {
-        //     {
-        //         await clearingHouse.connect(trader1).openPosition({
-        //             baseToken: baseToken.address,
-        //             isBaseToQuote: true,
-        //             isExactInput: false,
-        //             oppositeAmountBound: 0,
-        //             amount: parseEther("100"),
-        //             sqrtPriceLimitX96: 0,
-        //             deadline: ethers.constants.MaxUint256,
-        //             referralCode: ethers.constants.HashZero,
-        //         })
-        //     }
+            {
+                await clearingHouse.connect(trader1).openPosition({
+                    baseToken: baseToken.address,
+                    isBaseToQuote: true,
+                    isExactInput: false,
+                    oppositeAmountBound: 0,
+                    amount: parseEther("1"),
+                    sqrtPriceLimitX96: 0,
+                    deadline: ethers.constants.MaxUint256,
+                    referralCode: ethers.constants.HashZero,
+                })
+            }
         //     {
         //         await clearingHouse.connect(trader2).openPosition({
         //             baseToken: baseToken.address,

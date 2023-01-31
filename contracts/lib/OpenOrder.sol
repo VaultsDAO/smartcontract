@@ -8,8 +8,6 @@ library OpenOrder {
         uint128 liquidity;
         int24 lowerTick;
         int24 upperTick;
-        uint256 baseDebt;
-        uint256 quoteDebt;
     }
 
     function calcOrderKey(

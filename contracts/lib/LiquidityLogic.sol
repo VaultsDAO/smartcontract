@@ -34,7 +34,6 @@ library LiquidityLogic {
 
     function addLiquidity(
         address chAddress,
-        address trader,
         DataTypes.AddLiquidityParams calldata params
     )
         public
@@ -55,40 +54,20 @@ library LiquidityLogic {
         // CH_OMPS: Over the maximum price spread
         require(!IExchange(IClearingHouse(chAddress).getExchange()).isOverPriceSpread(params.baseToken), "CH_OMPS");
 
-        // register token if it's the first time
-        GenericLogic.registerBaseToken(chAddress, trader, params.baseToken);
-
-        // must settle funding first
-        DataTypes.Growth memory fundingGrowthGlobal = GenericLogic.settleFunding(chAddress, trader, params.baseToken);
-
         // note that we no longer check available tokens here because CH will always auto-mint in UniswapV3MintCallback
         IOrderBook.AddLiquidityResponse memory response = IOrderBook(IClearingHouse(chAddress).getOrderBook())
             .addLiquidity(
                 IOrderBook.AddLiquidityParams({
-                    trader: trader,
                     baseToken: params.baseToken,
-                    lowerTick: params.lowerTick,
-                    upperTick: params.upperTick,
-                    liquidity: params.liquidity,
-                    fundingGrowthGlobal: fundingGrowthGlobal
+                    liquidity: params.liquidity
                 })
             );
 
-        // // fees always have to be collected to owedRealizedPnl, as long as there is a change in liquidity
-        // IAccountBalance(IClearingHouse(chAddress).getAccountBalance()).modifyOwedRealizedPnl(
-        //     trader,
-        //     response.fee.toInt256()
-        // );
-
-        // after token balances are updated, we can check if there is enough free collateral
-        GenericLogic.requireEnoughFreeCollateral(chAddress, trader);
-
         emit GenericLogic.LiquidityChanged(
-            trader,
             params.baseToken,
             IClearingHouse(chAddress).getQuoteToken(),
-            params.lowerTick,
-            params.upperTick,
+            response.lowerTick,
+            response.upperTick,
             response.base.toInt256(),
             response.quote.toInt256(),
             response.liquidity.toInt128(),
@@ -174,7 +153,6 @@ library LiquidityLogic {
 
     function removeLiquidity(
         address chAddress,
-        address trader,
         DataTypes.RemoveLiquidityParams calldata params
     ) public returns (DataTypes.RemoveLiquidityResponse memory) {
         // input requirement checks:
@@ -191,10 +169,7 @@ library LiquidityLogic {
         IOrderBook.RemoveLiquidityResponse memory response = IOrderBook(IClearingHouse(chAddress).getOrderBook())
             .removeLiquidity(
                 IOrderBook.RemoveLiquidityParams({
-                    maker: trader,
                     baseToken: params.baseToken,
-                    lowerTick: params.lowerTick,
-                    upperTick: params.upperTick,
                     liquidity: params.liquidity
                 })
             );
@@ -210,11 +185,10 @@ library LiquidityLogic {
         // );
 
         emit GenericLogic.LiquidityChanged(
-            trader,
             params.baseToken,
             IClearingHouse(chAddress).getQuoteToken(),
-            params.lowerTick,
-            params.upperTick,
+            response.lowerTick,
+            response.upperTick,
             response.base.neg256(),
             response.quote.neg256(),
             params.liquidity.neg128(),
@@ -224,50 +198,37 @@ library LiquidityLogic {
         return DataTypes.RemoveLiquidityResponse({ quote: response.quote, base: response.base, fee: response.fee });
     }
 
-    function removeAllLiquidity(address chAddress, address maker, address baseToken, bytes32[] memory orderIds) public {
+    function removeAllLiquidity(address chAddress, address baseToken) public {
         IOrderBook.RemoveLiquidityResponse memory removeLiquidityResponse;
 
-        uint256 length = orderIds.length;
-        for (uint256 i = 0; i < length; i++) {
-            OpenOrder.Info memory order = IOrderBook(IClearingHouse(chAddress).getOrderBook()).getOpenOrderById(
-                orderIds[i]
+        OpenOrder.Info memory order = IOrderBook(IClearingHouse(chAddress).getOrderBook()).getOpenOrder(
+            baseToken
+        );
+
+        IOrderBook.RemoveLiquidityResponse memory response = IOrderBook(IClearingHouse(chAddress).getOrderBook())
+            .removeLiquidity(
+                IOrderBook.RemoveLiquidityParams({
+                    baseToken: baseToken,
+                    liquidity: order.liquidity
+                })
             );
 
-            // CH_ONBM: order is not belongs to this maker
-            require(
-                OpenOrder.calcOrderKey(maker, baseToken, order.lowerTick, order.upperTick) == orderIds[i],
-                "CH_ONBM"
-            );
+        removeLiquidityResponse.base = removeLiquidityResponse.base.add(response.base);
+        removeLiquidityResponse.quote = removeLiquidityResponse.quote.add(response.quote);
+        removeLiquidityResponse.fee = removeLiquidityResponse.fee.add(response.fee);
+        removeLiquidityResponse.takerBase = removeLiquidityResponse.takerBase.add(response.takerBase);
+        removeLiquidityResponse.takerQuote = removeLiquidityResponse.takerQuote.add(response.takerQuote);
 
-            IOrderBook.RemoveLiquidityResponse memory response = IOrderBook(IClearingHouse(chAddress).getOrderBook())
-                .removeLiquidity(
-                    IOrderBook.RemoveLiquidityParams({
-                        maker: maker,
-                        baseToken: baseToken,
-                        lowerTick: order.lowerTick,
-                        upperTick: order.upperTick,
-                        liquidity: order.liquidity
-                    })
-                );
-
-            removeLiquidityResponse.base = removeLiquidityResponse.base.add(response.base);
-            removeLiquidityResponse.quote = removeLiquidityResponse.quote.add(response.quote);
-            removeLiquidityResponse.fee = removeLiquidityResponse.fee.add(response.fee);
-            removeLiquidityResponse.takerBase = removeLiquidityResponse.takerBase.add(response.takerBase);
-            removeLiquidityResponse.takerQuote = removeLiquidityResponse.takerQuote.add(response.takerQuote);
-
-            emit GenericLogic.LiquidityChanged(
-                maker,
-                baseToken,
-                IClearingHouse(chAddress).getQuoteToken(),
-                order.lowerTick,
-                order.upperTick,
-                response.base.neg256(),
-                response.quote.neg256(),
-                order.liquidity.neg128(),
-                response.fee
-            );
-        }
+        emit GenericLogic.LiquidityChanged(
+            baseToken,
+            IClearingHouse(chAddress).getQuoteToken(),
+            order.lowerTick,
+            order.upperTick,
+            response.base.neg256(),
+            response.quote.neg256(),
+            order.liquidity.neg128(),
+            response.fee
+        );
 
         // _modifyPositionAndRealizePnl(
         //     chAddress,

@@ -14,8 +14,6 @@ library DataTypes {
     }
     struct AddLiquidityParams {
         address baseToken;
-        int24 lowerTick;
-        int24 upperTick;
         uint128 liquidity;
         uint256 deadline;
     }
@@ -36,8 +34,6 @@ library DataTypes {
 
     struct RemoveLiquidityParams {
         address baseToken;
-        int24 lowerTick;
-        int24 upperTick;
         uint128 liquidity;
         uint256 deadline;
     }
