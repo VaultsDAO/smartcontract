@@ -74,11 +74,11 @@ library LiquidityLogic {
                 })
             );
 
-        // fees always have to be collected to owedRealizedPnl, as long as there is a change in liquidity
-        IAccountBalance(IClearingHouse(chAddress).getAccountBalance()).modifyOwedRealizedPnl(
-            trader,
-            response.fee.toInt256()
-        );
+        // // fees always have to be collected to owedRealizedPnl, as long as there is a change in liquidity
+        // IAccountBalance(IClearingHouse(chAddress).getAccountBalance()).modifyOwedRealizedPnl(
+        //     trader,
+        //     response.fee.toInt256()
+        // );
 
         // after token balances are updated, we can check if there is enough free collateral
         GenericLogic.requireEnoughFreeCollateral(chAddress, trader);
