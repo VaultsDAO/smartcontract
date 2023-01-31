@@ -10,6 +10,7 @@ contract ClearingHouseConfig is IClearingHouseConfig, SafeOwnable, ClearingHouse
     //
     // EVENT
     //
+    event ImRatioChanged(uint24 imRatio);
     event TwapIntervalChanged(uint256 twapInterval);
     event LiquidationPenaltyRatioChanged(uint24 liquidationPenaltyRatio);
     event PartialCloseRatioChanged(uint24 partialCloseRatio);
@@ -36,7 +37,7 @@ contract ClearingHouseConfig is IClearingHouseConfig, SafeOwnable, ClearingHouse
         __SafeOwnable_init();
 
         _maxMarketsPerAccount = type(uint8).max;
-        _imRatio = 0.1e6; // initial-margin ratio, 10% in decimal 6
+        _imRatio = 0.2e6; // initial-margin ratio, 20% in decimal 6
         _mmRatio = 0.0625e6; // minimum-margin ratio, 6.25% in decimal 6
         _liquidationPenaltyRatio = 0.025e6; // initial penalty ratio, 2.5% in decimal 6
         _partialCloseRatio = 0.25e6; // partial close ratio, 25% in decimal 6
@@ -45,11 +46,14 @@ contract ClearingHouseConfig is IClearingHouseConfig, SafeOwnable, ClearingHouse
         _settlementTokenBalanceCap = 0;
     }
 
-    function setLiquidationPenaltyRatio(uint24 liquidationPenaltyRatioArg)
-        external
-        checkRatio(liquidationPenaltyRatioArg)
-        onlyOwner
-    {
+    function setImRatio(uint24 imRatioArg) external checkRatio(imRatioArg) onlyOwner {
+        _imRatio = imRatioArg;
+        emit ImRatioChanged(imRatioArg);
+    }
+
+    function setLiquidationPenaltyRatio(
+        uint24 liquidationPenaltyRatioArg
+    ) external checkRatio(liquidationPenaltyRatioArg) onlyOwner {
         _liquidationPenaltyRatio = liquidationPenaltyRatioArg;
         emit LiquidationPenaltyRatioChanged(liquidationPenaltyRatioArg);
     }

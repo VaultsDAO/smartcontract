@@ -190,6 +190,10 @@ describe("ClearingHouse fee updated", () => {
                 deadline: ethers.constants.MaxUint256,
                 referralCode: ethers.constants.HashZero,
             })
+            {
+                let [owedRealizedPnl, realizedPnl,] = await accountBalance.getPnlAndPendingFee(trader1.address)
+                console.log('accountBalance trader1', formatEther(owedRealizedPnl), formatEther(realizedPnl))
+            }
             await clearingHouse.connect(trader2).openPosition({
                 baseToken: baseToken.address,
                 isBaseToQuote: false,
@@ -211,9 +215,11 @@ describe("ClearingHouse fee updated", () => {
             ).wait()
             let [txRealizedPnl, fees] = await getTakerRealizedPnlAndFees(r)
             let takerOpenNotional = await accountBalance.getTakerOpenNotional(trader1.address, baseToken.address)
+            let totalOpenNotional = await accountBalance.getTotalOpenNotional(trader1.address, baseToken.address)
             let [owedRealizedPnl, realizedPnl,] = await accountBalance.getPnlAndPendingFee(trader1.address)
-            console.log('accountBalance trader1', formatEther(owedRealizedPnl), formatEther(realizedPnl), formatEther(txRealizedPnl), formatEther(takerOpenNotional))
+            console.log('accountBalance trader1', formatEther(owedRealizedPnl), formatEther(realizedPnl), formatEther(txRealizedPnl), formatEther(takerOpenNotional), formatEther(totalOpenNotional))
         }
+        return
         {
             await clearingHouse.connect(trader1).openPosition({
                 baseToken: baseToken.address,
@@ -225,6 +231,10 @@ describe("ClearingHouse fee updated", () => {
                 deadline: ethers.constants.MaxUint256,
                 referralCode: ethers.constants.HashZero,
             })
+            {
+                let [owedRealizedPnl, realizedPnl,] = await accountBalance.getPnlAndPendingFee(trader1.address)
+                console.log('accountBalance trader1', formatEther(owedRealizedPnl), formatEther(realizedPnl))
+            }
             await clearingHouse.connect(trader2).openPosition({
                 baseToken: baseToken.address,
                 isBaseToQuote: false,
@@ -244,10 +254,13 @@ describe("ClearingHouse fee updated", () => {
                     referralCode: ethers.constants.HashZero,
                 })
             ).wait()
-            let [txRealizedPnl, fees] = await getTakerRealizedPnlAndFees(r)
-            let takerOpenNotional = await accountBalance.getTakerOpenNotional(trader1.address, baseToken.address)
-            let [owedRealizedPnl, realizedPnl,] = await accountBalance.getPnlAndPendingFee(trader1.address)
-            console.log('accountBalance trader1', formatEther(owedRealizedPnl), formatEther(realizedPnl), formatEther(txRealizedPnl), formatEther(takerOpenNotional))
+            {
+                let [txRealizedPnl, fees] = await getTakerRealizedPnlAndFees(r)
+                let takerOpenNotional = await accountBalance.getTakerOpenNotional(trader1.address, baseToken.address)
+                let totalOpenNotional = await accountBalance.getTotalOpenNotional(trader1.address, baseToken.address)
+                let [owedRealizedPnl, realizedPnl,] = await accountBalance.getPnlAndPendingFee(trader1.address)
+                console.log('accountBalance trader1', formatEther(owedRealizedPnl), formatEther(realizedPnl), formatEther(txRealizedPnl), formatEther(takerOpenNotional), formatEther(totalOpenNotional))
+            }
         }
         // {
         //     await clearingHouse.connect(trader).openPosition({

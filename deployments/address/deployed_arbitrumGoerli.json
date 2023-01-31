@@ -51,7 +51,7 @@
     },
     "clearingHouseConfig": {
         "address": "0x4d5b423E915243f9Dda634B18648841698bD4Cfd",
-        "implAddress": "0x5186BD7B9c0417AA17998F5aD48cCF8a16dD0BBB"
+        "implAddress": "0xF7cF1F42720851886F294a58379264C4D13d0DC4"
     },
     "marketRegistry": {
         "address": "0xCe0783C19f2Fa6776D7376Ce74DD297Ea849bFa5",

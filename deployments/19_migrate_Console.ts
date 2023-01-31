@@ -49,19 +49,23 @@ async function main() {
 
     var uniFeeTier = 3000 // 0.3%
 
-    await waitForTx(
-        await clearingHouse.connect(hieuq).openPosition({
-            baseToken: vMAYC.address,
-            isBaseToQuote: false,
-            isExactInput: true,
-            oppositeAmountBound: 0,
-            amount: parseEther('20'),
-            sqrtPriceLimitX96: 0,
-            deadline: ethers.constants.MaxUint256,
-            referralCode: ethers.constants.HashZero,
-        }),
-        'clearingHouse.connect(hieuq).openPosition long'
-    )
+    let totalPositionSize = await accountBalance.getTotalPositionSize('0x088D8A4a03266870EDcbbbADdA3F475f404dB9B2', vMAYC.address)
+    let totalOpenNotional = await accountBalance.getTotalOpenNotional('0x088D8A4a03266870EDcbbbADdA3F475f404dB9B2', vMAYC.address)
+    console.log('getTotalUser', formatEther(totalPositionSize), formatEther(totalOpenNotional))
+
+    // await waitForTx(
+    //     await clearingHouse.connect(hieuq).openPosition({
+    //         baseToken: vMAYC.address,
+    //         isBaseToQuote: false,
+    //         isExactInput: true,
+    //         oppositeAmountBound: 0,
+    //         amount: parseEther('20'),
+    //         sqrtPriceLimitX96: 0,
+    //         deadline: ethers.constants.MaxUint256,
+    //         referralCode: ethers.constants.HashZero,
+    //     }),
+    //     'clearingHouse.connect(hieuq).openPosition long'
+    // )
 
     // let marketInfo = await exchange.getDetalTawpInsuranceFundFee
 

@@ -35,24 +35,6 @@ async function main() {
         }
     }
     var baseToken = await hre.ethers.getContractAt('BaseToken', deployData.baseToken.implAddress);
-    if (deployData.vBAYC.address == undefined || deployData.vBAYC.address == '') {
-        var initializeData = baseToken.interface.encodeFunctionData('initialize', [deployData.vBAYC.name, deployData.vBAYC.symbol, deployData.nftPriceFeedBAYC.address]);
-        var transparentUpgradeableProxy: BaseContract
-        do {
-            transparentUpgradeableProxy = await waitForDeploy(
-                await TransparentUpgradeableProxy.deploy(
-                    baseToken.address,
-                    proxyAdmin.address,
-                    initializeData,
-                )
-            ) as BaseContract;
-        } while (!isAscendingTokenOrder(transparentUpgradeableProxy.address.toString(), vETH.address))
-        {
-            deployData.vBAYC.address = transparentUpgradeableProxy.address;
-            await fs.writeFileSync(fileName, JSON.stringify(deployData, null, 4))
-            console.log('vBAYC TransparentUpgradeableProxy is deployed', transparentUpgradeableProxy.address)
-        }
-    }
     if (deployData.vMAYC.address == undefined || deployData.vMAYC.address == '') {
         var initializeData = baseToken.interface.encodeFunctionData('initialize', [deployData.vMAYC.name, deployData.vMAYC.symbol, deployData.nftPriceFeedMAYC.address]);
         var transparentUpgradeableProxy: BaseContract
@@ -72,18 +54,10 @@ async function main() {
         }
     }
     {
-        await upgradeContract(proxyAdmin as ProxyAdmin, deployData.vBAYC.address, deployData.baseToken.implAddress)
         await upgradeContract(proxyAdmin as ProxyAdmin, deployData.vMAYC.address, deployData.baseToken.implAddress)
     }
     // upgrade NftPriceFeed
     {
-        {
-            const vBAYC = (await hre.ethers.getContractAt('BaseToken', deployData.vBAYC.address)) as BaseToken;
-            if ((await vBAYC.getPriceFeed()) != deployData.nftPriceFeedBAYC.address) {
-                waitForTx(await vBAYC.setPriceFeed(deployData.nftPriceFeedBAYC.address))
-                console.log('vMAYC setPriceFeed is deployed', vBAYC.address)
-            }
-        }
         {
             const vMAYC = (await hre.ethers.getContractAt('BaseToken', deployData.vMAYC.address)) as BaseToken;
             if ((await vMAYC.getPriceFeed()) != deployData.nftPriceFeedMAYC.address) {
@@ -100,21 +74,6 @@ async function main() {
             [],
             {},
             "contracts/BaseToken.sol:BaseToken",
-        )
-    }
-    {
-        var initializeData = baseToken.interface.encodeFunctionData('initialize', [deployData.vBAYC.name, deployData.vBAYC.symbol, deployData.nftPriceFeedBAYC.address]);
-        await verifyContract(
-            deployData,
-            network,
-            deployData.vBAYC.address,
-            [
-                baseToken.address,
-                proxyAdmin.address,
-                initializeData,
-            ],
-            {},
-            "@openzeppelin/contracts/proxy/TransparentUpgradeableProxy.sol:TransparentUpgradeableProxy",
         )
     }
     {

@@ -3,7 +3,7 @@ import fs from "fs";
 import hre, { ethers } from "hardhat";
 
 import { encodePriceSqrt } from "../test/shared/utilities";
-import { AccountBalance, BaseToken, ClearingHouse, CollateralManager, Exchange, InsuranceFund, MarketRegistry, NftPriceFeed, OrderBook, QuoteToken, UniswapV3Pool, Vault } from "../typechain";
+import { AccountBalance, BaseToken, ClearingHouse, ClearingHouseConfig, CollateralManager, Exchange, InsuranceFund, MarketRegistry, NftPriceFeed, OrderBook, QuoteToken, UniswapV3Pool, Vault } from "../typechain";
 import { getMaxTickRange } from "../test/helper/number";
 import helpers from "./helpers";
 import { parseEther } from "ethers/lib/utils";
@@ -25,7 +25,7 @@ async function main() {
 
     // deploy UniV3 factory
     var uniswapV3Factory = await hre.ethers.getContractAt('UniswapV3Factory', deployData.uniswapV3Factory.address);
-    var clearingHouseConfig = await hre.ethers.getContractAt('ClearingHouseConfig', deployData.clearingHouseConfig.address);
+    var clearingHouseConfig = (await hre.ethers.getContractAt('ClearingHouseConfig', deployData.clearingHouseConfig.address)) as ClearingHouseConfig;
     var marketRegistry = (await hre.ethers.getContractAt('MarketRegistry', deployData.marketRegistry.address)) as MarketRegistry;
     var orderBook = (await hre.ethers.getContractAt('OrderBook', deployData.orderBook.address)) as OrderBook;
     var accountBalance = (await hre.ethers.getContractAt('AccountBalance', deployData.accountBalance.address)) as AccountBalance;
@@ -68,7 +68,6 @@ async function main() {
     if ((await accountBalance.getVault()).toLowerCase() != vault.address.toLowerCase()) {
         await waitForTx(await accountBalance.setVault(vault.address), 'accountBalance.setVault(vault.address)')
     }
-    await waitForTx(await clearingHouseConfig.setSettlementTokenBalanceCap(ethers.constants.MaxUint256))
     if ((await marketRegistry.getClearingHouse()).toLowerCase() != clearingHouse.address.toLowerCase()) {
         await waitForTx(await marketRegistry.setClearingHouse(clearingHouse.address), 'marketRegistry.setClearingHouse(clearingHouse.address)')
     }
@@ -98,7 +97,17 @@ async function main() {
     }
     if ((await clearingHouse.getPlatformFund()).toLowerCase() != deployData.platformFundAddress.toLowerCase()) {
         await waitForTx(
-            await clearingHouse.setPlatformFund(deployData.platformFundAddress)
+            await clearingHouse.setPlatformFund(deployData.platformFundAddress), 'clearingHouse.setPlatformFund(deployData.platformFundAddress)'
+        )
+    }
+    if (!(await clearingHouseConfig.getSettlementTokenBalanceCap()).eq(ethers.constants.MaxUint256)) {
+        await waitForTx(
+            await clearingHouseConfig.setSettlementTokenBalanceCap(ethers.constants.MaxUint256), 'clearingHouseConfig.setSettlementTokenBalanceCap(ethers.constants.MaxUint256)'
+        )
+    }
+    if ((await clearingHouseConfig.getImRatio()).toString() != '200000') {
+        await waitForTx(
+            await clearingHouseConfig.setImRatio('200000'), 'await clearingHouseConfig.setImRatio(200000)'
         )
     }
 }

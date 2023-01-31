@@ -14,7 +14,7 @@ npx hardhat run deployments/12_migrate_InsuranceFund.ts --network arbitrumGoerli
 npx hardhat run deployments/13_migrate_Vault.ts --network arbitrumGoerli --no-compile
 npx hardhat run deployments/14_migrate_CollateralManager.ts --network arbitrumGoerli --no-compile
 npx hardhat run deployments/15_migrate_ClearingHouse.ts --network arbitrumGoerli --no-compile
-# npx hardhat run deployments/16_migrate_Init.ts --network arbitrumGoerli --no-compile
+# npx hardhat run deployments/16_migrate_Init_Config.ts --network arbitrumGoerli --no-compile
 # npx hardhat run deployments/17_migrate_AddLiquidity.ts --network arbitrumGoerli --no-compile
 # npx hardhat run deployments/19_migrate_Console.ts --network arbitrumGoerli --no-compile
 # npx hardhat run deployments/20_migrate_Test.ts --network arbitrumGoerli --no-compile
