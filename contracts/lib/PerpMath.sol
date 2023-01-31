@@ -38,7 +38,7 @@ library PerpMath {
     }
 
     function neg256(int256 a) internal pure returns (int256) {
-        require(a > -2**255, "PerpMath: inversion overflow");
+        require(a > -2 ** 255, "PerpMath: inversion overflow");
         return -a;
     }
 
@@ -47,7 +47,7 @@ library PerpMath {
     }
 
     function neg128(int128 a) internal pure returns (int128) {
-        require(a > -2**127, "PerpMath: inversion overflow");
+        require(a > -2 ** 127, "PerpMath: inversion overflow");
         return -a;
     }
 
@@ -83,11 +83,7 @@ library PerpMath {
     }
 
     /// @param denominator cannot be 0 and is checked in FullMath.mulDiv()
-    function mulDiv(
-        int256 a,
-        int256 b,
-        uint256 denominator
-    ) internal pure returns (int256 result) {
+    function mulDiv(int256 a, int256 b, uint256 denominator) internal pure returns (int256 result) {
         uint256 unsignedA = a < 0 ? uint256(neg256(a)) : uint256(a);
         uint256 unsignedB = b < 0 ? uint256(neg256(b)) : uint256(b);
         bool negative = ((a < 0 && b > 0) || (a > 0 && b < 0)) ? true : false;
@@ -97,5 +93,13 @@ library PerpMath {
         result = negative ? neg256(unsignedResult) : PerpSafeCast.toInt256(unsignedResult);
 
         return result;
+    }
+
+    function mulMultiplier(int256 value, uint256 multiplier) internal pure returns (int256) {
+        return mulDiv(value, int256(multiplier), 1e18);
+    }
+
+    function divMultiplier(int256 value, uint256 multiplier) internal pure returns (int256) {
+        return mulDiv(value, 1e18, multiplier);
     }
 }

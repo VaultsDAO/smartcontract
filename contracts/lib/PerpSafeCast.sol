@@ -229,4 +229,5 @@ library PerpSafeCast {
     function toInt24(int256 value) internal pure returns (int24 returnValue) {
         require(((returnValue = int24(value)) == value), "SafeCast: value doesn't fit in an 24 bits");
     }
+
 }

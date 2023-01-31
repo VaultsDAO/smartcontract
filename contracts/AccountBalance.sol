@@ -63,6 +63,18 @@ contract AccountBalance is IAccountBalance, BlockContext, ClearingHouseCallee, A
         emit VaultChanged(vaultArg);
     }
 
+    function modifyMarketMultiplier(address baseToken, uint256 modifyRate) external {
+        _requireOnlyClearingHouse();
+        if (_marketMap[baseToken].multiplierX10_18 == 0) {
+            _marketMap[baseToken].multiplierX10_18 = 1e18;
+        }
+        _marketMap[baseToken].multiplierX10_18 = FullMath.mulDiv(
+            _marketMap[baseToken].multiplierX10_18,
+            modifyRate,
+            1e18
+        );
+    }
+
     /// @inheritdoc IAccountBalance
     function modifyTakerBalance(
         address trader,
@@ -406,6 +418,13 @@ contract AccountBalance is IAccountBalance, BlockContext, ClearingHouseCallee, A
         return (_marketMap[baseToken].longPositionSize, _marketMap[baseToken].shortPositionSize);
     }
 
+    function getMarketMultiplier(address baseToken) public view returns (uint256 multiplier) {
+        multiplier = _marketMap[baseToken].multiplierX10_18;
+        if (multiplier == 0) {
+            multiplier = 1e18;
+        }
+    }
+
     //
     // INTERNAL NON-VIEW
     //
@@ -415,6 +434,8 @@ contract AccountBalance is IAccountBalance, BlockContext, ClearingHouseCallee, A
         int256 base,
         int256 quote
     ) internal returns (int256, int256) {
+        // base = base.divMultiplier(getMarketMultiplier(baseToken)); // scale new base
+        //
         DataTypes.AccountMarketInfo storage accountInfo = _accountMarketMap[trader][baseToken];
         int256 oldPos = accountInfo.takerPositionSize;
         accountInfo.takerPositionSize = accountInfo.takerPositionSize.add(base);
