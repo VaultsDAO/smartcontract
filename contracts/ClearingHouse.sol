@@ -289,9 +289,7 @@ contract ClearingHouse is
     }
 
     /// @inheritdoc IClearingHouse
-    function cancelExcessOrders(
-        address baseToken
-    ) external override onlyMaker whenNotPaused nonReentrant {
+    function cancelExcessOrders(address baseToken) external override onlyMaker whenNotPaused nonReentrant {
         // input requirement checks:
         //   maker: in _cancelExcessOrders()
         //   baseToken: in Exchange.settleFunding()
@@ -301,9 +299,7 @@ contract ClearingHouse is
     }
 
     /// @inheritdoc IClearingHouse
-    function cancelAllExcessOrders(
-        address baseToken
-    ) external override onlyMaker whenNotPaused nonReentrant {
+    function cancelAllExcessOrders(address baseToken) external override onlyMaker whenNotPaused nonReentrant {
         // input requirement checks:
         //   maker: in _cancelExcessOrders()
         //   baseToken: in Exchange.settleFunding()
@@ -688,4 +684,39 @@ contract ClearingHouse is
     //     // CH_PSCF: price slippage check fails
     //     require(base >= minBase && quote >= minQuote, "CH_PSCF");
     // }
+
+    function repeg(address baseToken) external {
+        // check mark price != index price over 10% and over 1 hour
+        // calculate delta base (11) of long short -> delta quote (1)
+        // remove 99.99% liquidity
+        // calculate base amount for openPosition -> spot price
+        // maker openPosition -> spot price
+        // add 99.99% liquidity again
+        // maker closePosition -> spot price
+        // calculate delta quote (1) -> new delta base (22)
+        // calculate scale -> new mark price => rate = (% delta price)
+        // calculate scale for long short = (diff delta base on (11 - 22)) / (total_long + total_short)
+        // if delta base < 0 -> decrase delta long short
+        // -> if long > short -> decrease long and increase short
+        // -> if long < short -> increase long and decrease short
+        // if delta base > 0 -> increase delta long short
+        // -> if long > short -> increase long and decrease short
+        // -> if long < short -> decrease long and increase short
+        // update scale for position size for long short
+    }
+
+    function modifyLiquidity(address baseToken, uint256 newLiquidity) external {
+        // calculate delta base (11) of long short -> delta quote (1)
+        // add or remove liquidity
+        // calculate delta quote (1) -> new delta base (22)
+        // calculate scale -> new mark price => rate = (% delta price)
+        // calculate scale for long short = (diff delta base on (11 - 22)) / (total_long + total_short)
+        // if delta base < 0 -> decrase delta long short
+        // -> if long > short -> decrease long and increase short
+        // -> if long < short -> increase long and decrease short
+        // if delta base > 0 -> increase delta long short
+        // -> if long > short -> increase long and decrease short
+        // -> if long < short -> decrease long and increase short
+        // update scale for position size for long short
+    }
 }
