@@ -24,6 +24,9 @@ abstract contract CollateralManagerStorageV1 {
     uint256 internal _debtThreshold;
 
     uint256 internal _collateralValueDust;
+
+    address[10] private __gap1;
+    uint256[10] private __gap2;
 }
 
 abstract contract CollateralManagerStorageV2 is CollateralManagerStorageV1 {

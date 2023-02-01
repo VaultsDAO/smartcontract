@@ -12,6 +12,9 @@ abstract contract AccountBalanceStorageV1 {
     address internal _orderBook;
     address internal _vault;
 
+    address[10] private __gap1;
+    uint256[10] private __gap2;
+
     // trader => owedRealizedPnl
     mapping(address => int256) internal _owedRealizedPnlMap;
 

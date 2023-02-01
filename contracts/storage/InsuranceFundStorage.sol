@@ -12,6 +12,9 @@ abstract contract InsuranceFundStorageV1 {
     // --------- ^^^^^^^^^ ---------
 
     address internal _vault;
+
+    address[10] private __gap1;
+    uint256[10] private __gap2;
 }
 
 abstract contract InsuranceFundStorageV2 is InsuranceFundStorageV1 {

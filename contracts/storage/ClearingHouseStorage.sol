@@ -22,6 +22,10 @@ abstract contract ClearingHouseStorage {
     address internal _insuranceFund;
     address internal _platformFund;
     address internal _maker;
+    address internal _rewardMiner;
 
     address internal _delegateApproval;
+
+    address[10] private __gap1;
+    uint256[10] private __gap2;
 }

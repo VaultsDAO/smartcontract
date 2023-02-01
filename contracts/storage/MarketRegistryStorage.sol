@@ -10,6 +10,9 @@ abstract contract MarketRegistryStorageV1 {
 
     uint8 internal _maxOrdersPerMarket;
 
+    address[10] private __gap1;
+    uint256[10] private __gap2;
+
     // key: baseToken, value: pool
     mapping(address => address) internal _poolMap;
 

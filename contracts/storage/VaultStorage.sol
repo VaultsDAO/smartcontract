@@ -22,6 +22,9 @@ abstract contract VaultStorageV1 {
     // _totalDebt is deprecated
     uint256 internal _totalDebt;
 
+    address[10] private __gap1;
+    uint256[10] private __gap2;
+
     // key: trader, token address
     mapping(address => mapping(address => int256)) internal _balance;
 }

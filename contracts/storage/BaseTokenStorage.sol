@@ -14,6 +14,9 @@ abstract contract BaseTokenStorageV1 {
     // --------- ^^^^^^^^^ ---------
 
     address internal _priceFeed;
+
+    address[10] private __gap1;
+    uint256[10] private __gap2;
 }
 
 abstract contract BaseTokenStorageV2 is BaseTokenStorageV1 {
