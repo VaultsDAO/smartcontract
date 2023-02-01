@@ -674,6 +674,9 @@ contract Exchange is
             (uint256 longPositionSize, uint256 shortPositionSize) = IAccountBalance(_accountBalance)
                 .getMarketPositionSize(baseToken);
             if (longPositionSize > 0 && shortPositionSize > 0) {
+                (uint256 longMultiplier, uint256 shortMultiplier) = IAccountBalance(_accountBalance)
+                    .getMarketMultiplier(baseToken);
+
                 uint256 sqrtMarkTwapX96 = getSqrtMarkTwapX96(baseToken, 0);
                 int256 deltaTwapX96 = _getDeltaTwapX96AfterOptimal(
                     baseToken,

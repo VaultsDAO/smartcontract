@@ -102,4 +102,12 @@ library PerpMath {
     function divMultiplier(int256 value, uint256 multiplier) internal pure returns (int256) {
         return mulDiv(value, 1e18, multiplier);
     }
+
+    function mulMultiplier(uint256 value, uint256 multiplier) internal pure returns (uint256) {
+        return FullMath.mulDiv(value, multiplier, 1e18);
+    }
+
+    function divMultiplier(uint256 value, uint256 multiplier) internal pure returns (uint256) {
+        return FullMath.mulDiv(value, 1e18, multiplier);
+    }
 }

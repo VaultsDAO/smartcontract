@@ -338,7 +338,8 @@ contract AccountBalance is IAccountBalance, BlockContext, ClearingHouseCallee, A
     /// @inheritdoc IAccountBalance
     function getTakerPositionSize(address trader, address baseToken) public view override returns (int256) {
         int256 positionSize = _accountMarketMap[trader][baseToken].takerPositionSize;
-        return positionSize.abs() < _DUST ? 0 : positionSize;
+        positionSize = positionSize.abs() < _DUST ? 0 : positionSize;
+        return positionSize;
     }
 
     /// @inheritdoc IAccountBalance
@@ -348,7 +349,8 @@ contract AccountBalance is IAccountBalance, BlockContext, ClearingHouseCallee, A
         // the actual base amount in pool would be 1999999999999999999
         int256 takerPositionSize = _accountMarketMap[trader][baseToken].takerPositionSize;
         int256 totalPositionSize = takerPositionSize;
-        return totalPositionSize.abs() < _DUST ? 0 : totalPositionSize;
+        totalPositionSize = totalPositionSize.abs() < _DUST ? 0 : totalPositionSize;
+        return totalPositionSize;
     }
 
     /// @inheritdoc IAccountBalance
@@ -381,12 +383,22 @@ contract AccountBalance is IAccountBalance, BlockContext, ClearingHouseCallee, A
 
     /// @inheritdoc IAccountBalance
     function getMarketPositionSize(address baseToken) public view override returns (uint256, uint256) {
-        return (_marketMap[baseToken].longPositionSize, _marketMap[baseToken].shortPositionSize);
+        (uint256 longMultiplier, uint256 shortMultiplier) = _getMarketMultiplier(baseToken);
+        return (
+            _marketMap[baseToken].longPositionSize.mulMultiplier(longMultiplier),
+            _marketMap[baseToken].shortPositionSize.mulMultiplier(shortMultiplier)
+        );
     }
 
     function getMarketMultiplier(
         address baseToken
-    ) public view returns (uint256 longMultiplier, uint256 shortMultiplier) {
+    ) external view override returns (uint256 longMultiplier, uint256 shortMultiplier) {
+        return _getMarketMultiplier(baseToken);
+    }
+
+    function _getMarketMultiplier(
+        address baseToken
+    ) internal view returns (uint256 longMultiplier, uint256 shortMultiplier) {
         longMultiplier = _marketMap[baseToken].longMultiplierX10_18;
         if (longMultiplier == 0) {
             longMultiplier = 1e18;
@@ -408,7 +420,7 @@ contract AccountBalance is IAccountBalance, BlockContext, ClearingHouseCallee, A
         DataTypes.AccountMarketInfo storage accountInfo = _accountMarketMap[trader][baseToken];
         // update for multiplier
         {
-            (uint256 longMultiplier, uint256 shortMultiplier) = getMarketMultiplier(baseToken);
+            (uint256 longMultiplier, uint256 shortMultiplier) = _getMarketMultiplier(baseToken);
             if (accountInfo.takerPositionSize > 0) {
                 // in long
                 if (baseAfterMultiplier > 0) {
@@ -464,7 +476,7 @@ contract AccountBalance is IAccountBalance, BlockContext, ClearingHouseCallee, A
     ) internal returns (int256, int256) {
         // for multiplier
         int256 base = getModifyBaseForMultiplier(trader, baseToken, baseAfterMultiplier);
-        // 
+        //
         DataTypes.AccountMarketInfo storage accountInfo = _accountMarketMap[trader][baseToken];
         int256 oldPos = accountInfo.takerPositionSize;
         accountInfo.takerPositionSize = accountInfo.takerPositionSize.add(base);
