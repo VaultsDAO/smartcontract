@@ -309,7 +309,7 @@ contract Exchange is
 
             (uint256 longPositionSize, uint256 shortPositionSize) = IAccountBalance(_accountBalance)
                 .getMarketPositionSize(baseToken);
-                
+
             emit FundingUpdated(baseToken, markTwap, indexTwap, longPositionSize, shortPositionSize);
 
             // update tick for price limit checks
@@ -857,5 +857,34 @@ contract Exchange is
         address baseToken
     ) public view returns (DataTypes.Growth memory fundingGrowthGlobal, uint256 markTwap, uint256 indexTwap) {
         (fundingGrowthGlobal, markTwap, indexTwap) = _getFundingGrowthGlobalAndTwaps(baseToken);
+    }
+
+    function estimateSwap(
+        DataTypes.OpenPositionParams memory params
+    ) external override returns (IOrderBook.ReplaySwapResponse memory response) {
+        IMarketRegistry.MarketInfo memory marketInfo = IMarketRegistry(_marketRegistry).getMarketInfo(params.baseToken);
+        uint24 uniswapFeeRatio = marketInfo.uniswapFeeRatio;
+        (, int256 signedScaledAmountForReplaySwap) = SwapMath.calcScaledAmountForSwaps(
+            params.isBaseToQuote,
+            params.isExactInput,
+            params.amount,
+            uniswapFeeRatio
+        );
+        response = IOrderBook(_orderBook).estimateSwap(
+            IOrderBook.ReplaySwapParams({
+                baseToken: params.baseToken,
+                isBaseToQuote: params.isBaseToQuote,
+                amount: signedScaledAmountForReplaySwap,
+                sqrtPriceLimitX96: params.sqrtPriceLimitX96,
+                uniswapFeeRatio: uniswapFeeRatio,
+                shouldUpdateState: false,
+                globalFundingGrowth: DataTypes.Growth({
+                    twLongPremiumX96: 0,
+                    twLongPremiumDivBySqrtPriceX96: 0,
+                    twShortPremiumX96: 0,
+                    twShortPremiumDivBySqrtPriceX96: 0
+                })
+            })
+        );
     }
 }
