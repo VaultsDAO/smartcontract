@@ -10,8 +10,4 @@ import { OpenOrder } from "../lib/OpenOrder.sol";
 /// OrderBookStorageVX.
 abstract contract OrderBookStorageV1 {
     address internal _exchange;
-
-    // key: baseToke => info
-    mapping(address => OpenOrder.Info) internal _openOrderMap;
-
 }

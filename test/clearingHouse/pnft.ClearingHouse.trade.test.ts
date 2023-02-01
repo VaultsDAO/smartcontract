@@ -109,28 +109,29 @@ describe("ClearingHouse fee updated", () => {
             deadline: ethers.constants.MaxUint256,
         })
 
-        // const liquidity = (await orderBook.getOpenOrder(baseToken.address))
-        //     .liquidity
+        // const liquidity = (await orderBook.getLiquidity(baseToken.address))
         // await clearingHouse.connect(maker).removeLiquidity({
         //     baseToken: baseToken.address,
         //     liquidity,
         //     deadline: ethers.constants.MaxUint256,
         // })
 
+        // return
+
         // 
         // {
-            {
-                await clearingHouse.connect(trader1).openPosition({
-                    baseToken: baseToken.address,
-                    isBaseToQuote: true,
-                    isExactInput: false,
-                    oppositeAmountBound: 0,
-                    amount: parseEther("1"),
-                    sqrtPriceLimitX96: 0,
-                    deadline: ethers.constants.MaxUint256,
-                    referralCode: ethers.constants.HashZero,
-                })
-            }
+        {
+            await clearingHouse.connect(trader1).openPosition({
+                baseToken: baseToken.address,
+                isBaseToQuote: true,
+                isExactInput: false,
+                oppositeAmountBound: 0,
+                amount: parseEther("1"),
+                sqrtPriceLimitX96: 0,
+                deadline: ethers.constants.MaxUint256,
+                referralCode: ethers.constants.HashZero,
+            })
+        }
         //     {
         //         await clearingHouse.connect(trader2).openPosition({
         //             baseToken: baseToken.address,
