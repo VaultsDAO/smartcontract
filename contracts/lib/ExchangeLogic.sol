@@ -401,9 +401,6 @@ library ExchangeLogic {
 
         GenericLogic.requireNotMaker(chAddress, trader);
 
-        // CH_CLWTISO: cannot liquidate when there is still order
-        require(!IAccountBalance(IClearingHouse(chAddress).getAccountBalance()).hasOrder(trader), "CH_CLWTISO");
-
         // CH_EAV: enough account value
         require(GenericLogic.isLiquidatable(chAddress, trader), "CH_EAV");
 

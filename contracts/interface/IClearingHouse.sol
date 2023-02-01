@@ -242,16 +242,13 @@ interface IClearingHouse {
 
     /// @notice Cancel excess order of a maker
     /// @dev Order id can get from `OrderBook.getOpenOrderIds`
-    /// @param maker The address of Maker
     /// @param baseToken The address of baseToken
-    /// @param orderIds The id of the order
-    function cancelExcessOrders(address maker, address baseToken, bytes32[] calldata orderIds) external;
+    function cancelExcessOrders(address baseToken) external;
 
     /// @notice Cancel all excess orders of a maker if the maker is underwater
     /// @dev This function won't fail if the maker has no order but fails when maker is not underwater
-    /// @param maker The address of maker
     /// @param baseToken The address of baseToken
-    function cancelAllExcessOrders(address maker, address baseToken) external;
+    function cancelAllExcessOrders(address baseToken) external;
 
     /// @notice Close all positions and remove all liquidities of a trader in the closed market
     /// @param trader The address of trader

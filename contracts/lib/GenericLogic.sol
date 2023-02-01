@@ -65,7 +65,6 @@ library GenericLogic {
     );
 
     /// @notice Emitted when maker's liquidity of a order changed
-    /// @param maker The one who provide liquidity
     /// @param baseToken The address of virtual base token(ETH, BTC, etc...)
     /// @param quoteToken The address of virtual USD token
     /// @param lowerTick The lower tick of the position in which to add liquidity
@@ -75,7 +74,6 @@ library GenericLogic {
     /// @param liquidity The amount of liquidity unit added (> 0) / removed (< 0)
     /// @param quoteFee The amount of quote token the maker received as fees
     event LiquidityChanged(
-        address indexed maker,
         address indexed baseToken,
         address indexed quoteToken,
         int24 lowerTick,

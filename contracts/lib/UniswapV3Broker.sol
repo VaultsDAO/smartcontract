@@ -344,4 +344,10 @@ library UniswapV3Broker {
         wordPos = int16(tick >> 8);
         bitPos = uint8(tick % 256);
     }
+
+    function getFullTickForLiquidity(address pool) internal view returns (int24 lowerTick, int24 upperTick) {
+        int24 tickSpacing = IUniswapV3Pool(pool).tickSpacing();
+        lowerTick = (TickMath.MIN_TICK / tickSpacing) * tickSpacing;
+        upperTick = (TickMath.MAX_TICK / tickSpacing) * tickSpacing;
+    }
 }
