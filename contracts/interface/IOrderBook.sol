@@ -19,20 +19,12 @@ interface IOrderBook {
     struct AddLiquidityResponse {
         uint256 base;
         uint256 quote;
-        uint256 fee;
         uint128 liquidity;
-        int24 lowerTick;
-        int24 upperTick;
     }
 
     struct RemoveLiquidityResponse {
         uint256 base;
         uint256 quote;
-        uint256 fee;
-        int256 takerBase;
-        int256 takerQuote;
-        int24 lowerTick;
-        int24 upperTick;
     }
 
     struct ReplaySwapParams {
@@ -81,12 +73,7 @@ interface IOrderBook {
 
     /// @notice Get open order ids of a trader in the given market
     /// @param baseToken The base token address
-    function getOpenOrder(address baseToken) external view returns (OpenOrder.Info memory info);
-
-    /// @notice Check if the specified trader has order in given markets
-    /// @param tokens The base token addresses
-    /// @return hasOrder True if the trader has order in given markets
-    function hasOrder(address[] calldata tokens) external view returns (bool hasOrder);
+    function getLiquidity(address baseToken) external view returns (uint128);
 
     /// @notice Get `Exchange` contract address
     /// @return exchange The `Exchange` contract address

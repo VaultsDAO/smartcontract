@@ -21,7 +21,6 @@ library DataTypes {
     struct AddLiquidityResponse {
         uint256 base;
         uint256 quote;
-        uint256 fee;
         uint128 liquidity;
     }
 
@@ -41,7 +40,6 @@ library DataTypes {
     struct RemoveLiquidityResponse {
         uint256 base;
         uint256 quote;
-        uint256 fee;
     }
 
     struct OpenPositionParams {
