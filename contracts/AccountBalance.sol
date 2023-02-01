@@ -211,15 +211,6 @@ contract AccountBalance is IAccountBalance, BlockContext, ClearingHouseCallee, A
 
     // @inheritdoc IAccountBalance
     function getTotalOpenNotional(address trader, address baseToken) external view override returns (int256) {
-        // // quote.pool[baseToken] + quoteBalance[baseToken]
-        // (uint256 quoteInPool, ) = IOrderBook(_orderBook).getTotalTokenAmountInPoolAndPendingFee(
-        //     trader,
-        //     baseToken,
-        //     false
-        // );
-        // int256 quoteBalance = getQuote(trader, baseToken);
-        // return quoteInPool.toInt256().add(quoteBalance);
-
         return getQuote(trader, baseToken);
     }
 
@@ -312,17 +303,11 @@ contract AccountBalance is IAccountBalance, BlockContext, ClearingHouseCallee, A
 
     /// @inheritdoc IAccountBalance
     function getBase(address trader, address baseToken) public view override returns (int256) {
-        // uint256 orderDebt = IOrderBook(_orderBook).getTotalOrderDebt(trader, baseToken, true);
-        // // base = takerPositionSize - orderBaseDebt
-        // return _accountMarketMap[trader][baseToken].takerPositionSize.sub(orderDebt.toInt256());
         return _accountMarketMap[trader][baseToken].takerPositionSize;
     }
 
     /// @inheritdoc IAccountBalance
     function getQuote(address trader, address baseToken) public view override returns (int256) {
-        // uint256 orderDebt = IOrderBook(_orderBook).getTotalOrderDebt(trader, baseToken, false);
-        // // quote = takerOpenNotional - orderQuoteDebt
-        // return _accountMarketMap[trader][baseToken].takerOpenNotional.sub(orderDebt.toInt256());
         return _accountMarketMap[trader][baseToken].takerOpenNotional;
     }
 
@@ -337,19 +322,6 @@ contract AccountBalance is IAccountBalance, BlockContext, ClearingHouseCallee, A
         // NOTE: when a token goes into UniswapV3 pool (addLiquidity or swap), there would be 1 wei rounding error
         // for instance, maker adds liquidity with 2 base (2000000000000000000),
         // the actual base amount in pool would be 1999999999999999999
-
-        // makerBalance = totalTokenAmountInPool - totalOrderDebt
-        // (uint256 totalBaseBalanceFromOrders, ) = IOrderBook(_orderBook).getTotalTokenAmountInPoolAndPendingFee(
-        //     trader,
-        //     baseToken,
-        //     true
-        // );
-        // uint256 totalBaseDebtFromOrder = IOrderBook(_orderBook).getTotalOrderDebt(trader, baseToken, true);
-        // int256 makerBaseBalance = totalBaseBalanceFromOrders.toInt256().sub(totalBaseDebtFromOrder.toInt256());
-
-        // int256 takerPositionSize = _accountMarketMap[trader][baseToken].takerPositionSize;
-        // int256 totalPositionSize = makerBaseBalance.add(takerPositionSize);
-        // return totalPositionSize.abs() < _DUST ? 0 : totalPositionSize;
         int256 takerPositionSize = _accountMarketMap[trader][baseToken].takerPositionSize;
         int256 totalPositionSize = takerPositionSize;
         return totalPositionSize.abs() < _DUST ? 0 : totalPositionSize;
@@ -533,10 +505,6 @@ contract AccountBalance is IAccountBalance, BlockContext, ClearingHouseCallee, A
         }
         // pendingFee is included
         int256 totalMakerQuoteBalance;
-        // (totalMakerQuoteBalance, pendingFee) = IOrderBook(_orderBook).getTotalQuoteBalanceAndPendingFee(
-        //     trader,
-        //     _baseTokensMap[trader]
-        // );
         netQuoteBalance = totalTakerQuoteBalance.add(totalMakerQuoteBalance);
         return (netQuoteBalance, pendingFee);
     }

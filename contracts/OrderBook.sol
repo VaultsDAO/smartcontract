@@ -157,14 +157,6 @@ contract OrderBook is
             );
     }
 
-    /// @inheritdoc IOrderBook
-    function updateOrderDebt(address baseToken, int256 base, int256 quote) external override {
-        _requireOnlyClearingHouse();
-        OpenOrder.Info storage openOrder = _openOrderMap[baseToken];
-        // openOrder.baseDebt = openOrder.baseDebt.toInt256().add(base).toUint256();
-        // openOrder.quoteDebt = openOrder.quoteDebt.toInt256().add(quote).toUint256();
-    }
-
     /// @inheritdoc IUniswapV3MintCallback
     function uniswapV3MintCallback(
         uint256 amount0Owed,
@@ -307,54 +299,9 @@ contract OrderBook is
         return false;
     }
 
-    /// @inheritdoc IOrderBook
-    function getTotalQuoteBalanceAndPendingFee(
-        address[] calldata baseTokens
-    ) external view override returns (int256 totalQuoteAmountInPools, uint256 totalPendingFee) {
-        for (uint256 i = 0; i < baseTokens.length; i++) {
-            address baseToken = baseTokens[i];
-            (int256 makerQuoteBalance, uint256 pendingFee) = _getMakerQuoteBalanceAndPendingFee(baseToken, false);
-            totalQuoteAmountInPools = totalQuoteAmountInPools.add(makerQuoteBalance);
-            totalPendingFee = totalPendingFee.add(pendingFee);
-        }
-        return (totalQuoteAmountInPools, totalPendingFee);
-    }
-
-    /// @inheritdoc IOrderBook
-    function getTotalTokenAmountInPoolAndPendingFee(
-        address baseToken,
-        bool fetchBase // true: fetch base amount, false: fetch quote amount
-    ) external view override returns (uint256 tokenAmount, uint256 pendingFee) {
-        (tokenAmount, pendingFee) = _getTotalTokenAmountInPool(baseToken, fetchBase);
-    }
-
-    /// @inheritdoc IOrderBook
-    function getPendingFee(
-        address baseToken,
-        int24 lowerTick,
-        int24 upperTick
-    ) external view override returns (uint256) {
-        // (uint256 pendingFee, ) = _getPendingFeeAndFeeGrowthInsideX128ByOrder(
-        //     baseToken,
-        //     _openOrderMap[OpenOrder.calcOrderKey(trader, baseToken, lowerTick, upperTick)]
-        // );
-        // return pendingFee;
-        uint256 pendingFee;
-        return pendingFee;
-    }
-
     //
     // PUBLIC VIEW
     //
-
-    /// @inheritdoc IOrderBook
-    function getTotalOrderDebt(address baseToken, bool fetchBase) public view override returns (uint256) {
-        uint256 totalOrderDebt;
-        // OpenOrder.Info memory orderInfo = _openOrderMap[baseToken];
-        // uint256 orderDebt = fetchBase ? orderInfo.baseDebt : orderInfo.quoteDebt;
-        // totalOrderDebt = totalOrderDebt.add(orderDebt);
-        return totalOrderDebt;
-    }
 
     //
     // INTERNAL NON-VIEW
@@ -402,14 +349,6 @@ contract OrderBook is
         OpenOrder.Info storage openOrder = _openOrderMap[params.baseToken];
 
         if (params.liquidity != 0) {
-            // if (openOrder.baseDebt != 0) {
-            //     baseDebt = FullMath.mulDiv(openOrder.baseDebt, params.liquidity, openOrder.liquidity);
-            //     openOrder.baseDebt = openOrder.baseDebt.sub(baseDebt);
-            // }
-            // if (openOrder.quoteDebt != 0) {
-            //     quoteDebt = FullMath.mulDiv(openOrder.quoteDebt, params.liquidity, openOrder.liquidity);
-            //     openOrder.quoteDebt = openOrder.quoteDebt.sub(quoteDebt);
-            // }
             openOrder.liquidity = openOrder.liquidity.sub(params.liquidity).toUint128();
         }
 
@@ -438,8 +377,6 @@ contract OrderBook is
 
         // after the fee is calculated, liquidity & lastFeeGrowthInsideX128 can be updated
         openOrder.liquidity = openOrder.liquidity.add(params.liquidity).toUint128();
-        // openOrder.baseDebt = openOrder.baseDebt.add(params.base);
-        // openOrder.quoteDebt = openOrder.quoteDebt.add(params.quote);
 
         return 0;
     }
@@ -448,82 +385,18 @@ contract OrderBook is
     // INTERNAL VIEW
     //
 
-    /// @return makerBalance maker quote balance
-    /// @return pendingFee pending fee
-    function _getMakerQuoteBalanceAndPendingFee(
-        address baseToken,
-        bool fetchBase
-    ) internal view returns (int256 makerBalance, uint256 pendingFee) {
-        (uint256 totalBalanceFromOrders, uint256 pendingFee) = _getTotalTokenAmountInPool(baseToken, fetchBase);
-        uint256 totalOrderDebt = getTotalOrderDebt(baseToken, fetchBase);
-        // makerBalance = totalTokenAmountInPool - totalOrderDebt
-        return (totalBalanceFromOrders.toInt256().sub(totalOrderDebt.toInt256()), pendingFee);
-    }
-
-    /// @dev Get total amount of the specified tokens in the specified pool.
-    ///      Note:
-    ///        1. when querying quote amount, it includes Exchange fees, i.e.:
-    ///           quote amount = quote liquidity + fees
-    ///           base amount = base liquidity
-    ///        2. quote/base liquidity does NOT include Uniswap pool fees since
-    ///           they do not have any impact to our margin system
-    ///        3. the returned fee amount is only meaningful when querying quote amount
-    function _getTotalTokenAmountInPool(
-        address baseToken, // this argument is only for specifying which pool to get base or quote amounts
-        bool fetchBase // true: fetch base amount, false: fetch quote amount
-    ) internal view returns (uint256 tokenAmount, uint256 pendingFee) {
-        //
-        // tick:    lower             upper
-        //       -|---+-----------------+---|--
-        //     case 1                    case 2
-        //
-        // if current price < upper tick, maker has base
-        // case 1 : current price < lower tick
-        //  --> maker only has base token
-        //
-        // if current price > lower tick, maker has quote
-        // case 2 : current price > upper tick
-        //  --> maker only has quote token
-        (uint160 sqrtMarkPriceX96, , , , , , ) = UniswapV3Broker.getSlot0(
-            IMarketRegistry(_marketRegistry).getPool(baseToken)
-        );
-
-        OpenOrder.Info memory order = _openOrderMap[baseToken];
-
-        uint256 amount;
-        {
-            uint160 sqrtPriceAtLowerTick = TickMath.getSqrtRatioAtTick(order.lowerTick);
-            uint160 sqrtPriceAtUpperTick = TickMath.getSqrtRatioAtTick(order.upperTick);
-            if (fetchBase && sqrtMarkPriceX96 < sqrtPriceAtUpperTick) {
-                amount = LiquidityAmounts.getAmount0ForLiquidity(
-                    sqrtMarkPriceX96 > sqrtPriceAtLowerTick ? sqrtMarkPriceX96 : sqrtPriceAtLowerTick,
-                    sqrtPriceAtUpperTick,
-                    order.liquidity
-                );
-            } else if (!fetchBase && sqrtMarkPriceX96 > sqrtPriceAtLowerTick) {
-                amount = LiquidityAmounts.getAmount1ForLiquidity(
-                    sqrtPriceAtLowerTick,
-                    sqrtMarkPriceX96 < sqrtPriceAtUpperTick ? sqrtMarkPriceX96 : sqrtPriceAtUpperTick,
-                    order.liquidity
-                );
-            }
-        }
-        tokenAmount = tokenAmount.add(amount);
-        return (tokenAmount, pendingFee);
-    }
-
     function _requireOnlyExchange() internal view {
         // OB_OEX: Only exchange
         require(_msgSender() == _exchange, "OB_OEX");
     }
 
-    function getAmount0Amount1ForLiquidity(
-        address baseToken,
-        int24 lowerTick,
-        int24 upperTick,
-        uint128 liquidity
-    ) external view returns (uint256 addedAmount0, uint256 addedAmount1) {
-        address pool = IMarketRegistry(_marketRegistry).getPool(baseToken);
-        return UniswapV3Broker.getAmount0Amount1ForLiquidity(pool, lowerTick, upperTick, liquidity);
-    }
+    // function getAmount0Amount1ForLiquidity(
+    //     address baseToken,
+    //     int24 lowerTick,
+    //     int24 upperTick,
+    //     uint128 liquidity
+    // ) external view returns (uint256 addedAmount0, uint256 addedAmount1) {
+    //     address pool = IMarketRegistry(_marketRegistry).getPool(baseToken);
+    //     return UniswapV3Broker.getAmount0Amount1ForLiquidity(pool, lowerTick, upperTick, liquidity);
+    // }
 }

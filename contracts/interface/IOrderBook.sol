@@ -79,8 +79,6 @@ interface IOrderBook {
     /// @return response The swap result encoded in `ReplaySwapResponse`
     function replaySwap(ReplaySwapParams memory params) external returns (ReplaySwapResponse memory response);
 
-    function updateOrderDebt(address baseToken, int256 base, int256 quote) external;
-
     /// @notice Get open order ids of a trader in the given market
     /// @param baseToken The base token address
     function getOpenOrder(address baseToken) external view returns (OpenOrder.Info memory info);
@@ -89,37 +87,6 @@ interface IOrderBook {
     /// @param tokens The base token addresses
     /// @return hasOrder True if the trader has order in given markets
     function hasOrder(address[] calldata tokens) external view returns (bool hasOrder);
-
-    /// @notice Get the total quote token amount and pending fees of all orders in given markets
-    /// @param baseTokens The base token addresses
-    /// @return totalQuoteAmountInPools The total quote token amount
-    /// @return totalPendingFee The total pending fees in the orders
-    function getTotalQuoteBalanceAndPendingFee(
-        address[] calldata baseTokens
-    ) external view returns (int256 totalQuoteAmountInPools, uint256 totalPendingFee);
-
-    /// @notice Get the total token amount (quote or base) and pending fees of all orders in the given market
-    /// @param baseToken The base token addresses
-    /// @param fetchBase True if fetch base token amount, false if fetch quote token amount
-    /// @return tokenAmount The total quote/base token amount
-    /// @return totalPendingFee The total pending fees in the orders
-    function getTotalTokenAmountInPoolAndPendingFee(
-        address baseToken,
-        bool fetchBase
-    ) external view returns (uint256 tokenAmount, uint256 totalPendingFee);
-
-    /// @notice Get the total debt token amount (base or quote) of all orders in the given market
-    /// @param baseToken The base token address
-    /// @param fetchBase True if fetch base token amount, false if fetch quote token amount
-    /// @return debtAmount The total debt token amount
-    function getTotalOrderDebt(address baseToken, bool fetchBase) external view returns (uint256 debtAmount);
-
-    /// @notice Get the pending fees of a order
-    /// @param baseToken The base token address
-    /// @param lowerTick The lower tick
-    /// @param upperTick The upper tick
-    /// @return fee The pending fees
-    function getPendingFee(address baseToken, int24 lowerTick, int24 upperTick) external view returns (uint256 fee);
 
     /// @notice Get `Exchange` contract address
     /// @return exchange The `Exchange` contract address
