@@ -91,24 +91,24 @@ library UniswapV3Broker {
     // INTERNAL NON-VIEW
     //
 
-    function getAmount0Amount1ForLiquidity(
-        address pool,
-        int24 lowerTick,
-        int24 upperTick,
-        uint128 liquidity
-    ) internal view returns (uint256 addedAmount0, uint256 addedAmount1) {
-        (uint160 sqrtRatioX96, , , , , , ) = getSlot0(pool);
-        uint160 sqrtRatioAX96 = TickMath.getSqrtRatioAtTick(lowerTick);
-        uint160 sqrtRatioBX96 = TickMath.getSqrtRatioAtTick(upperTick);
-        if (sqrtRatioX96 <= sqrtRatioAX96) {
-            addedAmount0 = LiquidityAmounts.getAmount0ForLiquidity(sqrtRatioAX96, sqrtRatioBX96, liquidity);
-        } else if (sqrtRatioX96 < sqrtRatioBX96) {
-            addedAmount0 = LiquidityAmounts.getAmount0ForLiquidity(sqrtRatioX96, sqrtRatioBX96, liquidity);
-            addedAmount1 = LiquidityAmounts.getAmount1ForLiquidity(sqrtRatioAX96, sqrtRatioX96, liquidity);
-        } else {
-            addedAmount1 = LiquidityAmounts.getAmount1ForLiquidity(sqrtRatioAX96, sqrtRatioBX96, liquidity);
-        }
-    }
+    // function getAmount0Amount1ForLiquidity(
+    //     address pool,
+    //     int24 lowerTick,
+    //     int24 upperTick,
+    //     uint128 liquidity
+    // ) internal view returns (uint256 addedAmount0, uint256 addedAmount1) {
+    //     (uint160 sqrtRatioX96, , , , , , ) = getSlot0(pool);
+    //     uint160 sqrtRatioAX96 = TickMath.getSqrtRatioAtTick(lowerTick);
+    //     uint160 sqrtRatioBX96 = TickMath.getSqrtRatioAtTick(upperTick);
+    //     if (sqrtRatioX96 <= sqrtRatioAX96) {
+    //         addedAmount0 = LiquidityAmounts.getAmount0ForLiquidity(sqrtRatioAX96, sqrtRatioBX96, liquidity);
+    //     } else if (sqrtRatioX96 < sqrtRatioBX96) {
+    //         addedAmount0 = LiquidityAmounts.getAmount0ForLiquidity(sqrtRatioX96, sqrtRatioBX96, liquidity);
+    //         addedAmount1 = LiquidityAmounts.getAmount1ForLiquidity(sqrtRatioAX96, sqrtRatioX96, liquidity);
+    //     } else {
+    //         addedAmount1 = LiquidityAmounts.getAmount1ForLiquidity(sqrtRatioAX96, sqrtRatioBX96, liquidity);
+    //     }
+    // }
 
     function addLiquidity(AddLiquidityParams memory params) internal returns (AddLiquidityResponse memory) {
         // (uint160 sqrtMarkPrice, , , , , , ) = getSlot0(params.pool);
