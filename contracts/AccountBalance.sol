@@ -63,16 +63,28 @@ contract AccountBalance is IAccountBalance, BlockContext, ClearingHouseCallee, A
         emit VaultChanged(vaultArg);
     }
 
-    function modifyMarketMultiplier(address baseToken, uint256 modifyRate) external {
+    function modifyMarketMultiplier(address baseToken, int256 longDeltaRate, int256 shortDeltaRate) external {
         _requireOnlyClearingHouse();
-        if (_marketMap[baseToken].multiplierX10_18 == 0) {
-            _marketMap[baseToken].multiplierX10_18 = 1e18;
+        if (_marketMap[baseToken].longMultiplierX10_18 == 0) {
+            _marketMap[baseToken].longMultiplierX10_18 = 1e18;
         }
-        _marketMap[baseToken].multiplierX10_18 = FullMath.mulDiv(
-            _marketMap[baseToken].multiplierX10_18,
-            modifyRate,
-            1e18
-        );
+        if (_marketMap[baseToken].shortMultiplierX10_18 == 0) {
+            _marketMap[baseToken].shortMultiplierX10_18 = 1e18;
+        }
+        if (longDeltaRate != 0) {
+            _marketMap[baseToken].longMultiplierX10_18 = FullMath.mulDiv(
+                _marketMap[baseToken].longMultiplierX10_18,
+                longDeltaRate > 0 ? (1e18 + longDeltaRate.abs()) : (1e18 - longDeltaRate.abs()),
+                1e18
+            );
+        }
+        if (shortDeltaRate != 0) {
+            _marketMap[baseToken].shortMultiplierX10_18 = FullMath.mulDiv(
+                _marketMap[baseToken].shortMultiplierX10_18,
+                shortDeltaRate > 0 ? (1e18 + shortDeltaRate.abs()) : (1e18 - shortDeltaRate.abs()),
+                1e18
+            );
+        }
     }
 
     /// @inheritdoc IAccountBalance
@@ -372,10 +384,16 @@ contract AccountBalance is IAccountBalance, BlockContext, ClearingHouseCallee, A
         return (_marketMap[baseToken].longPositionSize, _marketMap[baseToken].shortPositionSize);
     }
 
-    function getMarketMultiplier(address baseToken) public view returns (uint256 multiplier) {
-        multiplier = _marketMap[baseToken].multiplierX10_18;
-        if (multiplier == 0) {
-            multiplier = 1e18;
+    function getMarketMultiplier(
+        address baseToken
+    ) public view returns (uint256 longMultiplier, uint256 shortMultiplier) {
+        longMultiplier = _marketMap[baseToken].longMultiplierX10_18;
+        if (longMultiplier == 0) {
+            longMultiplier = 1e18;
+        }
+        shortMultiplier = _marketMap[baseToken].shortMultiplierX10_18;
+        if (shortMultiplier == 0) {
+            shortMultiplier = 1e18;
         }
     }
 
