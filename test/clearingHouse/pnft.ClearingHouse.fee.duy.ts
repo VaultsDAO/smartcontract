@@ -108,29 +108,31 @@ describe("ClearingHouse fee updated", () => {
         console.log((await exchange.getInsuranceFundFeeRatio(baseToken.address, true)).toString())
         console.log((await exchange.getInsuranceFundFeeRatio(baseToken.address, false)).toString())
 
+        await clearingHouse.connect(maker).repeg(baseToken.address);
+        return
         //estimate
         //short
-        await exchange.connect(trader).estimateSwap({
-            baseToken: baseToken.address,
-            isBaseToQuote: true,
-            isExactInput: true,
-            oppositeAmountBound: 0,
-            amount: parseEther("100"),
-            sqrtPriceLimitX96: parseEther("0"),
-            deadline: ethers.constants.MaxUint256,
-            referralCode: ethers.constants.HashZero,
-        })
+        // await exchange.connect(trader).estimateSwap({
+        //     baseToken: baseToken.address,
+        //     isBaseToQuote: true,
+        //     isExactInput: true,
+        //     oppositeAmountBound: 0,
+        //     amount: parseEther("100"),
+        //     sqrtPriceLimitX96: parseEther("0"),
+        //     deadline: ethers.constants.MaxUint256,
+        //     referralCode: ethers.constants.HashZero,
+        // })
 
-        await exchange.connect(trader).estimateSwap({
-            baseToken: baseToken.address,
-            isBaseToQuote: true,
-            isExactInput: false,
-            oppositeAmountBound: 0,
-            amount: parseEther("9982"),
-            sqrtPriceLimitX96: parseEther("0"),
-            deadline: ethers.constants.MaxUint256,
-            referralCode: ethers.constants.HashZero,
-        })
+        // await exchange.connect(trader).estimateSwap({
+        //     baseToken: baseToken.address,
+        //     isBaseToQuote: true,
+        //     isExactInput: false,
+        //     oppositeAmountBound: 0,
+        //     amount: parseEther("9982"),
+        //     sqrtPriceLimitX96: parseEther("0"),
+        //     deadline: ethers.constants.MaxUint256,
+        //     referralCode: ethers.constants.HashZero,
+        // })
 
         // await clearingHouse.connect(trader).estimateSwap({
         //     baseToken: baseToken.address,
