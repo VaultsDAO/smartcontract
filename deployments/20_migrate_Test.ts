@@ -37,18 +37,15 @@ async function main() {
         {
             var priceFeed = await hre.ethers.getContractAt('NftPriceFeed', deployData.nftPriceFeedBAYC.address);
             await waitForTx(
-                await priceFeed.setPrice(parseEther('100'))
+                await priceFeed.connect(priceAdmin).setPrice(parseEther('100')), 'priceFeed.connect(priceAdmin).setPrice(parseEther(100))'
             )
         }
         {
             var priceFeed = await hre.ethers.getContractAt('NftPriceFeed', deployData.nftPriceFeedMAYC.address);
             await waitForTx(
-                await priceFeed.setPrice(parseEther('100'))
+                await priceFeed.connect(priceAdmin).setPrice(parseEther('100')), 'priceFeed.connect(priceAdmin).setPrice(parseEther(100))'
             )
         }
-
-        const lowerTick: number = 45780
-        const upperTick: number = 46440
 
         var baseToken = vBAYC
 
@@ -56,13 +53,7 @@ async function main() {
             await waitForTx(
                 await clearingHouse.connect(maker).addLiquidity({
                     baseToken: baseToken.address,
-                    base: parseEther("100"),
-                    quote: parseEther("10000"),
-                    lowerTick,
-                    upperTick,
-                    minBase: 0,
-                    minQuote: 0,
-                    useTakerBalance: false,
+                    liquidity: parseEther('1000'),
                     deadline: ethers.constants.MaxUint256,
                 }),
                 'clearingHouse.connect(maker).addLiquidity'
@@ -123,13 +114,9 @@ async function main() {
             await waitForTx(
                 await clearingHouse.connect(maker).removeLiquidity({
                     baseToken: baseToken.address,
-                    lowerTick,
-                    upperTick,
                     liquidity: (
-                        await orderBook.getOpenOrder(admin.address, wETH.address, lowerTick, upperTick)
+                        await orderBook.getOpenOrder(wETH.address)
                     ).liquidity,
-                    minBase: parseEther("0"),
-                    minQuote: parseEther("0"),
                     deadline: ethers.constants.MaxUint256,
                 }),
                 'clearingHouse.connect(maker).removeLiquidity'

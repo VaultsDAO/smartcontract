@@ -24,7 +24,9 @@ async function main() {
 
     var nftPriceFeedAddress = deployData.nftPriceFeedMAYC.address
     var price = '14'
-
+    if (network == 'local') {
+        price = "100"
+    }
     // oracle price
     {
         var priceFeed = (await hre.ethers.getContractAt('NftPriceFeed', nftPriceFeedAddress)) as NftPriceFeed;

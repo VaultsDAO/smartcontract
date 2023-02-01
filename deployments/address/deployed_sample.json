@@ -37,7 +37,7 @@
         "decimals": 18
     },
     "priceAdminAddress": "0x9686203be0cae320bb4Dee971BB8a530A15EF489",
-    "platformFundAddress": "0x9686203be0cae320bb4Dee971BB8a530A15EF489",
+    "platformFundAddress": "0x618B9BD8C290D55af7fBD5185b178071Fec8DF36",
     "makerFundAddress": "0x9cEDf5C18B8c93E4DE45A446C9caDFF98DB1a756",
     "proxyAdminAddress": "",
     "uniswapV3Factory": {
