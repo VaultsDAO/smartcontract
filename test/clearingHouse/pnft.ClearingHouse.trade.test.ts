@@ -105,13 +105,14 @@ describe("ClearingHouse fee updated", () => {
             deadline: ethers.constants.MaxUint256,
         })
 
-        // const liquidity = (await orderBook.getOpenOrder(baseToken.address))
-        //     .liquidity
+        // const liquidity = (await orderBook.getLiquidity(baseToken.address))
         // await clearingHouse.connect(maker).removeLiquidity({
         //     baseToken: baseToken.address,
         //     liquidity,
         //     deadline: ethers.constants.MaxUint256,
         // })
+
+        // return
 
         // 
         // {

@@ -114,28 +114,7 @@ contract OrderBook is
             );
         }
 
-        // state changes; if adding liquidity to an existing order, get fees accrued
-        uint256 fee = _addLiquidityToOrder(
-            InternalAddLiquidityToOrderParams({
-                baseToken: params.baseToken,
-                pool: pool,
-                lowerTick: lowerTick,
-                upperTick: upperTick,
-                liquidity: response.liquidity,
-                base: response.base,
-                quote: response.quote
-            })
-        );
-
-        return
-            AddLiquidityResponse({
-                base: response.base,
-                quote: response.quote,
-                fee: fee,
-                liquidity: response.liquidity,
-                lowerTick: lowerTick,
-                upperTick: upperTick
-            });
+        return AddLiquidityResponse({ base: response.base, quote: response.quote, liquidity: response.liquidity });
     }
 
     /// @inheritdoc IOrderBook
@@ -275,28 +254,9 @@ contract OrderBook is
     }
 
     /// @inheritdoc IOrderBook
-    // function getOpenOrderIds(address trader, address baseToken) external view override returns (bytes32[] memory) {
-    //     return _openOrderIdsMap[trader][baseToken];
-    // }
-
-    // /// @inheritdoc IOrderBook
-    // function getOpenOrderById(bytes32 orderId) external view override returns (OpenOrder.Info memory) {
-    //     return _openOrderMap[orderId];
-    // }
-
-    /// @inheritdoc IOrderBook
-    function getOpenOrder(address baseToken) external view override returns (OpenOrder.Info memory) {
-        return _openOrderMap[baseToken];
-    }
-
-    /// @inheritdoc IOrderBook
-    function hasOrder(address[] calldata tokens) external view override returns (bool) {
-        for (uint256 i = 0; i < tokens.length; i++) {
-            if (_openOrderMap[tokens[i]].liquidity > 0) {
-                return true;
-            }
-        }
-        return false;
+    function getLiquidity(address baseToken) external view override returns (uint128) {
+        address pool = IMarketRegistry(_marketRegistry).getPool(baseToken);
+        return UniswapV3Broker.getLiquidity(pool);
     }
 
     //
@@ -320,65 +280,11 @@ contract OrderBook is
             )
         );
 
-        // update token info based on existing open order
-        (uint256 fee, uint256 baseDebt, uint256 quoteDebt) = _removeLiquidityFromOrder(params);
-
-        int256 takerBase = response.base.toInt256().sub(baseDebt.toInt256());
-        int256 takerQuote = response.quote.toInt256().sub(quoteDebt.toInt256());
-
         // if flipped from initialized to uninitialized, clear the tick info
         if (!UniswapV3Broker.getIsTickInitialized(params.pool, params.lowerTick)) {}
         if (!UniswapV3Broker.getIsTickInitialized(params.pool, params.upperTick)) {}
 
-        return
-            RemoveLiquidityResponse({
-                base: response.base,
-                quote: response.quote,
-                fee: fee,
-                takerBase: takerBase,
-                takerQuote: takerQuote,
-                lowerTick: params.lowerTick,
-                upperTick: params.upperTick
-            });
-    }
-
-    function _removeLiquidityFromOrder(
-        InternalRemoveLiquidityParams memory params
-    ) internal returns (uint256 fee, uint256 baseDebt, uint256 quoteDebt) {
-        // update token info based on existing open order
-        OpenOrder.Info storage openOrder = _openOrderMap[params.baseToken];
-
-        if (params.liquidity != 0) {
-            openOrder.liquidity = openOrder.liquidity.sub(params.liquidity).toUint128();
-        }
-
-        // after the fee is calculated, lastFeeGrowthInsideX128 can be updated if liquidity != 0 after removing
-        if (openOrder.liquidity == 0) {
-            _removeOrder(params.baseToken);
-        }
-
-        return (0, baseDebt, quoteDebt);
-    }
-
-    function _removeOrder(address baseToken) internal {
-        delete _openOrderMap[baseToken];
-    }
-
-    /// @dev this function is extracted from and only used by addLiquidity() to avoid stack too deep error
-    function _addLiquidityToOrder(InternalAddLiquidityToOrderParams memory params) internal returns (uint256) {
-        // get the struct by key, no matter it's a new or existing order
-        OpenOrder.Info storage openOrder = _openOrderMap[params.baseToken];
-
-        // initialization for a new order
-        if (openOrder.liquidity == 0) {
-            openOrder.lowerTick = params.lowerTick;
-            openOrder.upperTick = params.upperTick;
-        }
-
-        // after the fee is calculated, liquidity & lastFeeGrowthInsideX128 can be updated
-        openOrder.liquidity = openOrder.liquidity.add(params.liquidity).toUint128();
-
-        return 0;
+        return RemoveLiquidityResponse({ base: response.base, quote: response.quote });
     }
 
     //

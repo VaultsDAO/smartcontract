@@ -13,7 +13,4 @@ abstract contract OrderBookStorageV1 {
 
     address[10] private __gap1;
     uint256[10] private __gap2;
-
-    // key: baseToke => info
-    mapping(address => OpenOrder.Info) internal _openOrderMap;
 }

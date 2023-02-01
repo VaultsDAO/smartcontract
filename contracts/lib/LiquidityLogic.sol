@@ -61,71 +61,18 @@ library LiquidityLogic {
         emit GenericLogic.LiquidityChanged(
             params.baseToken,
             IClearingHouse(chAddress).getQuoteToken(),
-            response.lowerTick,
-            response.upperTick,
             response.base.toInt256(),
             response.quote.toInt256(),
-            response.liquidity.toInt128(),
-            response.fee
+            response.liquidity.toInt128()
         );
 
         return
             DataTypes.AddLiquidityResponse({
                 base: response.base,
                 quote: response.quote,
-                fee: response.fee,
                 liquidity: response.liquidity
             });
     }
-
-    // /// @dev Calculate how much profit/loss we should realize,
-    // ///      The profit/loss is calculated by exchangedPositionSize/exchangedPositionNotional amount
-    // ///      and existing taker's base/quote amount.
-    // function _modifyPositionAndRealizePnl(
-    //     address chAddress,
-    //     address trader,
-    //     address baseToken,
-    //     int256 exchangedPositionSize,
-    //     int256 exchangedPositionNotional,
-    //     uint256 makerFee,
-    //     uint256 takerFee
-    // ) internal {
-    //     int256 realizedPnl;
-    //     if (exchangedPositionSize != 0) {
-    //         realizedPnl = IExchange(IClearingHouse(chAddress).getExchange()).getPnlToBeRealized(
-    //             IExchange.RealizePnlParams({
-    //                 trader: trader,
-    //                 baseToken: baseToken,
-    //                 base: exchangedPositionSize,
-    //                 quote: exchangedPositionNotional
-    //             })
-    //         );
-    //     }
-
-    //     // realizedPnl is realized here
-    //     // will deregister baseToken if there is no position
-    //     _settleBalanceAndDeregister(
-    //         chAddress,
-    //         trader,
-    //         baseToken,
-    //         exchangedPositionSize, // takerBase
-    //         exchangedPositionNotional, // takerQuote
-    //         realizedPnl,
-    //         makerFee.toInt256()
-    //     );
-    //     uint160 currentPrice = GenericLogic.getSqrtMarkX96(chAddress, baseToken);
-    //     int256 openNotional = GenericLogic.getTakerOpenNotional(chAddress, trader, baseToken); // openNotional
-    //     emit GenericLogic.PositionChanged(
-    //         trader,
-    //         baseToken,
-    //         exchangedPositionSize,
-    //         exchangedPositionNotional,
-    //         takerFee, // fee
-    //         openNotional, // openNotional
-    //         realizedPnl,
-    //         currentPrice // sqrtPriceAfterX96: no swap, so market price didn't change
-    //     );
-    // }
 
     function _settleBalanceAndDeregister(
         address chAddress,
@@ -166,63 +113,34 @@ library LiquidityLogic {
                 IOrderBook.RemoveLiquidityParams({ baseToken: params.baseToken, liquidity: params.liquidity })
             );
 
-        // _modifyPositionAndRealizePnl(
-        //     chAddress,
-        //     trader,
-        //     params.baseToken,
-        //     response.takerBase, // exchangedPositionSize
-        //     response.takerQuote, // exchangedPositionNotional
-        //     response.fee, // makerFee
-        //     0 //takerFee
-        // );
-
         emit GenericLogic.LiquidityChanged(
             params.baseToken,
             IClearingHouse(chAddress).getQuoteToken(),
-            response.lowerTick,
-            response.upperTick,
             response.base.neg256(),
             response.quote.neg256(),
-            params.liquidity.neg128(),
-            response.fee
+            params.liquidity.neg128()
         );
 
-        return DataTypes.RemoveLiquidityResponse({ quote: response.quote, base: response.base, fee: response.fee });
+        return DataTypes.RemoveLiquidityResponse({ quote: response.quote, base: response.base });
     }
 
     function removeAllLiquidity(address chAddress, address baseToken) public {
         IOrderBook.RemoveLiquidityResponse memory removeLiquidityResponse;
 
-        OpenOrder.Info memory order = IOrderBook(IClearingHouse(chAddress).getOrderBook()).getOpenOrder(baseToken);
+        uint128 liquidity = IOrderBook(IClearingHouse(chAddress).getOrderBook()).getLiquidity(baseToken);
 
         IOrderBook.RemoveLiquidityResponse memory response = IOrderBook(IClearingHouse(chAddress).getOrderBook())
-            .removeLiquidity(IOrderBook.RemoveLiquidityParams({ baseToken: baseToken, liquidity: order.liquidity }));
+            .removeLiquidity(IOrderBook.RemoveLiquidityParams({ baseToken: baseToken, liquidity: liquidity }));
 
         removeLiquidityResponse.base = removeLiquidityResponse.base.add(response.base);
         removeLiquidityResponse.quote = removeLiquidityResponse.quote.add(response.quote);
-        removeLiquidityResponse.fee = removeLiquidityResponse.fee.add(response.fee);
-        removeLiquidityResponse.takerBase = removeLiquidityResponse.takerBase.add(response.takerBase);
-        removeLiquidityResponse.takerQuote = removeLiquidityResponse.takerQuote.add(response.takerQuote);
 
         emit GenericLogic.LiquidityChanged(
             baseToken,
             IClearingHouse(chAddress).getQuoteToken(),
-            order.lowerTick,
-            order.upperTick,
             response.base.neg256(),
             response.quote.neg256(),
-            order.liquidity.neg128(),
-            response.fee
+            liquidity.neg128()
         );
-
-        // _modifyPositionAndRealizePnl(
-        //     chAddress,
-        //     maker,
-        //     baseToken,
-        //     removeLiquidityResponse.takerBase,
-        //     removeLiquidityResponse.takerQuote,
-        //     removeLiquidityResponse.fee,
-        //     0
-        // );
     }
 }
