@@ -400,14 +400,71 @@ contract AccountBalance is IAccountBalance, BlockContext, ClearingHouseCallee, A
     //
     // INTERNAL NON-VIEW
     //
+    function getModifyBaseForMultiplier(
+        address trader,
+        address baseToken,
+        int256 baseAfterMultiplier
+    ) public view returns (int256 base) {
+        DataTypes.AccountMarketInfo storage accountInfo = _accountMarketMap[trader][baseToken];
+        // update for multiplier
+        {
+            (uint256 longMultiplier, uint256 shortMultiplier) = getMarketMultiplier(baseToken);
+            if (accountInfo.takerPositionSize > 0) {
+                // in long
+                if (baseAfterMultiplier > 0) {
+                    base = baseAfterMultiplier.divMultiplier(longMultiplier);
+                } else {
+                    if (
+                        accountInfo.takerPositionSize.abs() >= baseAfterMultiplier.divMultiplier(longMultiplier).abs()
+                    ) {
+                        base = baseAfterMultiplier.divMultiplier(longMultiplier);
+                    } else {
+                        int256 rangeBase = accountInfo.takerPositionSize.neg256();
+                        base = rangeBase.add(
+                            baseAfterMultiplier.sub(rangeBase.mulMultiplier(longMultiplier)).divMultiplier(
+                                shortMultiplier
+                            )
+                        );
+                    }
+                }
+            } else if (accountInfo.takerPositionSize == 0) {
+                // in none
+                if (baseAfterMultiplier > 0) {
+                    base = baseAfterMultiplier.divMultiplier(longMultiplier);
+                } else {
+                    base = baseAfterMultiplier.divMultiplier(shortMultiplier);
+                }
+            } else {
+                // in short
+                if (baseAfterMultiplier < 0) {
+                    base = baseAfterMultiplier.divMultiplier(shortMultiplier);
+                } else {
+                    if (
+                        accountInfo.takerPositionSize.abs() >= baseAfterMultiplier.divMultiplier(shortMultiplier).abs()
+                    ) {
+                        base = baseAfterMultiplier.divMultiplier(shortMultiplier);
+                    } else {
+                        int256 rangeBase = accountInfo.takerPositionSize.neg256();
+                        base = rangeBase.add(
+                            baseAfterMultiplier.sub(rangeBase.mulMultiplier(shortMultiplier)).divMultiplier(
+                                longMultiplier
+                            )
+                        );
+                    }
+                }
+            }
+        }
+    }
+
     function _modifyTakerBalance(
         address trader,
         address baseToken,
-        int256 base,
+        int256 baseAfterMultiplier,
         int256 quote
     ) internal returns (int256, int256) {
-        // base = base.divMultiplier(getMarketMultiplier(baseToken)); // scale new base
-        //
+        // for multiplier
+        int256 base = getModifyBaseForMultiplier(trader, baseToken, baseAfterMultiplier);
+        // 
         DataTypes.AccountMarketInfo storage accountInfo = _accountMarketMap[trader][baseToken];
         int256 oldPos = accountInfo.takerPositionSize;
         accountInfo.takerPositionSize = accountInfo.takerPositionSize.add(base);

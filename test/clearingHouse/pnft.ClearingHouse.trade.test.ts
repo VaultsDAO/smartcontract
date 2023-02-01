@@ -101,16 +101,9 @@ describe("ClearingHouse fee updated", () => {
         // maker add liquidity
         await clearingHouse.connect(maker).addLiquidity({
             baseToken: baseToken.address,
-            liquidity: ('10000'),
-            deadline: ethers.constants.MaxUint256,
-        })
-        await clearingHouse.connect(maker).addLiquidity({
-            baseToken: baseToken.address,
             liquidity: parseEther('10000'),
             deadline: ethers.constants.MaxUint256,
         })
-
-        return
 
         // const liquidity = (await orderBook.getOpenOrder(baseToken.address))
         //     .liquidity

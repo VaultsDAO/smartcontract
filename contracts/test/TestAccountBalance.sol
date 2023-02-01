@@ -36,15 +36,28 @@ contract TestAccountBalance is AccountBalance {
         return _testBlockTimestamp;
     }
 
-    function getNetQuoteBalanceAndPendingFee(address trader)
-        external
-        view
-        returns (int256 netQuoteBalance, uint256 pendingFee)
-    {
+    function getNetQuoteBalanceAndPendingFee(
+        address trader
+    ) external view returns (int256 netQuoteBalance, uint256 pendingFee) {
         return _getNetQuoteBalanceAndPendingFee(trader);
     }
 
     function testModifyOwedRealizedPnl(address trader, int256 owedRealizedPnlDelta) external {
         _modifyOwedRealizedPnl(trader, owedRealizedPnlDelta);
+    }
+
+    function testMarketMultiplier(
+        address baseToken,
+        uint256 longMultiplierX10_18,
+        uint256 shortMultiplierX10_18
+    ) external {
+        if (_marketMap[baseToken].longMultiplierX10_18 == 0) {
+            _marketMap[baseToken].longMultiplierX10_18 = 1e18;
+        }
+        if (_marketMap[baseToken].shortMultiplierX10_18 == 0) {
+            _marketMap[baseToken].shortMultiplierX10_18 = 1e18;
+        }
+        _marketMap[baseToken].longMultiplierX10_18 = longMultiplierX10_18;
+        _marketMap[baseToken].shortMultiplierX10_18 = shortMultiplierX10_18;
     }
 }
