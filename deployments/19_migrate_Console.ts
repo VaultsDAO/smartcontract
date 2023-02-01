@@ -49,9 +49,20 @@ async function main() {
 
     var uniFeeTier = 3000 // 0.3%
 
-    let totalPositionSize = await accountBalance.getTotalPositionSize('0x088D8A4a03266870EDcbbbADdA3F475f404dB9B2', vMAYC.address)
-    let totalOpenNotional = await accountBalance.getTotalOpenNotional('0x088D8A4a03266870EDcbbbADdA3F475f404dB9B2', vMAYC.address)
-    console.log('getTotalUser', formatEther(totalPositionSize), formatEther(totalOpenNotional))
+    // let totalPositionSize = await accountBalance.getTotalPositionSize('0x088D8A4a03266870EDcbbbADdA3F475f404dB9B2', vMAYC.address)
+    // let totalOpenNotional = await accountBalance.getTotalOpenNotional('0x088D8A4a03266870EDcbbbADdA3F475f404dB9B2', vMAYC.address)
+    // console.log('getTotalUser', formatEther(totalPositionSize), formatEther(totalOpenNotional))
+
+    await waitForTx(
+        await clearingHouse.connect(hieuq).closePosition({
+            baseToken: vMAYC.address,
+            oppositeAmountBound: 0,
+            sqrtPriceLimitX96: 0,
+            deadline: ethers.constants.MaxUint256,
+            referralCode: ethers.constants.HashZero,
+        }),
+        'clearingHouse.connect(hieuq).closePosition'
+    )
 
     // await waitForTx(
     //     await clearingHouse.connect(hieuq).openPosition({

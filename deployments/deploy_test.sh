@@ -1,7 +1,6 @@
 # npm run build
 
 npx hardhat run deployments/1_migrate_Admin.ts --network arbitrumGoerli --no-compile
-npx hardhat run deployments/2_migrate_PriceFeed.ts --network arbitrumGoerli --no-compile
 npx hardhat run deployments/2_migrate_PriceFeed_1BAYC.ts --network arbitrumGoerli --no-compile
 npx hardhat run deployments/2_migrate_PriceFeed_2MAYC.ts --network arbitrumGoerli --no-compile
 npx hardhat run deployments/3_migrate_Tokens.ts --network arbitrumGoerli --no-compile

@@ -39,6 +39,10 @@ async function main() {
     var baseTokenAddress = deployData.vBAYC.address
     var nftPriceFeedAddress = deployData.nftPriceFeedBAYC.address
 
+    if (network == 'local') {
+        price = "100"
+    }
+
     var uniFeeTier = "3000" // 0.3%
 
     const baseToken = (await ethers.getContractAt('BaseToken', baseTokenAddress)) as BaseToken;
@@ -72,11 +76,9 @@ async function main() {
     {
         const poolAddr = await uniswapV3Factory.getPool(baseToken.address, vETH.address, uniFeeTier)
         const uniPool = (await ethers.getContractAt('UniswapV3Pool', poolAddr) as UniswapV3Pool);
-        if (network == 'local') {
-            await tryWaitForTx(await uniPool.initialize(encodePriceSqrt("100", "1")), 'uniPool.initialize(encodePriceSqrt("100", "1"))')
-        } else {
-            await tryWaitForTx(await uniPool.initialize(encodePriceSqrt(price, "1")), 'uniPool.initialize(encodePriceSqrt(price, "1"))')
-        }
+        await tryWaitForTx(
+            await uniPool.initialize(encodePriceSqrt(price, "1")), 'uniPool.initialize(encodePriceSqrt(price, "1"))'
+        )
         await tryWaitForTx(
             await uniPool.increaseObservationCardinalityNext((2 ^ 16) - 1),
             'uniPool.increaseObservationCardinalityNext((2 ^ 16) - 1)'

@@ -1,9 +1,13 @@
 # npm run build
+
 npx hardhat run deployments/1_migrate_Admin.ts --network local --no-compile
-npx hardhat run deployments/2_migrate_PriceFeed.ts --network local --no-compile
+npx hardhat run deployments/2_migrate_PriceFeed_1BAYC.ts --network local --no-compile
+npx hardhat run deployments/2_migrate_PriceFeed_2MAYC.ts --network local --no-compile
 npx hardhat run deployments/3_migrate_Tokens.ts --network local --no-compile
 npx hardhat run deployments/4_migrate_QuoteToken.ts --network local --no-compile
-npx hardhat run deployments/5_migrate_BaseTokens.ts --network local --no-compile
+npx hardhat run deployments/5_migrate_BaseToken_0.ts --network local --no-compile
+npx hardhat run deployments/5_migrate_BaseToken_1BAYC.ts --network local --no-compile
+npx hardhat run deployments/5_migrate_BaseToken_2MAYC.ts --network local --no-compile
 npx hardhat run deployments/6_migrate_UniswapV3.ts --network local --no-compile
 npx hardhat run deployments/7_migrate_ClearingHouseConfig.ts --network local --no-compile
 npx hardhat run deployments/8_migrate_MarketRegistry.ts --network local --no-compile
@@ -14,5 +18,14 @@ npx hardhat run deployments/12_migrate_InsuranceFund.ts --network local --no-com
 npx hardhat run deployments/13_migrate_Vault.ts --network local --no-compile
 npx hardhat run deployments/14_migrate_CollateralManager.ts --network local --no-compile
 npx hardhat run deployments/15_migrate_ClearingHouse.ts --network local --no-compile
-# npx hardhat run deployments/16_migrate_Init.ts --network local --no-compile
+npx hardhat run deployments/16_migrate_Init_Config.ts --network local --no-compile
+npx hardhat run deployments/16_migrate_Init_Token_1BAYC.ts --network local --no-compile
+npx hardhat run deployments/16_migrate_Init_Token_2MAYC.ts --network local --no-compile
+npx hardhat run deployments/17_migrate_AddLiquidity_1BAYC.ts --network local --no-compile
+npx hardhat run deployments/17_migrate_AddLiquidity_2MAYC.ts --network local --no-compile
+npx hardhat run deployments/18_migrate_SetPrice_1BAYC.ts --network local --no-compile
+npx hardhat run deployments/18_migrate_SetPrice_2MAYC.ts --network local --no-compile
+
+# npx hardhat run deployments/19_migrate_Console.ts --network local --no-compile
 # npx hardhat run deployments/20_migrate_Test.ts --network local --no-compile
+# npx hardhat run deployments/22_migrate_Faucet.ts --network local --no-compile

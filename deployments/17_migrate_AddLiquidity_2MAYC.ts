@@ -24,21 +24,29 @@ async function main() {
     const [admin, maker, priceAdmin, platformFund, trader, liquidator] = await ethers.getSigners()
 
     // deploy UniV3 factory
+    var orderBook = (await hre.ethers.getContractAt('OrderBook', deployData.orderBook.address)) as OrderBook;
     var clearingHouse = (await hre.ethers.getContractAt('ClearingHouse', deployData.clearingHouse.address)) as ClearingHouse;
 
     var baseTokenAddress = deployData.vBAYC.address
 
-    const lowerTick: number = priceToTick(1.5, 60)
-    const upperTick: number = priceToTick(150.0, 60)
-
     const baseToken = await hre.ethers.getContractAt('BaseToken', baseTokenAddress);
+    // {
+    //     await waitForTx(
+    //         await clearingHouse.connect(maker).removeLiquidity({
+    //             baseToken: baseToken.address,
+    //             liquidity: (
+    //                 await orderBook.getOpenOrder(baseToken.address)
+    //             ).liquidity,
+    //             deadline: ethers.constants.MaxUint256,
+    //         }),
+    //         'clearingHouse.connect(maker).removeLiquidity'
+    //     )
+    // }
     {
         await waitForTx(
             await clearingHouse.connect(maker).addLiquidity({
                 baseToken: baseToken.address,
-                lowerTick,
-                upperTick,
-                liquidity: '2000',
+                liquidity: parseEther('10000'),
                 deadline: ethers.constants.MaxUint256,
             }),
             'clearingHouse.connect(maker).addLiquidity'
