@@ -262,7 +262,7 @@ contract OrderBook is
             }
         }
 
-        return ReplaySwapResponse({ tick: swapState.tick, fee: fee });
+        return ReplaySwapResponse({ tick: swapState.tick, fee: fee, amountIn: 0, amountOut: 0 });
     }
 
     //
@@ -399,4 +399,109 @@ contract OrderBook is
     //     address pool = IMarketRegistry(_marketRegistry).getPool(baseToken);
     //     return UniswapV3Broker.getAmount0Amount1ForLiquidity(pool, lowerTick, upperTick, liquidity);
     // }
+
+    function estimateSwap(ReplaySwapParams memory params) external override returns (ReplaySwapResponse memory) {
+        console.log("limit %d", params.sqrtPriceLimitX96);
+        address pool = IMarketRegistry(_marketRegistry).getPool(params.baseToken);
+        bool isExactInput = params.amount > 0;
+        uint256 fee;
+
+        uint256 amountIn;
+        uint256 amountOut;
+
+        UniswapV3Broker.SwapState memory swapState = UniswapV3Broker.getSwapState(pool, params.amount);
+
+        params.sqrtPriceLimitX96 = params.sqrtPriceLimitX96 == 0
+            ? (params.isBaseToQuote ? TickMath.MIN_SQRT_RATIO + 1 : TickMath.MAX_SQRT_RATIO - 1)
+            : params.sqrtPriceLimitX96;
+
+        // if there is residue in amountSpecifiedRemaining, makers can get a tiny little bit less than expected,
+        // which is safer for the system
+        int24 tickSpacing = UniswapV3Broker.getTickSpacing(pool);
+
+        while (swapState.amountSpecifiedRemaining != 0 && swapState.sqrtPriceX96 != params.sqrtPriceLimitX96) {
+            InternalSwapStep memory step;
+            step.initialSqrtPriceX96 = swapState.sqrtPriceX96;
+
+            // find next tick
+            // note the search is bounded in one word
+            (step.nextTick, step.isNextTickInitialized) = UniswapV3Broker.getNextInitializedTickWithinOneWord(
+                pool,
+                swapState.tick,
+                tickSpacing,
+                params.isBaseToQuote
+            );
+
+            // ensure that we do not overshoot the min/max tick, as the tick bitmap is not aware of these bounds
+            if (step.nextTick < TickMath.MIN_TICK) {
+                step.nextTick = TickMath.MIN_TICK;
+            } else if (step.nextTick > TickMath.MAX_TICK) {
+                step.nextTick = TickMath.MAX_TICK;
+            }
+
+            // get the next price of this step (either next tick's price or the ending price)
+            // use sqrtPrice instead of tick is more precise
+            step.nextSqrtPriceX96 = TickMath.getSqrtRatioAtTick(step.nextTick);
+
+            // find the next swap checkpoint
+            // (either reached the next price of this step, or exhausted remaining amount specified)
+            (swapState.sqrtPriceX96, step.amountIn, step.amountOut, step.fee) = SwapMath.computeSwapStep(
+                swapState.sqrtPriceX96,
+                (
+                    params.isBaseToQuote
+                        ? step.nextSqrtPriceX96 < params.sqrtPriceLimitX96
+                        : step.nextSqrtPriceX96 > params.sqrtPriceLimitX96
+                )
+                    ? params.sqrtPriceLimitX96
+                    : step.nextSqrtPriceX96,
+                swapState.liquidity,
+                swapState.amountSpecifiedRemaining,
+                // isBaseToQuote: fee is charged in base token in uniswap pool; thus, use uniswapFeeRatio to replay
+                // !isBaseToQuote: fee is charged in quote token in clearing house; thus, use exchangeFeeRatioRatio
+                params.isBaseToQuote ? params.uniswapFeeRatio : 0
+            );
+
+            // user input 1 quote:
+            // quote token to uniswap ===> 1*0.98/0.99 = 0.98989899
+            // fee = 0.98989899 * 2% = 0.01979798
+            if (isExactInput) {
+                swapState.amountSpecifiedRemaining = swapState.amountSpecifiedRemaining.sub(
+                    step.amountIn.add(step.fee).toInt256()
+                );
+            } else {
+                swapState.amountSpecifiedRemaining = swapState.amountSpecifiedRemaining.add(step.amountOut.toInt256());
+            }
+            amountIn = amountIn.add(step.amountIn);
+            amountOut = amountOut.add(step.amountOut);
+            // update CH's global fee growth if there is liquidity in this range
+            // note CH only collects quote fee when swapping base -> quote
+            if (swapState.liquidity > 0) {
+                if (params.isBaseToQuote) {
+                    step.fee = FullMath.mulDivRoundingUp(step.amountOut, 0, 1e6);
+                }
+                fee += step.fee;
+            }
+
+            if (swapState.sqrtPriceX96 == step.nextSqrtPriceX96) {
+                // we have reached the tick's boundary
+                if (step.isNextTickInitialized) {
+                    if (params.shouldUpdateState) {}
+                    int128 liquidityNet = UniswapV3Broker.getTickLiquidityNet(pool, step.nextTick);
+                    if (params.isBaseToQuote) liquidityNet = liquidityNet.neg128();
+                    swapState.liquidity = LiquidityMath.addDelta(swapState.liquidity, liquidityNet);
+                }
+
+                swapState.tick = params.isBaseToQuote ? step.nextTick - 1 : step.nextTick;
+            } else if (swapState.sqrtPriceX96 != step.initialSqrtPriceX96) {
+                // update state.tick corresponding to the current price if the price has changed in this step
+                swapState.tick = TickMath.getTickAtSqrtRatio(swapState.sqrtPriceX96);
+            }
+        }
+
+        console.logInt(swapState.tick);
+        console.logInt(swapState.sqrtPriceX96);
+        console.log("amountIn %d", amountIn);
+        console.log("amountOut %d", amountOut);
+        return ReplaySwapResponse({ tick: swapState.tick, fee: fee, amountIn: amountIn, amountOut: amountOut });
+    }
 }

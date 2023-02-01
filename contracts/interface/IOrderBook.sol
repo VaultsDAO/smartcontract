@@ -49,6 +49,8 @@ interface IOrderBook {
     struct ReplaySwapResponse {
         int24 tick;
         uint256 fee;
+        uint256 amountIn;
+        uint256 amountOut;
     }
 
     struct MintCallbackData {
@@ -91,4 +93,6 @@ interface IOrderBook {
     /// @notice Get `Exchange` contract address
     /// @return exchange The `Exchange` contract address
     function getExchange() external view returns (address exchange);
+
+    function estimateSwap(ReplaySwapParams memory params) external returns (ReplaySwapResponse memory response);
 }

@@ -56,12 +56,7 @@ library LiquidityLogic {
 
         // note that we no longer check available tokens here because CH will always auto-mint in UniswapV3MintCallback
         IOrderBook.AddLiquidityResponse memory response = IOrderBook(IClearingHouse(chAddress).getOrderBook())
-            .addLiquidity(
-                IOrderBook.AddLiquidityParams({
-                    baseToken: params.baseToken,
-                    liquidity: params.liquidity
-                })
-            );
+            .addLiquidity(IOrderBook.AddLiquidityParams({ baseToken: params.baseToken, liquidity: params.liquidity }));
 
         emit GenericLogic.LiquidityChanged(
             params.baseToken,
@@ -153,7 +148,7 @@ library LiquidityLogic {
 
     function removeLiquidity(
         address chAddress,
-        DataTypes.RemoveLiquidityParams calldata params
+        DataTypes.RemoveLiquidityParams memory params
     ) public returns (DataTypes.RemoveLiquidityResponse memory) {
         // input requirement checks:
         //   baseToken: in Exchange.settleFunding()
@@ -168,10 +163,7 @@ library LiquidityLogic {
 
         IOrderBook.RemoveLiquidityResponse memory response = IOrderBook(IClearingHouse(chAddress).getOrderBook())
             .removeLiquidity(
-                IOrderBook.RemoveLiquidityParams({
-                    baseToken: params.baseToken,
-                    liquidity: params.liquidity
-                })
+                IOrderBook.RemoveLiquidityParams({ baseToken: params.baseToken, liquidity: params.liquidity })
             );
 
         // _modifyPositionAndRealizePnl(
@@ -201,17 +193,10 @@ library LiquidityLogic {
     function removeAllLiquidity(address chAddress, address baseToken) public {
         IOrderBook.RemoveLiquidityResponse memory removeLiquidityResponse;
 
-        OpenOrder.Info memory order = IOrderBook(IClearingHouse(chAddress).getOrderBook()).getOpenOrder(
-            baseToken
-        );
+        OpenOrder.Info memory order = IOrderBook(IClearingHouse(chAddress).getOrderBook()).getOpenOrder(baseToken);
 
         IOrderBook.RemoveLiquidityResponse memory response = IOrderBook(IClearingHouse(chAddress).getOrderBook())
-            .removeLiquidity(
-                IOrderBook.RemoveLiquidityParams({
-                    baseToken: baseToken,
-                    liquidity: order.liquidity
-                })
-            );
+            .removeLiquidity(IOrderBook.RemoveLiquidityParams({ baseToken: baseToken, liquidity: order.liquidity }));
 
         removeLiquidityResponse.base = removeLiquidityResponse.base.add(response.base);
         removeLiquidityResponse.quote = removeLiquidityResponse.quote.add(response.quote);

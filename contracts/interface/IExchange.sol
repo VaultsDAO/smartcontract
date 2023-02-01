@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 pragma solidity 0.7.6;
 pragma abicoder v2;
-
+import { IOrderBook } from "./IOrderBook.sol";
 import { DataTypes } from "../types/DataTypes.sol";
 
 interface IExchange {
@@ -134,4 +134,8 @@ interface IExchange {
     /// @notice Get `ClearingHouseConfig` contract address
     /// @return clearingHouse `ClearingHouseConfig` contract address
     function getClearingHouseConfig() external view returns (address clearingHouse);
+
+    function estimateSwap(
+        DataTypes.OpenPositionParams memory params
+    ) external returns (IOrderBook.ReplaySwapResponse memory response);
 }

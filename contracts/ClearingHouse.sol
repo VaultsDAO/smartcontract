@@ -190,9 +190,9 @@ contract ClearingHouse is
 
     /// @inheritdoc IClearingHouse
     function addLiquidity(
-        DataTypes.AddLiquidityParams calldata params
+        DataTypes.AddLiquidityParams memory params
     )
-        external
+        public
         override
         whenNotPaused
         nonReentrant
@@ -208,9 +208,9 @@ contract ClearingHouse is
 
     /// @inheritdoc IClearingHouse
     function removeLiquidity(
-        DataTypes.RemoveLiquidityParams calldata params
+        DataTypes.RemoveLiquidityParams memory params
     )
-        external
+        public
         override
         whenNotPaused
         nonReentrant
@@ -635,63 +635,34 @@ contract ClearingHouse is
         require(contractArg.isContract(), errorMsg);
     }
 
-    //
-    // INTERNAL PURE
-    //
-
-    // function _getOppositeAmount(uint256 oppositeAmountBound, bool isPartialClose) internal view returns (uint256) {
-    //     return
-    //         isPartialClose
-    //             ? oppositeAmountBound.mulRatio(IClearingHouseConfig(_clearingHouseConfig).getPartialCloseRatio())
-    //             : oppositeAmountBound;
-    // }
-
-    // function _checkSlippage(InternalCheckSlippageParams memory params) internal pure {
-    //     // skip when params.oppositeAmountBound is zero
-    //     if (params.oppositeAmountBound == 0) {
-    //         return;
-    //     }
-
-    //     // B2Q + exact input, want more output quote as possible, so we set a lower bound of output quote
-    //     // B2Q + exact output, want less input base as possible, so we set a upper bound of input base
-    //     // Q2B + exact input, want more output base as possible, so we set a lower bound of output base
-    //     // Q2B + exact output, want less input quote as possible, so we set a upper bound of input quote
-    //     if (params.isBaseToQuote) {
-    //         if (params.isExactInput) {
-    //             // too little received when short
-    //             require(params.quote >= params.oppositeAmountBound, "CH_TLRS");
-    //         } else {
-    //             // too much requested when short
-    //             require(params.base <= params.oppositeAmountBound, "CH_TMRS");
-    //         }
-    //     } else {
-    //         if (params.isExactInput) {
-    //             // too little received when long
-    //             require(params.base >= params.oppositeAmountBound, "CH_TLRL");
-    //         } else {
-    //             // too much requested when long
-    //             require(params.quote <= params.oppositeAmountBound, "CH_TMRL");
-    //         }
-    //     }
-    // }
-
-    // function _checkSlippageAfterLiquidityChange(
-    //     uint256 base,
-    //     uint256 minBase,
-    //     uint256 quote,
-    //     uint256 minQuote
-    // ) internal pure {
-    //     // CH_PSCF: price slippage check fails
-    //     require(base >= minBase && quote >= minQuote, "CH_PSCF");
-    // }
-
+    ///REPEG
     function repeg(address baseToken) external {
         // check mark price != index price over 10% and over 1 hour
         // calculate delta base (11) of long short -> delta quote (1)
         // remove 99.99% liquidity
+        address pool = IMarketRegistry(_marketRegistry).getPool(baseToken);
+        uint128 liquidity = IUniswapV3Pool(pool).liquidity();
+        console.log("liquidity  %d", liquidity);
+        uint128 removedLiquidity = (liquidity * 999900) / 1e6;
+        removeLiquidity(
+            DataTypes.RemoveLiquidityParams({
+                baseToken: baseToken,
+                liquidity: removedLiquidity,
+                deadline: block.timestamp + 60
+            })
+        );
+        console.log("removed liquidity %d", IUniswapV3Pool(pool).liquidity());
         // calculate base amount for openPosition -> spot price
         // maker openPosition -> spot price
         // add 99.99% liquidity again
+        addLiquidity(
+            DataTypes.AddLiquidityParams({
+                baseToken: baseToken,
+                liquidity: removedLiquidity,
+                deadline: block.timestamp + 60
+            })
+        );
+        console.log("added liquidity %d", IUniswapV3Pool(pool).liquidity());
         // maker closePosition -> spot price
         // calculate delta quote (1) -> new delta base (22)
         // calculate scale -> new mark price => rate = (% delta price)
