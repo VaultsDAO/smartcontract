@@ -270,15 +270,8 @@ contract ClearingHouse is
 
     /// @inheritdoc IClearingHouse
     function closePosition(
-        DataTypes.ClosePositionParams calldata params
-    )
-        external
-        override
-        whenNotPaused
-        nonReentrant
-        checkDeadline(params.deadline)
-        returns (uint256 base, uint256 quote)
-    {
+        DataTypes.ClosePositionParams memory params
+    ) public override whenNotPaused nonReentrant checkDeadline(params.deadline) returns (uint256 base, uint256 quote) {
         return ExchangeLogic.closePosition(address(this), _msgSender(), params);
     }
 
@@ -637,6 +630,17 @@ contract ClearingHouse is
 
     ///REPEG
     function repeg(address baseToken) external {
+        //variable
+        uint256 markPrice = IExchange(_exchange)
+            .getSqrtMarkTwapX96(baseToken, 0)
+            .formatSqrtPriceX96ToPriceX96()
+            .formatX96ToX10_18();
+        uint256 spotPrice = IIndexPrice(baseToken).getIndexPrice(
+            IClearingHouseConfig(_clearingHouseConfig).getTwapInterval()
+        );
+
+        uint160 sqrtSpotPrice = spotPrice.formatPriceX10_18ToSqrtPriceX96();
+
         // check mark price != index price over 10% and over 1 hour
         // calculate delta base (11) of long short -> delta quote (1)
         // remove 99.99% liquidity
@@ -654,6 +658,64 @@ contract ClearingHouse is
         console.log("removed liquidity %d", IUniswapV3Pool(pool).liquidity());
         // calculate base amount for openPosition -> spot price
         // maker openPosition -> spot price
+
+        IOrderBook.ReplaySwapResponse memory estimate;
+        if (spotPrice > markPrice) {
+            //long
+            estimate = IExchange(_exchange).estimateSwap(
+                DataTypes.OpenPositionParams({
+                    baseToken: baseToken,
+                    isBaseToQuote: false,
+                    isExactInput: false,
+                    oppositeAmountBound: 0,
+                    amount: type(uint256).max / 1e10,
+                    sqrtPriceLimitX96: sqrtSpotPrice,
+                    deadline: block.timestamp + 60,
+                    referralCode: ""
+                })
+            );
+            _openPositionFor(
+                _msgSender(),
+                DataTypes.OpenPositionParams({
+                    baseToken: baseToken,
+                    isBaseToQuote: false,
+                    isExactInput: false,
+                    oppositeAmountBound: 0,
+                    amount: estimate.amountIn,
+                    sqrtPriceLimitX96: sqrtSpotPrice,
+                    deadline: block.timestamp + 60,
+                    referralCode: ""
+                })
+            );
+        } else {
+            //short
+            estimate = IExchange(_exchange).estimateSwap(
+                DataTypes.OpenPositionParams({
+                    baseToken: baseToken,
+                    isBaseToQuote: true,
+                    isExactInput: true,
+                    oppositeAmountBound: 0,
+                    amount: type(uint256).max / 1e10,
+                    sqrtPriceLimitX96: sqrtSpotPrice,
+                    deadline: block.timestamp + 60,
+                    referralCode: ""
+                })
+            );
+            _openPositionFor(
+                _msgSender(),
+                DataTypes.OpenPositionParams({
+                    baseToken: baseToken,
+                    isBaseToQuote: true,
+                    isExactInput: true,
+                    oppositeAmountBound: 0,
+                    amount: estimate.amountIn,
+                    sqrtPriceLimitX96: sqrtSpotPrice,
+                    deadline: block.timestamp + 60,
+                    referralCode: ""
+                })
+            );
+        }
+
         // add 99.99% liquidity again
         addLiquidity(
             DataTypes.AddLiquidityParams({
@@ -664,6 +726,15 @@ contract ClearingHouse is
         );
         console.log("added liquidity %d", IUniswapV3Pool(pool).liquidity());
         // maker closePosition -> spot price
+        closePosition(
+            DataTypes.ClosePositionParams({
+                baseToken: baseToken,
+                sqrtPriceLimitX96: 0,
+                oppositeAmountBound: 0,
+                deadline: block.timestamp + 60,
+                referralCode: ""
+            })
+        );
         // calculate delta quote (1) -> new delta base (22)
         // calculate scale -> new mark price => rate = (% delta price)
         // calculate scale for long short = (diff delta base on (11 - 22)) / (total_long + total_short)

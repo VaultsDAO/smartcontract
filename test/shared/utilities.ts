@@ -18,6 +18,15 @@ export function encodePriceSqrt(reserve1: BigNumberish, reserve0: BigNumberish):
             .toString(),
     )
 }
+export function formatPriceToPriceSqrt(price: string): BigNumber {
+    return BigNumber.from(
+        new bn(price.toString())
+            .sqrt()
+            .multipliedBy(new bn(2).pow(96))
+            .integerValue(3)
+            .toString(),
+    )
+}
 
 function bigNumberToBig(val: BigNumber, decimals: number = 18): bn {
     return new bn(val.toString()).div(new bn(10).pow(decimals))
