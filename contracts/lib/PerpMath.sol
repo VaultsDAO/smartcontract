@@ -110,4 +110,24 @@ library PerpMath {
     function divMultiplier(uint256 value, uint256 multiplier) internal pure returns (uint256) {
         return FullMath.mulDiv(value, 1e18, multiplier);
     }
+
+    function sqrt(uint256 y) internal pure returns (uint256 z) {
+        if (y > 3) {
+            z = y;
+            uint x = y / 2 + 1;
+            while (x < z) {
+                z = x;
+                x = (y / x + x) / 2;
+            }
+        } else if (y != 0) {
+            z = 1;
+        }
+        // else z = 0 (default value)
+    }
+
+    function formatPriceX10_18ToSqrtPriceX96(uint256 y) internal pure returns (uint256 z) {
+        z = formatX10_18ToX96(y);
+        z = z.mul(FixedPoint96.Q96);
+        z = sqrt(z);
+    }
 }
