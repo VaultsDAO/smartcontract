@@ -621,6 +621,14 @@ contract Exchange is
     /// @return fundingGrowthGlobal the up-to-date globalFundingGrowth
     /// @return markTwap only for settleFunding()
     /// @return indexTwap only for settleFunding()
+
+    struct InternalFundingGrowthGlobalAndTwapsParams {
+        uint256 longPositionSize;
+        uint256 shortPositionSize;
+        uint256 longMultiplier;
+        uint256 shortMultiplier;
+    }
+
     function _getFundingGrowthGlobalAndTwaps(
         address baseToken
     ) internal view returns (DataTypes.Growth memory fundingGrowthGlobal, uint256 markTwap, uint256 indexTwap) {
@@ -676,7 +684,7 @@ contract Exchange is
             //     PerpMath.mulDiv(deltaTwPremiumX96, PerpFixedPoint96._IQ96, getSqrtMarkTwapX96(baseToken, 0))
             // );
 
-            DataTypes.FundingGrowthGlobalParams memory params;
+            InternalFundingGrowthGlobalAndTwapsParams memory params;
 
             (params.longPositionSize, params.shortPositionSize) = IAccountBalance(_accountBalance)
                 .getMarketPositionSize(baseToken);

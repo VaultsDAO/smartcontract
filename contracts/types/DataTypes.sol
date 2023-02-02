@@ -58,11 +58,4 @@ library DataTypes {
         uint256 deadline;
         bytes32 referralCode;
     }
-
-    struct FundingGrowthGlobalParams {
-        uint256 longPositionSize;
-        uint256 shortPositionSize;
-        uint256 longMultiplier;
-        uint256 shortMultiplier;
-    }
 }

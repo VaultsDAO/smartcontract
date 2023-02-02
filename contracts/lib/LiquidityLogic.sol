@@ -52,7 +52,35 @@ library LiquidityLogic {
 
         // This condition is to prevent the intentional bad debt attack through price manipulation.
         // CH_OMPS: Over the maximum price spread
-        require(!IExchange(IClearingHouse(chAddress).getExchange()).isOverPriceSpread(params.baseToken), "CH_OMPS");
+        // require(!IExchange(IClearingHouse(chAddress).getExchange()).isOverPriceSpread(params.baseToken), "CH_OMPS");
+
+        // for multiplier
+        uint256 deltaQuote;
+        int256 oldDeltaBase;
+        {
+            (uint256 oldLongPositionSize, uint256 oldShortPositionSize) = IAccountBalance(
+                IClearingHouse(chAddress).getAccountBalance()
+            ).getMarketPositionSize(params.baseToken);
+            oldDeltaBase = oldLongPositionSize.toInt256().sub(oldShortPositionSize.toInt256());
+            if (oldDeltaBase != 0) {
+                bool isBaseToQuote = oldDeltaBase > 0 ? true : false;
+                IOrderBook.ReplaySwapResponse memory estimate = IExchange(IClearingHouse(chAddress).getExchange())
+                    .estimateSwap(
+                        DataTypes.OpenPositionParams({
+                            baseToken: params.baseToken,
+                            isBaseToQuote: isBaseToQuote,
+                            isExactInput: isBaseToQuote,
+                            oppositeAmountBound: 0,
+                            amount: uint256(oldDeltaBase.abs()),
+                            sqrtPriceLimitX96: 0,
+                            deadline: block.timestamp + 60,
+                            referralCode: ""
+                        })
+                    );
+                deltaQuote = isBaseToQuote ? estimate.amountOut : estimate.amountIn;
+            }
+        }
+        // for multiplier
 
         GenericLogic.settleFundingGlobal(chAddress, params.baseToken);
 

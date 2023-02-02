@@ -9,7 +9,6 @@ import { IClearingHouseConfig } from "../interface/IClearingHouseConfig.sol";
 import { IOrderBook } from "../interface/IOrderBook.sol";
 import { IExchange } from "../interface/IExchange.sol";
 import { IVault } from "../interface/IVault.sol";
-import { IIndexPrice } from "../interface/IIndexPrice.sol";
 import { FullMath } from "@uniswap/v3-core/contracts/libraries/FullMath.sol";
 import { PerpSafeCast } from "./PerpSafeCast.sol";
 import { PerpMath } from "./PerpMath.sol";
