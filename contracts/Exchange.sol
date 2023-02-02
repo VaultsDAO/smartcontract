@@ -275,10 +275,8 @@ contract Exchange is
         uint256 indexTwap;
         (fundingGrowthGlobal, markTwap, indexTwap) = _getFundingGrowthGlobalAndTwaps(baseToken);
 
-        fundingPayment = _updateFundingGrowth(
-            trader,
-            baseToken,
-            IAccountBalance(_accountBalance).getBase(trader, baseToken),
+        fundingPayment = Funding.calcPendingFundingPaymentWithLiquidityCoefficient(
+            IAccountBalance(_accountBalance).getOriginBase(trader, baseToken),
             IAccountBalance(_accountBalance).getAccountInfo(trader, baseToken).lastLongTwPremiumGrowthGlobalX96,
             IAccountBalance(_accountBalance).getAccountInfo(trader, baseToken).lastShortTwPremiumGrowthGlobalX96,
             fundingGrowthGlobal
@@ -296,16 +294,8 @@ contract Exchange is
             (
                 _lastSettledTimestampMap[baseToken],
                 lastFundingGrowthGlobal.twLongPremiumX96,
-                lastFundingGrowthGlobal.twShortPremiumX96,
-                lastFundingGrowthGlobal.twLongPremiumDivBySqrtPriceX96,
-                lastFundingGrowthGlobal.twShortPremiumDivBySqrtPriceX96
-            ) = (
-                timestamp,
-                fundingGrowthGlobal.twLongPremiumX96,
-                fundingGrowthGlobal.twShortPremiumX96,
-                fundingGrowthGlobal.twLongPremiumDivBySqrtPriceX96,
-                fundingGrowthGlobal.twShortPremiumDivBySqrtPriceX96
-            );
+                lastFundingGrowthGlobal.twShortPremiumX96
+            ) = (timestamp, fundingGrowthGlobal.twLongPremiumX96, fundingGrowthGlobal.twShortPremiumX96);
 
             (uint256 longPositionSize, uint256 shortPositionSize) = IAccountBalance(_accountBalance)
                 .getMarketPositionSize(baseToken);
@@ -400,7 +390,7 @@ contract Exchange is
         (DataTypes.Growth memory fundingGrowthGlobal, , ) = _getFundingGrowthGlobalAndTwaps(baseToken);
         return
             Funding.calcPendingFundingPaymentWithLiquidityCoefficient(
-                IAccountBalance(_accountBalance).getBase(trader, baseToken),
+                IAccountBalance(_accountBalance).getOriginBase(trader, baseToken),
                 IAccountBalance(_accountBalance).getAccountInfo(trader, baseToken).lastLongTwPremiumGrowthGlobalX96,
                 IAccountBalance(_accountBalance).getAccountInfo(trader, baseToken).lastShortTwPremiumGrowthGlobalX96,
                 fundingGrowthGlobal
@@ -458,13 +448,7 @@ contract Exchange is
                 amount: signedScaledAmountForReplaySwap,
                 sqrtPriceLimitX96: params.sqrtPriceLimitX96,
                 uniswapFeeRatio: uniswapFeeRatio,
-                shouldUpdateState: false,
-                globalFundingGrowth: DataTypes.Growth({
-                    twLongPremiumX96: 0,
-                    twLongPremiumDivBySqrtPriceX96: 0,
-                    twShortPremiumX96: 0,
-                    twShortPremiumDivBySqrtPriceX96: 0
-                })
+                shouldUpdateState: false
             })
         );
         return response.tick;
@@ -482,7 +466,6 @@ contract Exchange is
                 marketInfo.uniswapFeeRatio
             );
 
-        (DataTypes.Growth memory fundingGrowthGlobal, , ) = _getFundingGrowthGlobalAndTwaps(params.baseToken);
         // simulate the swap to calculate the fees charged in exchange
         IOrderBook.ReplaySwapResponse memory replayResponse = IOrderBook(_orderBook).replaySwap(
             IOrderBook.ReplaySwapParams({
@@ -491,8 +474,7 @@ contract Exchange is
                 shouldUpdateState: true,
                 amount: signedScaledAmountForReplaySwap,
                 sqrtPriceLimitX96: params.sqrtPriceLimitX96,
-                uniswapFeeRatio: marketInfo.uniswapFeeRatio,
-                globalFundingGrowth: fundingGrowthGlobal
+                uniswapFeeRatio: marketInfo.uniswapFeeRatio
             })
         );
         UniswapV3Broker.SwapResponse memory response = UniswapV3Broker.swap(
@@ -567,26 +549,6 @@ contract Exchange is
                 fee: replayResponse.fee,
                 tick: replayResponse.tick
             });
-    }
-
-    /// @dev this is the non-view version of getPendingFundingPayment()
-    /// @return pendingFundingPayment the pending funding payment of a trader in one market,
-    ///         including liquidity & balance coefficients
-    function _updateFundingGrowth(
-        address trader,
-        address baseToken,
-        int256 baseBalance,
-        int256 twLongPremiumGrowthGlobalX96,
-        int256 twShortPremiumGrowthGlobalX96,
-        DataTypes.Growth memory fundingGrowthGlobal
-    ) internal returns (int256 pendingFundingPayment) {
-        return
-            Funding.calcPendingFundingPaymentWithLiquidityCoefficient(
-                baseBalance,
-                twLongPremiumGrowthGlobalX96,
-                twShortPremiumGrowthGlobalX96,
-                fundingGrowthGlobal
-            );
     }
 
     //
@@ -671,13 +633,14 @@ contract Exchange is
             //     PerpMath.mulDiv(deltaTwPremiumX96, PerpFixedPoint96._IQ96, getSqrtMarkTwapX96(baseToken, 0))
             // );
 
-            (uint256 longPositionSize, uint256 shortPositionSize) = IAccountBalance(_accountBalance)
-                .getMarketPositionSize(baseToken);
-            if (longPositionSize > 0 && shortPositionSize > 0) {
-                (uint256 longMultiplier, uint256 shortMultiplier) = IAccountBalance(_accountBalance)
-                    .getMarketMultiplier(baseToken);
+            DataTypes.FundingGrowthGlobalParams memory params;
 
-                uint256 sqrtMarkTwapX96 = getSqrtMarkTwapX96(baseToken, 0);
+            (params.longPositionSize, params.shortPositionSize) = IAccountBalance(_accountBalance)
+                .getMarketPositionSize(baseToken);
+            if (params.longPositionSize > 0 && params.shortPositionSize > 0) {
+                (params.longMultiplier, params.shortMultiplier) = IAccountBalance(_accountBalance).getMarketMultiplier(
+                    baseToken
+                );
                 int256 deltaTwapX96 = _getDeltaTwapX96AfterOptimal(
                     baseToken,
                     _getDeltaTwapX96(markTwapX96, indexTwap.formatX10_18ToX96()),
@@ -687,39 +650,27 @@ contract Exchange is
                 if (deltaTwapX96 > 0) {
                     // LONG pay
                     fundingGrowthGlobal.twLongPremiumX96 = lastFundingGrowthGlobal.twLongPremiumX96.add(
-                        deltaTwPremiumX96
+                        deltaTwPremiumX96.mulMultiplier(params.longMultiplier)
                     );
-                    fundingGrowthGlobal.twLongPremiumDivBySqrtPriceX96 = lastFundingGrowthGlobal
-                        .twLongPremiumDivBySqrtPriceX96
-                        .add(PerpMath.mulDiv(deltaTwPremiumX96, PerpFixedPoint96._IQ96, sqrtMarkTwapX96));
                     // SHORT receive
-                    int256 deltaShortTwPremiumX96 = deltaTwPremiumX96.mul(longPositionSize.toInt256()).div(
-                        shortPositionSize.toInt256()
+                    int256 deltaShortTwPremiumX96 = deltaTwPremiumX96.mul(params.longPositionSize.toInt256()).div(
+                        params.shortPositionSize.toInt256()
                     );
                     fundingGrowthGlobal.twShortPremiumX96 = lastFundingGrowthGlobal.twShortPremiumX96.add(
-                        deltaShortTwPremiumX96
+                        deltaShortTwPremiumX96.mulMultiplier(params.shortMultiplier)
                     );
-                    fundingGrowthGlobal.twShortPremiumDivBySqrtPriceX96 = lastFundingGrowthGlobal
-                        .twShortPremiumDivBySqrtPriceX96
-                        .add(PerpMath.mulDiv(deltaShortTwPremiumX96, PerpFixedPoint96._IQ96, sqrtMarkTwapX96));
                 } else if (deltaTwapX96 < 0) {
-                    // LONG pay
-                    int256 deltaLongTwPremiumX96 = deltaTwPremiumX96.mul(shortPositionSize.toInt256()).div(
-                        longPositionSize.toInt256()
+                    // LONG receive
+                    int256 deltaLongTwPremiumX96 = deltaTwPremiumX96.mul(params.shortPositionSize.toInt256()).div(
+                        params.longPositionSize.toInt256()
                     );
                     fundingGrowthGlobal.twLongPremiumX96 = lastFundingGrowthGlobal.twLongPremiumX96.add(
-                        deltaLongTwPremiumX96
+                        deltaLongTwPremiumX96.mulMultiplier(params.longMultiplier)
                     );
-                    fundingGrowthGlobal.twLongPremiumDivBySqrtPriceX96 = lastFundingGrowthGlobal
-                        .twLongPremiumDivBySqrtPriceX96
-                        .add(PerpMath.mulDiv(deltaLongTwPremiumX96, PerpFixedPoint96._IQ96, sqrtMarkTwapX96));
-                    // SHORT receive
+                    // SHORT pay
                     fundingGrowthGlobal.twShortPremiumX96 = lastFundingGrowthGlobal.twShortPremiumX96.add(
-                        deltaTwPremiumX96
+                        deltaTwPremiumX96.mulMultiplier(params.shortMultiplier)
                     );
-                    fundingGrowthGlobal.twShortPremiumDivBySqrtPriceX96 = lastFundingGrowthGlobal
-                        .twShortPremiumDivBySqrtPriceX96
-                        .add(PerpMath.mulDiv(deltaTwPremiumX96, PerpFixedPoint96._IQ96, sqrtMarkTwapX96));
                 }
             } else {
                 fundingGrowthGlobal = lastFundingGrowthGlobal;
@@ -880,13 +831,7 @@ contract Exchange is
                 amount: signedScaledAmountForReplaySwap,
                 sqrtPriceLimitX96: params.sqrtPriceLimitX96,
                 uniswapFeeRatio: uniswapFeeRatio,
-                shouldUpdateState: false,
-                globalFundingGrowth: DataTypes.Growth({
-                    twLongPremiumX96: 0,
-                    twLongPremiumDivBySqrtPriceX96: 0,
-                    twShortPremiumX96: 0,
-                    twShortPremiumDivBySqrtPriceX96: 0
-                })
+                shouldUpdateState: false
             })
         );
     }

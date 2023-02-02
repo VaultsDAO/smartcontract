@@ -171,6 +171,8 @@ interface IAccountBalance {
         address trader
     ) external view returns (int256 owedRealizedPnl, int256 unrealizedPnl, uint256 pendingFee);
 
+    function getOriginBase(address trader, address baseToken) external view returns (int256 baseAmount);
+
     /// @notice Get trader base amount
     /// @dev `base amount = takerPositionSize - orderBaseDebt`
     /// @param trader The address of trader

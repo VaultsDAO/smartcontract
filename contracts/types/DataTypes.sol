@@ -8,9 +8,7 @@ library DataTypes {
     //         assume premium = 10000, time = 10 year = 60 * 60 * 24 * 365 * 10 -> twPremium = 3.1536E12
     struct Growth {
         int256 twLongPremiumX96;
-        int256 twLongPremiumDivBySqrtPriceX96;
         int256 twShortPremiumX96;
-        int256 twShortPremiumDivBySqrtPriceX96;
     }
     struct AddLiquidityParams {
         address baseToken;
@@ -59,5 +57,12 @@ library DataTypes {
         uint256 oppositeAmountBound;
         uint256 deadline;
         bytes32 referralCode;
+    }
+
+    struct FundingGrowthGlobalParams {
+        uint256 longPositionSize;
+        uint256 shortPositionSize;
+        uint256 longMultiplier;
+        uint256 shortMultiplier;
     }
 }

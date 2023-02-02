@@ -325,9 +325,15 @@ contract AccountBalance is IAccountBalance, BlockContext, ClearingHouseCallee, A
     // PUBLIC VIEW
     //
 
+    function getOriginBase(address trader, address baseToken) public view override returns (int256) {
+        return _accountMarketMap[trader][baseToken].takerPositionSize;
+    }
+
     /// @inheritdoc IAccountBalance
     function getBase(address trader, address baseToken) public view override returns (int256) {
-        return _accountMarketMap[trader][baseToken].takerPositionSize;
+        int256 base = getOriginBase(trader, baseToken);
+        (uint256 longMultiplier, uint256 shortMultiplier) = _getMarketMultiplier(baseToken);
+        return base > 0 ? base.mulMultiplier(longMultiplier) : base.mulMultiplier(shortMultiplier);
     }
 
     /// @inheritdoc IAccountBalance
@@ -335,22 +341,44 @@ contract AccountBalance is IAccountBalance, BlockContext, ClearingHouseCallee, A
         return _accountMarketMap[trader][baseToken].takerOpenNotional;
     }
 
-    /// @inheritdoc IAccountBalance
-    function getTakerPositionSize(address trader, address baseToken) public view override returns (int256) {
+    function getOriginTakerPositionSize(address trader, address baseToken) public view returns (int256) {
         int256 positionSize = _accountMarketMap[trader][baseToken].takerPositionSize;
         positionSize = positionSize.abs() < _DUST ? 0 : positionSize;
-        return positionSize;
+        (uint256 longMultiplier, uint256 shortMultiplier) = _getMarketMultiplier(baseToken);
+        return
+            positionSize > 0 ? positionSize.mulMultiplier(longMultiplier) : positionSize.mulMultiplier(shortMultiplier);
     }
 
     /// @inheritdoc IAccountBalance
-    function getTotalPositionSize(address trader, address baseToken) public view override returns (int256) {
+    function getTakerPositionSize(address trader, address baseToken) public view override returns (int256) {
+        int256 positionSize = getOriginTakerPositionSize(trader, baseToken);
+        (uint256 longMultiplier, uint256 shortMultiplier) = _getMarketMultiplier(baseToken);
+        return
+            positionSize > 0 ? positionSize.mulMultiplier(longMultiplier) : positionSize.mulMultiplier(shortMultiplier);
+    }
+
+    function getOriginTotalPositionSize(address trader, address baseToken) public view returns (int256) {
         // NOTE: when a token goes into UniswapV3 pool (addLiquidity or swap), there would be 1 wei rounding error
         // for instance, maker adds liquidity with 2 base (2000000000000000000),
         // the actual base amount in pool would be 1999999999999999999
         int256 takerPositionSize = _accountMarketMap[trader][baseToken].takerPositionSize;
         int256 totalPositionSize = takerPositionSize;
         totalPositionSize = totalPositionSize.abs() < _DUST ? 0 : totalPositionSize;
-        return totalPositionSize;
+        (uint256 longMultiplier, uint256 shortMultiplier) = _getMarketMultiplier(baseToken);
+        return
+            totalPositionSize > 0
+                ? totalPositionSize.mulMultiplier(longMultiplier)
+                : totalPositionSize.mulMultiplier(shortMultiplier);
+    }
+
+    /// @inheritdoc IAccountBalance
+    function getTotalPositionSize(address trader, address baseToken) public view override returns (int256) {
+        int256 totalPositionSize = getOriginTotalPositionSize(trader, baseToken);
+        (uint256 longMultiplier, uint256 shortMultiplier) = _getMarketMultiplier(baseToken);
+        return
+            totalPositionSize > 0
+                ? totalPositionSize.mulMultiplier(longMultiplier)
+                : totalPositionSize.mulMultiplier(shortMultiplier);
     }
 
     /// @inheritdoc IAccountBalance
@@ -379,6 +407,10 @@ contract AccountBalance is IAccountBalance, BlockContext, ClearingHouseCallee, A
             getTotalAbsPositionValue(trader)
                 .mulRatio(IClearingHouseConfig(_clearingHouseConfig).getMmRatio())
                 .toInt256();
+    }
+
+    function getOriginMarketPositionSize(address baseToken) public view returns (uint256, uint256) {
+        return (_marketMap[baseToken].longPositionSize, _marketMap[baseToken].shortPositionSize);
     }
 
     /// @inheritdoc IAccountBalance

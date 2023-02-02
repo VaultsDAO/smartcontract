@@ -34,7 +34,6 @@ interface IOrderBook {
         int256 amount;
         uint160 sqrtPriceLimitX96;
         uint24 uniswapFeeRatio;
-        DataTypes.Growth globalFundingGrowth;
     }
 
     /// @param insuranceFundFee = fee * insuranceFundFeeRatio
