@@ -228,4 +228,6 @@ interface IAccountBalance {
     function getMarketPositionSize(address baseToken) external view returns (uint256, uint256);
 
     function getMarketMultiplier(address baseToken) external view returns (uint256, uint256);
+
+    function modifyMarketMultiplier(address baseToken, uint256 longDeltaRate, uint256 shortDeltaRate) external;
 }

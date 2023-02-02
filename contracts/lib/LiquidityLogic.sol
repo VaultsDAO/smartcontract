@@ -54,58 +54,32 @@ library LiquidityLogic {
         // CH_OMPS: Over the maximum price spread
         // require(!IExchange(IClearingHouse(chAddress).getExchange()).isOverPriceSpread(params.baseToken), "CH_OMPS");
 
-        // for multiplier
-        uint256 deltaQuote;
-        (uint256 oldLongPositionSize, uint256 oldShortPositionSize) = IAccountBalance(
-            IClearingHouse(chAddress).getAccountBalance()
-        ).getMarketPositionSize(params.baseToken);
-        int256 oldDeltaBase = oldLongPositionSize.toInt256().sub(oldShortPositionSize.toInt256());
-        if (oldDeltaBase != 0) {
-            bool isBaseToQuote = oldDeltaBase > 0 ? true : false;
-            IOrderBook.ReplaySwapResponse memory estimate = IExchange(IClearingHouse(chAddress).getExchange())
-                .estimateSwap(
-                    DataTypes.OpenPositionParams({
-                        baseToken: params.baseToken,
-                        isBaseToQuote: isBaseToQuote,
-                        isExactInput: isBaseToQuote,
-                        oppositeAmountBound: 0,
-                        amount: uint256(oldDeltaBase.abs()),
-                        sqrtPriceLimitX96: 0,
-                        deadline: block.timestamp + 60,
-                        referralCode: ""
-                    })
-                );
-            deltaQuote = isBaseToQuote ? estimate.amountOut : estimate.amountIn;
-        }
-        // for multiplier
-
         GenericLogic.settleFundingGlobal(chAddress, params.baseToken);
+
+        // for multiplier
+        (
+            uint256 oldLongPositionSize,
+            uint256 oldShortPositionSize,
+            int256 oldDeltaBase,
+            uint256 deltaQuote
+        ) = GenericLogic.getInfoMultiplier(chAddress, params.baseToken);
+        // for multiplier
 
         // note that we no longer check available tokens here because CH will always auto-mint in UniswapV3MintCallback
         IOrderBook.AddLiquidityResponse memory response = IOrderBook(IClearingHouse(chAddress).getOrderBook())
             .addLiquidity(IOrderBook.AddLiquidityParams({ baseToken: params.baseToken, liquidity: params.liquidity }));
 
         // for multiplier
-        uint256 newDeltaBase;
-        if (deltaQuote > 0) {
-            bool isBaseToQuote = oldDeltaBase > 0 ? true : false;
-            IOrderBook.ReplaySwapResponse memory estimate = IExchange(IClearingHouse(chAddress).getExchange())
-                .estimateSwap(
-                    DataTypes.OpenPositionParams({
-                        baseToken: params.baseToken,
-                        isBaseToQuote: isBaseToQuote,
-                        isExactInput: !isBaseToQuote,
-                        oppositeAmountBound: 0,
-                        amount: deltaQuote,
-                        sqrtPriceLimitX96: 0,
-                        deadline: block.timestamp + 60,
-                        referralCode: ""
-                    })
-                );
-            newDeltaBase = isBaseToQuote ? estimate.amountIn : estimate.amountOut;
-        }
-
-        console.log("newDeltaBase %d", newDeltaBase);
+        GenericLogic.updateInfoMultiplier(
+            chAddress,
+            params.baseToken,
+            oldLongPositionSize,
+            oldShortPositionSize,
+            oldDeltaBase,
+            0,
+            0,
+            deltaQuote
+        );
         // for multiplier
 
         emit GenericLogic.LiquidityChanged(
@@ -158,12 +132,34 @@ library LiquidityLogic {
 
         GenericLogic.settleFundingGlobal(chAddress, params.baseToken);
 
+        // for multiplier
+        (
+            uint256 oldLongPositionSize,
+            uint256 oldShortPositionSize,
+            int256 oldDeltaBase,
+            uint256 deltaQuote
+        ) = GenericLogic.getInfoMultiplier(chAddress, params.baseToken);
+        // for multiplier
+
         // must settle funding first
 
         IOrderBook.RemoveLiquidityResponse memory response = IOrderBook(IClearingHouse(chAddress).getOrderBook())
             .removeLiquidity(
                 IOrderBook.RemoveLiquidityParams({ baseToken: params.baseToken, liquidity: params.liquidity })
             );
+
+        // for multiplier
+        GenericLogic.updateInfoMultiplier(
+            chAddress,
+            params.baseToken,
+            oldLongPositionSize,
+            oldShortPositionSize,
+            oldDeltaBase,
+            0,
+            0,
+            deltaQuote
+        );
+        // for multiplier
 
         emit GenericLogic.LiquidityChanged(
             params.baseToken,

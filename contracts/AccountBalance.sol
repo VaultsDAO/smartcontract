@@ -63,7 +63,7 @@ contract AccountBalance is IAccountBalance, BlockContext, ClearingHouseCallee, A
         emit VaultChanged(vaultArg);
     }
 
-    function modifyMarketMultiplier(address baseToken, int256 longDeltaRate, int256 shortDeltaRate) external {
+    function modifyMarketMultiplier(address baseToken, uint256 longRate, uint256 shortRate) external override {
         _requireOnlyClearingHouse();
         if (_marketMap[baseToken].longMultiplierX10_18 == 0) {
             _marketMap[baseToken].longMultiplierX10_18 = 1e18;
@@ -71,20 +71,18 @@ contract AccountBalance is IAccountBalance, BlockContext, ClearingHouseCallee, A
         if (_marketMap[baseToken].shortMultiplierX10_18 == 0) {
             _marketMap[baseToken].shortMultiplierX10_18 = 1e18;
         }
-        if (longDeltaRate != 0) {
-            _marketMap[baseToken].longMultiplierX10_18 = FullMath.mulDiv(
-                _marketMap[baseToken].longMultiplierX10_18,
-                longDeltaRate > 0 ? (1e18 + longDeltaRate.abs()) : (1e18 - longDeltaRate.abs()),
-                1e18
+        if (longRate != 1e18) {
+            _marketMap[baseToken].longMultiplierX10_18 = _marketMap[baseToken].longMultiplierX10_18.mulMultiplier(
+                longRate
             );
         }
-        if (shortDeltaRate != 0) {
-            _marketMap[baseToken].shortMultiplierX10_18 = FullMath.mulDiv(
-                _marketMap[baseToken].shortMultiplierX10_18,
-                shortDeltaRate > 0 ? (1e18 + shortDeltaRate.abs()) : (1e18 - shortDeltaRate.abs()),
-                1e18
+        if (shortRate != 1e18) {
+            _marketMap[baseToken].shortMultiplierX10_18 = _marketMap[baseToken].shortMultiplierX10_18.mulMultiplier(
+                shortRate
             );
         }
+        console.log("longMultiplierX10_18 %d", _marketMap[baseToken].longMultiplierX10_18);
+        console.log("shortMultiplierX10_18 %d", _marketMap[baseToken].shortMultiplierX10_18);
     }
 
     /// @inheritdoc IAccountBalance
@@ -343,10 +341,7 @@ contract AccountBalance is IAccountBalance, BlockContext, ClearingHouseCallee, A
 
     function getOriginTakerPositionSize(address trader, address baseToken) public view returns (int256) {
         int256 positionSize = _accountMarketMap[trader][baseToken].takerPositionSize;
-        positionSize = positionSize.abs() < _DUST ? 0 : positionSize;
-        (uint256 longMultiplier, uint256 shortMultiplier) = _getMarketMultiplier(baseToken);
-        return
-            positionSize > 0 ? positionSize.mulMultiplier(longMultiplier) : positionSize.mulMultiplier(shortMultiplier);
+        return positionSize.abs() < _DUST ? 0 : positionSize;
     }
 
     /// @inheritdoc IAccountBalance
@@ -363,12 +358,7 @@ contract AccountBalance is IAccountBalance, BlockContext, ClearingHouseCallee, A
         // the actual base amount in pool would be 1999999999999999999
         int256 takerPositionSize = _accountMarketMap[trader][baseToken].takerPositionSize;
         int256 totalPositionSize = takerPositionSize;
-        totalPositionSize = totalPositionSize.abs() < _DUST ? 0 : totalPositionSize;
-        (uint256 longMultiplier, uint256 shortMultiplier) = _getMarketMultiplier(baseToken);
-        return
-            totalPositionSize > 0
-                ? totalPositionSize.mulMultiplier(longMultiplier)
-                : totalPositionSize.mulMultiplier(shortMultiplier);
+        return totalPositionSize.abs() < _DUST ? 0 : totalPositionSize;
     }
 
     /// @inheritdoc IAccountBalance
@@ -508,6 +498,9 @@ contract AccountBalance is IAccountBalance, BlockContext, ClearingHouseCallee, A
     ) internal returns (int256, int256) {
         // for multiplier
         int256 base = getModifyBaseForMultiplier(trader, baseToken, baseAfterMultiplier);
+        console.log("_modifyTakerBalance base");
+        console.logInt(baseAfterMultiplier);
+        console.logInt(base);
         //
         DataTypes.AccountMarketInfo storage accountInfo = _accountMarketMap[trader][baseToken];
         int256 oldPos = accountInfo.takerPositionSize;

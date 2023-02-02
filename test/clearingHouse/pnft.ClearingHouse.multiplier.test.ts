@@ -35,7 +35,7 @@ import { ClearingHouseFixture, createClearingHouseFixture } from "./fixtures"
 
 describe("ClearingHouse multiplier", () => {
 
-    const [admin, maker, trader1, trader2, liquidator, priceAdmin] = waffle.provider.getWallets()
+    const [admin, maker, trader1, trader2, liquidator, priceAdmin, user01, fundingFund, platformFund] = waffle.provider.getWallets()
     const loadFixture: ReturnType<typeof waffle.createFixtureLoader> = waffle.createFixtureLoader([admin])
     let fixture: ClearingHouseFixture
     let clearingHouse: TestClearingHouse
@@ -147,5 +147,255 @@ describe("ClearingHouse multiplier", () => {
         expect(await accountBalance.getModifyBaseForMultiplier(trader1.address, baseToken.address, parseEther('0.1'))).to.deep.eq(parseEther("0.2"))
         expect(await accountBalance.getModifyBaseForMultiplier(trader1.address, baseToken.address, parseEther('-0.1'))).to.deep.eq(parseEther("-0.2"))
         expect(await accountBalance.getModifyBaseForMultiplier(trader1.address, baseToken.address, parseEther('-2'))).to.deep.eq(parseEther("-2.25"))
+    })
+
+    // it("short multiplier for increase liquidity and trade", async () => {
+    //     // maker add liquidity
+    //     await clearingHouse.connect(maker).addLiquidity({
+    //         baseToken: baseToken.address,
+    //         liquidity: parseEther('10000'),
+    //         deadline: ethers.constants.MaxUint256,
+    //     })
+    //     {
+    //         await clearingHouse.connect(trader1).openPosition({
+    //             baseToken: baseToken.address,
+    //             isBaseToQuote: true,
+    //             isExactInput: true,
+    //             oppositeAmountBound: 0,
+    //             amount: parseEther("10"),
+    //             sqrtPriceLimitX96: 0,
+    //             deadline: ethers.constants.MaxUint256,
+    //             referralCode: ethers.constants.HashZero,
+    //         })
+    //     }
+    //     {
+    //         await clearingHouse.connect(trader2).openPosition({
+    //             baseToken: baseToken.address,
+    //             isBaseToQuote: false,
+    //             isExactInput: false,
+    //             oppositeAmountBound: 0,
+    //             amount: parseEther("9"),
+    //             sqrtPriceLimitX96: 0,
+    //             deadline: ethers.constants.MaxUint256,
+    //             referralCode: ethers.constants.HashZero,
+    //         })
+    //     }
+    //     await clearingHouse.connect(maker).addLiquidity({
+    //         baseToken: baseToken.address,
+    //         liquidity: parseEther('10000'),
+    //         deadline: ethers.constants.MaxUint256,
+    //     })
+
+    //     {
+    //         let [longSize, shortSize] = (await accountBalance.getMarketPositionSize(baseToken.address))
+    //         console.log(
+    //             'getMarketPositionSize',
+    //             formatEther(longSize),
+    //             formatEther(shortSize),
+    //         )
+    //     }
+
+    //     {
+    //         let [longSize, shortSize] = (await accountBalance.getOriginMarketPositionSize(baseToken.address))
+    //         console.log(
+    //             'getMarketPositionSize',
+    //             formatEther(longSize),
+    //             formatEther(shortSize),
+    //         )
+    //     }
+
+    //     {
+    //         let size1 = (await accountBalance.getTotalPositionSize(trader1.address, baseToken.address))
+    //         console.log(
+    //             'getTotalPositionSize1',
+    //             formatEther(size1),
+    //         )
+    //         let size2 = (await accountBalance.getTotalPositionSize(trader2.address, baseToken.address))
+    //         console.log(
+    //             'getTotalPositionSize2',
+    //             formatEther(size2),
+    //         )
+    //     }
+
+    //     await clearingHouse.connect(trader1).closePosition({
+    //         baseToken: baseToken.address,
+    //         sqrtPriceLimitX96: parseEther("0"),
+    //         oppositeAmountBound: parseEther("0"),
+    //         deadline: ethers.constants.MaxUint256,
+    //         referralCode: ethers.constants.HashZero,
+    //     })
+
+    //     {
+    //         let [longSize, shortSize] = (await accountBalance.getMarketPositionSize(baseToken.address))
+    //         console.log(
+    //             'getMarketPositionSize',
+    //             formatEther(longSize),
+    //             formatEther(shortSize),
+    //         )
+    //     }
+
+    //     await clearingHouse.connect(trader2).closePosition({
+    //         baseToken: baseToken.address,
+    //         sqrtPriceLimitX96: parseEther("0"),
+    //         oppositeAmountBound: parseEther("0"),
+    //         deadline: ethers.constants.MaxUint256,
+    //         referralCode: ethers.constants.HashZero,
+    //     })
+    //     {
+    //         let size1 = (await accountBalance.getTotalPositionSize(trader1.address, baseToken.address))
+    //         console.log(
+    //             'getTotalPositionSize1',
+    //             formatEther(size1),
+    //         )
+    //         let size2 = (await accountBalance.getTotalPositionSize(trader2.address, baseToken.address))
+    //         console.log(
+    //             'getTotalPositionSize2',
+    //             formatEther(size2),
+    //         )
+    //     }
+
+    //     let owedRealizedPnlPlatformFund = (await accountBalance.getPnlAndPendingFee(platformFund.address))[0]
+    //     let owedRealizedPnlInsuranceFund = (await accountBalance.getPnlAndPendingFee(insuranceFund.address))[0]
+    //     let owedRealizedPnlTrade1 = (await accountBalance.getPnlAndPendingFee(trader1.address))[0]
+    //     let owedRealizedPnlTrade2 = (await accountBalance.getPnlAndPendingFee(trader2.address))[0]
+
+    //     console.log(
+    //         'owedRealizedPnl',
+    //         formatEther(owedRealizedPnlPlatformFund),
+    //         formatEther(owedRealizedPnlInsuranceFund),
+    //         formatEther(owedRealizedPnlTrade1),
+    //         formatEther(owedRealizedPnlTrade2),
+    //         formatEther(owedRealizedPnlPlatformFund.add(owedRealizedPnlInsuranceFund).add(owedRealizedPnlTrade1).add(owedRealizedPnlTrade2)),
+    //     )
+
+    //     // await accountBalance.testMarketMultiplier(baseToken.address, parseEther('1.2'), parseEther('0.5'))
+    //     // expect(await accountBalance.getModifyBaseForMultiplier(trader1.address, baseToken.address, parseEther('-0.1'))).to.deep.eq(parseEther("-0.2"))
+    //     // expect(await accountBalance.getModifyBaseForMultiplier(trader1.address, baseToken.address, parseEther('0.1'))).to.deep.eq(parseEther("0.2"))
+    //     // expect(await accountBalance.getModifyBaseForMultiplier(trader1.address, baseToken.address, parseEther('2'))).to.deep.eq(parseEther("2.25"))
+    // })
+
+    it("short multiplier for decrease liquidity and trade", async () => {
+        // maker add liquidity
+        await clearingHouse.connect(maker).addLiquidity({
+            baseToken: baseToken.address,
+            liquidity: parseEther('10000'),
+            deadline: ethers.constants.MaxUint256,
+        })
+        {
+            await clearingHouse.connect(trader1).openPosition({
+                baseToken: baseToken.address,
+                isBaseToQuote: true,
+                isExactInput: true,
+                oppositeAmountBound: 0,
+                amount: parseEther("10"),
+                sqrtPriceLimitX96: 0,
+                deadline: ethers.constants.MaxUint256,
+                referralCode: ethers.constants.HashZero,
+            })
+        }
+        {
+            await clearingHouse.connect(trader2).openPosition({
+                baseToken: baseToken.address,
+                isBaseToQuote: false,
+                isExactInput: false,
+                oppositeAmountBound: 0,
+                amount: parseEther("9"),
+                sqrtPriceLimitX96: 0,
+                deadline: ethers.constants.MaxUint256,
+                referralCode: ethers.constants.HashZero,
+            })
+        }
+        await clearingHouse.connect(maker).removeLiquidity({
+            baseToken: baseToken.address,
+            liquidity: parseEther('5000'),
+            deadline: ethers.constants.MaxUint256,
+        })
+
+        {
+            let [longSize, shortSize] = (await accountBalance.getMarketPositionSize(baseToken.address))
+            console.log(
+                'getMarketPositionSize',
+                formatEther(longSize),
+                formatEther(shortSize),
+            )
+        }
+
+        {
+            let [longSize, shortSize] = (await accountBalance.getOriginMarketPositionSize(baseToken.address))
+            console.log(
+                'getMarketPositionSize',
+                formatEther(longSize),
+                formatEther(shortSize),
+            )
+        }
+
+        {
+            let size1 = (await accountBalance.getTotalPositionSize(trader1.address, baseToken.address))
+            console.log(
+                'getTotalPositionSize1',
+                formatEther(size1),
+            )
+            let size2 = (await accountBalance.getTotalPositionSize(trader2.address, baseToken.address))
+            console.log(
+                'getTotalPositionSize2',
+                formatEther(size2),
+            )
+        }
+
+        await clearingHouse.connect(trader1).closePosition({
+            baseToken: baseToken.address,
+            sqrtPriceLimitX96: parseEther("0"),
+            oppositeAmountBound: parseEther("0"),
+            deadline: ethers.constants.MaxUint256,
+            referralCode: ethers.constants.HashZero,
+        })
+
+        {
+            let [longSize, shortSize] = (await accountBalance.getMarketPositionSize(baseToken.address))
+            console.log(
+                'getMarketPositionSize',
+                formatEther(longSize),
+                formatEther(shortSize),
+            )
+        }
+
+        await clearingHouse.connect(trader2).closePosition({
+            baseToken: baseToken.address,
+            sqrtPriceLimitX96: parseEther("0"),
+            oppositeAmountBound: parseEther("0"),
+            deadline: ethers.constants.MaxUint256,
+            referralCode: ethers.constants.HashZero,
+        })
+        {
+            let size1 = (await accountBalance.getTotalPositionSize(trader1.address, baseToken.address))
+            console.log(
+                'getTotalPositionSize1',
+                formatEther(size1),
+            )
+            let size2 = (await accountBalance.getTotalPositionSize(trader2.address, baseToken.address))
+            console.log(
+                'getTotalPositionSize2',
+                formatEther(size2),
+            )
+        }
+
+        let owedRealizedPnlPlatformFund = (await accountBalance.getPnlAndPendingFee(platformFund.address))[0]
+        let owedRealizedPnlInsuranceFund = (await accountBalance.getPnlAndPendingFee(insuranceFund.address))[0]
+        let owedRealizedPnlTrade1 = (await accountBalance.getPnlAndPendingFee(trader1.address))[0]
+        let owedRealizedPnlTrade2 = (await accountBalance.getPnlAndPendingFee(trader2.address))[0]
+
+        console.log(
+            'owedRealizedPnl',
+            formatEther(owedRealizedPnlPlatformFund),
+            formatEther(owedRealizedPnlInsuranceFund),
+            formatEther(owedRealizedPnlTrade1),
+            formatEther(owedRealizedPnlTrade2),
+            formatEther(owedRealizedPnlPlatformFund.add(owedRealizedPnlInsuranceFund).add(owedRealizedPnlTrade1).add(owedRealizedPnlTrade2)),
+        )
+
+        // await accountBalance.testMarketMultiplier(baseToken.address, parseEther('1.2'), parseEther('0.5'))
+        // expect(await accountBalance.getModifyBaseForMultiplier(trader1.address, baseToken.address, parseEther('-0.1'))).to.deep.eq(parseEther("-0.2"))
+        // expect(await accountBalance.getModifyBaseForMultiplier(trader1.address, baseToken.address, parseEther('0.1'))).to.deep.eq(parseEther("0.2"))
+        // expect(await accountBalance.getModifyBaseForMultiplier(trader1.address, baseToken.address, parseEther('2'))).to.deep.eq(parseEther("2.25"))
     })
 })

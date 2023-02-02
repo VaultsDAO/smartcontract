@@ -244,6 +244,24 @@ library GenericLogic {
             );
     }
 
+    function getNewPositionSizeForMultiplierRate(
+        uint256 longPositionSize,
+        uint256 shortPositionSize,
+        uint256 oldMarkPrice,
+        uint256 newMarkPrice,
+        uint256 newDetalPositionSize
+    ) internal view returns (uint256 newLongPositionSizeRate, uint256 newShortPositionSizeRate) {
+        (uint256 newLongPositionSize, uint256 newShortPositionSize) = getNewPositionSizeForMultiplier(
+            longPositionSize,
+            shortPositionSize,
+            oldMarkPrice,
+            newMarkPrice,
+            newDetalPositionSize
+        );
+        newLongPositionSizeRate = newLongPositionSize.divMultiplier(longPositionSize);
+        newShortPositionSizeRate = newShortPositionSize.divMultiplier(shortPositionSize);
+    }
+
     function getNewPositionSizeForMultiplier(
         uint256 longPositionSize,
         uint256 shortPositionSize,
@@ -297,5 +315,84 @@ library GenericLogic {
             );
         }
         return (newLongPositionSize, newShortPositionSize);
+    }
+
+    function getInfoMultiplier(
+        address chAddress,
+        address baseToken
+    )
+        internal
+        returns (uint256 oldLongPositionSize, uint256 oldShortPositionSize, int256 oldDeltaBase, uint256 deltaQuote)
+    {
+        (oldLongPositionSize, oldShortPositionSize) = IAccountBalance(IClearingHouse(chAddress).getAccountBalance())
+            .getMarketPositionSize(baseToken);
+        oldDeltaBase = oldLongPositionSize.toInt256().sub(oldShortPositionSize.toInt256());
+        if (oldDeltaBase != 0) {
+            bool isBaseToQuote = oldDeltaBase > 0 ? true : false;
+            IOrderBook.ReplaySwapResponse memory estimate = IExchange(IClearingHouse(chAddress).getExchange())
+                .estimateSwap(
+                    DataTypes.OpenPositionParams({
+                        baseToken: baseToken,
+                        isBaseToQuote: isBaseToQuote,
+                        isExactInput: isBaseToQuote,
+                        oppositeAmountBound: 0,
+                        amount: uint256(oldDeltaBase.abs()),
+                        sqrtPriceLimitX96: 0,
+                        deadline: block.timestamp + 60,
+                        referralCode: ""
+                    })
+                );
+            deltaQuote = isBaseToQuote ? estimate.amountOut : estimate.amountIn;
+        }
+    }
+
+    function updateInfoMultiplier(
+        address chAddress,
+        address baseToken,
+        uint256 oldLongPositionSize,
+        uint256 oldShortPositionSize,
+        int256 oldDeltaBase,
+        uint256 oldMarkPrice,
+        uint256 newMarkPrice,
+        uint256 deltaQuote
+    ) internal {
+        if (deltaQuote > 0) {
+            bool isBaseToQuote = oldDeltaBase > 0 ? true : false;
+            IOrderBook.ReplaySwapResponse memory estimate = IExchange(IClearingHouse(chAddress).getExchange())
+                .estimateSwap(
+                    DataTypes.OpenPositionParams({
+                        baseToken: baseToken,
+                        isBaseToQuote: isBaseToQuote,
+                        isExactInput: !isBaseToQuote,
+                        oppositeAmountBound: 0,
+                        amount: deltaQuote,
+                        sqrtPriceLimitX96: 0,
+                        deadline: block.timestamp + 60,
+                        referralCode: ""
+                    })
+                );
+            uint256 newDeltaBase = isBaseToQuote ? estimate.amountIn : estimate.amountOut;
+
+            (uint256 newLongPositionSizeRate, uint256 newShortPositionSizeRate) = GenericLogic
+                .getNewPositionSizeForMultiplierRate(
+                    oldLongPositionSize,
+                    oldShortPositionSize,
+                    oldMarkPrice,
+                    newMarkPrice,
+                    newDeltaBase
+                );
+
+            // console.log("oldDeltaBase %d", oldDeltaBase.abs());
+            // console.log("deltaQuote %d", deltaQuote);
+            // console.log("newDeltaBase %d", newDeltaBase);
+            // console.log("newLongPositionSize %d", newLongPositionSizeRate);
+            // console.log("newShortPositionSize %d", newShortPositionSizeRate);
+
+            IAccountBalance(IClearingHouse(chAddress).getAccountBalance()).modifyMarketMultiplier(
+                baseToken,
+                newLongPositionSizeRate,
+                newShortPositionSizeRate
+            );
+        }
     }
 }
