@@ -54,6 +54,8 @@ library LiquidityLogic {
         // CH_OMPS: Over the maximum price spread
         require(!IExchange(IClearingHouse(chAddress).getExchange()).isOverPriceSpread(params.baseToken), "CH_OMPS");
 
+        GenericLogic.settleFundingGlobal(chAddress, params.baseToken);
+
         // note that we no longer check available tokens here because CH will always auto-mint in UniswapV3MintCallback
         IOrderBook.AddLiquidityResponse memory response = IOrderBook(IClearingHouse(chAddress).getOrderBook())
             .addLiquidity(IOrderBook.AddLiquidityParams({ baseToken: params.baseToken, liquidity: params.liquidity }));
@@ -106,6 +108,8 @@ library LiquidityLogic {
         // CH_MP: Market paused
         require(!IBaseToken(params.baseToken).isPaused(), "CH_MP");
 
+        GenericLogic.settleFundingGlobal(chAddress, params.baseToken);
+
         // must settle funding first
 
         IOrderBook.RemoveLiquidityResponse memory response = IOrderBook(IClearingHouse(chAddress).getOrderBook())
@@ -124,23 +128,25 @@ library LiquidityLogic {
         return DataTypes.RemoveLiquidityResponse({ quote: response.quote, base: response.base });
     }
 
-    function removeAllLiquidity(address chAddress, address baseToken) public {
-        IOrderBook.RemoveLiquidityResponse memory removeLiquidityResponse;
+    // function removeAllLiquidity(address chAddress, address baseToken) public {
+    //     GenericLogic.settleFundingGlobal(chAddress, baseToken);
 
-        uint128 liquidity = IOrderBook(IClearingHouse(chAddress).getOrderBook()).getLiquidity(baseToken);
+    //     IOrderBook.RemoveLiquidityResponse memory removeLiquidityResponse;
 
-        IOrderBook.RemoveLiquidityResponse memory response = IOrderBook(IClearingHouse(chAddress).getOrderBook())
-            .removeLiquidity(IOrderBook.RemoveLiquidityParams({ baseToken: baseToken, liquidity: liquidity }));
+    //     uint128 liquidity = IOrderBook(IClearingHouse(chAddress).getOrderBook()).getLiquidity(baseToken);
 
-        removeLiquidityResponse.base = removeLiquidityResponse.base.add(response.base);
-        removeLiquidityResponse.quote = removeLiquidityResponse.quote.add(response.quote);
+    //     IOrderBook.RemoveLiquidityResponse memory response = IOrderBook(IClearingHouse(chAddress).getOrderBook())
+    //         .removeLiquidity(IOrderBook.RemoveLiquidityParams({ baseToken: baseToken, liquidity: liquidity }));
 
-        emit GenericLogic.LiquidityChanged(
-            baseToken,
-            IClearingHouse(chAddress).getQuoteToken(),
-            response.base.neg256(),
-            response.quote.neg256(),
-            liquidity.neg128()
-        );
-    }
+    //     removeLiquidityResponse.base = removeLiquidityResponse.base.add(response.base);
+    //     removeLiquidityResponse.quote = removeLiquidityResponse.quote.add(response.quote);
+
+    //     emit GenericLogic.LiquidityChanged(
+    //         baseToken,
+    //         IClearingHouse(chAddress).getQuoteToken(),
+    //         response.base.neg256(),
+    //         response.quote.neg256(),
+    //         liquidity.neg128()
+    //     );
+    // }
 }

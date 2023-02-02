@@ -261,6 +261,47 @@ contract Exchange is
     }
 
     /// @inheritdoc IExchange
+    function settleFundingGlobal(
+        address baseToken
+    ) external override returns (DataTypes.Growth memory fundingGrowthGlobal) {
+        _requireOnlyClearingHouse();
+        // EX_BTNE: base token does not exists
+        require(IMarketRegistry(_marketRegistry).hasPool(baseToken), "EX_BTNE");
+
+        // if updating TWAP fails, this call will be reverted and thus using try-catch
+        try IBaseToken(baseToken).cacheTwap(IClearingHouseConfig(_clearingHouseConfig).getTwapInterval()) {} catch {}
+        uint256 markTwap;
+        uint256 indexTwap;
+        (fundingGrowthGlobal, markTwap, indexTwap) = _getFundingGrowthGlobalAndTwaps(baseToken);
+
+        // funding will be stopped once the market is being paused
+        uint256 timestamp = IBaseToken(baseToken).isOpen()
+            ? _blockTimestamp()
+            : IBaseToken(baseToken).getPausedTimestamp();
+
+        // update states before further actions in this block; once per block
+        if (timestamp != _lastSettledTimestampMap[baseToken]) {
+            // update fundingGrowthGlobal and _lastSettledTimestamp
+            DataTypes.Growth storage lastFundingGrowthGlobal = _globalFundingGrowthX96Map[baseToken];
+            (
+                _lastSettledTimestampMap[baseToken],
+                lastFundingGrowthGlobal.twLongPremiumX96,
+                lastFundingGrowthGlobal.twShortPremiumX96
+            ) = (timestamp, fundingGrowthGlobal.twLongPremiumX96, fundingGrowthGlobal.twShortPremiumX96);
+
+            (uint256 longPositionSize, uint256 shortPositionSize) = IAccountBalance(_accountBalance)
+                .getMarketPositionSize(baseToken);
+
+            emit FundingUpdated(baseToken, markTwap, indexTwap, longPositionSize, shortPositionSize);
+
+            // update tick for price limit checks
+            _lastUpdatedTickMap[baseToken] = _getTick(baseToken);
+        }
+
+        return (fundingGrowthGlobal);
+    }
+
+    /// @inheritdoc IExchange
     function settleFunding(
         address trader,
         address baseToken

@@ -93,6 +93,14 @@ library GenericLogic {
         IAccountBalance(IClearingHouse(chAddress).getAccountBalance()).registerBaseToken(trader, baseToken);
     }
 
+    function settleFundingGlobal(
+        address chAddress,
+        address baseToken
+    ) public returns (DataTypes.Growth memory fundingGrowthGlobal) {
+        (fundingGrowthGlobal) = IExchange(IClearingHouse(chAddress).getExchange()).settleFundingGlobal(baseToken);
+        return fundingGrowthGlobal;
+    }
+
     function settleFunding(
         address chAddress,
         address trader,
@@ -235,5 +243,60 @@ library GenericLogic {
             IIndexPrice(baseToken).getIndexPrice(
                 IClearingHouseConfig(IClearingHouse(chAddress).getClearingHouseConfig()).getTwapInterval()
             );
+    }
+
+    function getNewPositionSizeForMultiplier(
+        uint256 longPositionSize,
+        uint256 shortPositionSize,
+        uint256 oldMarkPrice,
+        uint256 newMarkPrice,
+        uint256 newDetalPositionSize
+    ) internal view returns (uint256 newLongPositionSize, uint256 newShortPositionSize) {
+        newLongPositionSize = longPositionSize;
+        newShortPositionSize = shortPositionSize;
+
+        if (longPositionSize == shortPositionSize && oldMarkPrice == newMarkPrice) {
+            return (newLongPositionSize, newShortPositionSize);
+        }
+
+        if (oldMarkPrice != newMarkPrice) {
+            newLongPositionSize = FullMath.mulDiv(newLongPositionSize, oldMarkPrice, newMarkPrice);
+            newShortPositionSize = FullMath.mulDiv(newShortPositionSize, oldMarkPrice, newMarkPrice);
+        }
+
+        uint256 oldDetalPositionSize = newLongPositionSize.toInt256().sub(newShortPositionSize.toInt256()).abs();
+        int256 diffDetalPositionSize = newDetalPositionSize.toInt256().sub(oldDetalPositionSize.toInt256());
+        uint256 newTotalPositionSize = newLongPositionSize.add(newShortPositionSize);
+
+        if (
+            (diffDetalPositionSize > 0 && newLongPositionSize > newShortPositionSize) ||
+            (diffDetalPositionSize < 0 && newLongPositionSize < newShortPositionSize)
+        ) {
+            newLongPositionSize = FullMath.mulDiv(
+                newLongPositionSize,
+                (1e18 + FullMath.mulDiv(diffDetalPositionSize.abs(), 1e18, newTotalPositionSize)),
+                1e18
+            );
+            newShortPositionSize = FullMath.mulDiv(
+                newShortPositionSize,
+                (1e18 - FullMath.mulDiv(diffDetalPositionSize.abs(), 1e18, newTotalPositionSize)),
+                1e18
+            );
+        } else if (
+            (diffDetalPositionSize > 0 && newLongPositionSize < newShortPositionSize) ||
+            (diffDetalPositionSize < 0 && newLongPositionSize > newShortPositionSize)
+        ) {
+            newLongPositionSize = FullMath.mulDiv(
+                newLongPositionSize,
+                (1e18 - FullMath.mulDiv(diffDetalPositionSize.abs(), 1e18, newTotalPositionSize)),
+                1e18
+            );
+            newShortPositionSize = FullMath.mulDiv(
+                newShortPositionSize,
+                (1e18 + FullMath.mulDiv(diffDetalPositionSize.abs(), 1e18, newTotalPositionSize)),
+                1e18
+            );
+        }
+        return (newLongPositionSize, newShortPositionSize);
     }
 }

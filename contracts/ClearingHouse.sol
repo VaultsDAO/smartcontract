@@ -288,25 +288,25 @@ contract ClearingHouse is
         _liquidate(trader, baseToken);
     }
 
-    /// @inheritdoc IClearingHouse
-    function cancelExcessOrders(address baseToken) external override onlyMaker whenNotPaused nonReentrant {
-        // input requirement checks:
-        //   maker: in _cancelExcessOrders()
-        //   baseToken: in Exchange.settleFunding()
-        //   orderIds: in OrderBook.removeLiquidityByIds()
+    // /// @inheritdoc IClearingHouse
+    // function cancelExcessOrders(address baseToken) external override onlyMaker whenNotPaused nonReentrant {
+    //     // input requirement checks:
+    //     //   maker: in _cancelExcessOrders()
+    //     //   baseToken: in Exchange.settleFunding()
+    //     //   orderIds: in OrderBook.removeLiquidityByIds()
 
-        _cancelExcessOrders(baseToken);
-    }
+    //     _cancelExcessOrders(baseToken);
+    // }
 
-    /// @inheritdoc IClearingHouse
-    function cancelAllExcessOrders(address baseToken) external override onlyMaker whenNotPaused nonReentrant {
-        // input requirement checks:
-        //   maker: in _cancelExcessOrders()
-        //   baseToken: in Exchange.settleFunding()
-        //   orderIds: in OrderBook.removeLiquidityByIds()
+    // /// @inheritdoc IClearingHouse
+    // function cancelAllExcessOrders(address baseToken) external override onlyMaker whenNotPaused nonReentrant {
+    //     // input requirement checks:
+    //     //   maker: in _cancelExcessOrders()
+    //     //   baseToken: in Exchange.settleFunding()
+    //     //   orderIds: in OrderBook.removeLiquidityByIds()
 
-        _cancelExcessOrders(baseToken);
-    }
+    //     _cancelExcessOrders(baseToken);
+    // }
 
     /// @inheritdoc IClearingHouse
     function quitMarket(address trader, address baseToken) external override returns (uint256 base, uint256 quote) {
@@ -461,14 +461,14 @@ contract ClearingHouse is
         return ExchangeLogic.liquidate(address(this), _msgSender(), trader, baseToken);
     }
 
-    /// @dev only cancel open orders if there are not enough free collateral with mmRatio
-    /// or account is able to being liquidated.
-    function _cancelExcessOrders(address baseToken) internal {
-        _checkMarketOpen(baseToken);
+    // /// @dev only cancel open orders if there are not enough free collateral with mmRatio
+    // /// or account is able to being liquidated.
+    // function _cancelExcessOrders(address baseToken) internal {
+    //     _checkMarketOpen(baseToken);
 
-        // remove all orders in internal function
-        LiquidityLogic.removeAllLiquidity(address(this), baseToken);
-    }
+    //     // remove all orders in internal function
+    //     LiquidityLogic.removeAllLiquidity(address(this), baseToken);
+    // }
 
     function _openPositionFor(
         address trader,

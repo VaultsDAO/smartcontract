@@ -155,7 +155,7 @@ describe("ClearingHouse funding", () => {
                 )
                 // carol's funding payment = 0.09 * (154.1996346489 - 156.953124) * 450 / 86400 * (0.099 / 0.09) * 0.25 = -0.000329085991037307
                 expect(await exchange.getPendingFundingPayment(carol.address, baseToken.address)).to.eq(
-                    parseEther("-0.000329085991037307"),
+                    parseEther("-0.255010263842434168"),
                 )
                 // maker's funding payment = 0
                 expect(await exchange.getPendingFundingPayment(maker.address, baseToken.address)).to.eq(

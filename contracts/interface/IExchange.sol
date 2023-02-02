@@ -72,6 +72,8 @@ interface IExchange {
     /// @return swapResponse The result of the swap
     function swap(SwapParams memory params) external returns (SwapResponse memory swapResponse);
 
+    function settleFundingGlobal(address baseToken) external returns (DataTypes.Growth memory fundingGrowthGlobal);
+
     /// @notice Settle the funding payment for the time interval since the last settlement
     /// @dev This function should be called at the beginning of every high-level function, such as `openPosition()`
     ///      while it doesn't matter who calls this function
