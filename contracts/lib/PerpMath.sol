@@ -125,9 +125,11 @@ library PerpMath {
         // else z = 0 (default value)
     }
 
-    function formatPriceX10_18ToSqrtPriceX96(uint256 y) internal pure returns (uint256 z) {
+    function formatPriceX10_18ToSqrtPriceX96(uint256 y) internal pure returns (uint160) {
+        uint256 z;
         z = formatX10_18ToX96(y);
         z = z.mul(FixedPoint96.Q96);
         z = sqrt(z);
+        return PerpSafeCast.toUint160(z);
     }
 }

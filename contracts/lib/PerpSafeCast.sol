@@ -230,4 +230,7 @@ library PerpSafeCast {
         require(((returnValue = int24(value)) == value), "SafeCast: value doesn't fit in an 24 bits");
     }
 
+    function toUint160(uint256 value) internal pure returns (uint160 returnValue) {
+        require(((returnValue = uint160(value)) == value), "SafeCast: value doesn't fit in 160 bits");
+    }
 }
