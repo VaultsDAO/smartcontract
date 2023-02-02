@@ -51,10 +51,10 @@ describe("ClearingHouse funding", () => {
         mockedNFTPriceFeed = fixture.mockedNFTPriceFeed
         collateralDecimals = await collateral.decimals()
 
-        const initPrice = "154.4310961"
+        const initPrice = "100"
         await initMarket(fixture, initPrice, undefined, 0)
         mockedNFTPriceFeed.smocked.getPrice.will.return.with(async () => {
-            return parseUnits("154", 18)
+            return parseUnits("100", 18)
         })
 
         await collateral.mint(bob.address, parseUnits("1000", collateralDecimals))
@@ -73,13 +73,7 @@ describe("ClearingHouse funding", () => {
             beforeEach(async () => {
                 await clearingHouse.connect(maker).addLiquidity({
                     baseToken: baseToken.address,
-                    base: parseUnits("150", await baseToken.decimals()),
-                    quote: parseUnits("1500", await quoteToken.decimals()),
-                    lowerTick: 50200,
-                    upperTick: 50600,
-                    minBase: 0,
-                    minQuote: 0,
-                    useTakerBalance: false,
+                    liquidity: parseEther('10000'),
                     deadline: ethers.constants.MaxUint256,
                 })
             })
@@ -90,7 +84,7 @@ describe("ClearingHouse funding", () => {
             it("with twap; two takers; positive, negative then positive funding", async () => {
                 // set index price for a positive funding
                 mockedNFTPriceFeed.smocked.getPrice.will.return.with(async () => {
-                    return parseUnits("150.953124", 18)
+                    return parseUnits("100", 18)
                 })
 
                 // bob's position 0 -> -0.099 short
@@ -99,7 +93,7 @@ describe("ClearingHouse funding", () => {
                     isBaseToQuote: true,
                     isExactInput: true,
                     oppositeAmountBound: 0,
-                    amount: parseEther("0.099"),
+                    amount: parseEther("1"),
                     sqrtPriceLimitX96: 0,
                     deadline: ethers.constants.MaxUint256,
                     referralCode: ethers.constants.HashZero,
@@ -107,12 +101,16 @@ describe("ClearingHouse funding", () => {
 
                 // console.log('getMarketTwap', await getMarketTwap(exchange, baseToken, 0));
 
-                await forwardBothTimestamps(clearingHouse, 300)
+                await forwardBothTimestamps(clearingHouse, 86400)
 
                 // bob's funding payment = -0.099 * (153.9531248192 - 150.953124) * 300 / 86400 = -0.001031250282
                 expect(await exchange.getPendingFundingPayment(bob.address, baseToken.address)).to.eq(
                     parseEther("0"),
                 )
+
+                mockedNFTPriceFeed.smocked.getPrice.will.return.with(async () => {
+                    return parseUnits("101", 18)
+                })
 
                 // carol's position 0 -> 0.09 long
                 await clearingHouse.connect(carol).openPosition({
@@ -120,7 +118,7 @@ describe("ClearingHouse funding", () => {
                     isBaseToQuote: false,
                     isExactInput: false,
                     oppositeAmountBound: ethers.constants.MaxUint256,
-                    amount: parseEther("0.09"),
+                    amount: parseEther("0.9"),
                     sqrtPriceLimitX96: 0,
                     deadline: ethers.constants.MaxUint256,
                     referralCode: ethers.constants.HashZero,
@@ -128,28 +126,32 @@ describe("ClearingHouse funding", () => {
 
                 // maker's funding payment shouldn't change after carol swaps
                 // -(-0.099 * (153.9531248192 - 150.953124) * 300 / 86400) = -0.001031250282
-                expect(await exchange.getPendingFundingPayment(maker.address, baseToken.address)).to.eq(
+                expect(await exchange.getPendingFundingPayment(bob.address, baseToken.address)).to.eq(
                     parseEther("0"),
                 )
 
-                await forwardBothTimestamps(clearingHouse, 450)
+                // let [, markTwap, indexTwap] = await exchange.getFundingGrowthGlobalAndTwaps(baseToken.address)
+                // console.log(
+                //     'markTwap indexTwap',
+                //     formatEther(markTwap),
+                //     formatEther(indexTwap),
+                // )
+
+                // return
+
+                await forwardBothTimestamps(clearingHouse, 86400)
 
                 expect((await accountBalance.getMarketPositionSize(baseToken.address))[0]).to.eq(
-                    parseEther("0.09"),
+                    parseEther("0.9"),
                 )
                 expect((await accountBalance.getMarketPositionSize(baseToken.address))[1]).to.eq(
-                    parseEther("0.099"),
+                    parseEther("1"),
                 )
 
-                // set index price for a negative funding
-                mockedNFTPriceFeed.smocked.getPrice.will.return.with(async () => {
-                    return parseUnits("156.953124", 18)
-                })
-
                 // notice that markTwap here is not 154.3847760162 as in "two takers; first positive then negative funding", though having the same amount swapped
-                // bob's funding payment = -0.099 * ((154.1996346489 - 156.953124) * 450) / 86400 * 0.25 = 0.000329085991037307
+                // bob's funding payment = -1 * ((99.979958944630260000 - 101) * 86400) / 86400 * 0.25 = 0.000329085991037307
                 expect(await exchange.getPendingFundingPayment(bob.address, baseToken.address)).to.eq(
-                    parseEther("0.000329085991037307"),
+                    parseEther("0.255010263842434168"),
                 )
                 // carol's funding payment = 0.09 * (154.1996346489 - 156.953124) * 450 / 86400 * (0.099 / 0.09) * 0.25 = -0.000329085991037307
                 expect(await exchange.getPendingFundingPayment(carol.address, baseToken.address)).to.eq(
@@ -159,6 +161,11 @@ describe("ClearingHouse funding", () => {
                 expect(await exchange.getPendingFundingPayment(maker.address, baseToken.address)).to.eq(
                     parseEther("0"),
                 )
+
+                // set index price for a negative funding
+                mockedNFTPriceFeed.smocked.getPrice.will.return.with(async () => {
+                    return parseUnits("101", 18)
+                })
 
                 // bob swaps to trigger funding update & funding-related prices emission
                 const tx = await clearingHouse.connect(bob).openPosition({
@@ -218,9 +225,6 @@ describe("ClearingHouse funding", () => {
                     deadline: ethers.constants.MaxUint256,
                     referralCode: ethers.constants.HashZero,
                 })
-
-                console.log('bob getTotalPositionSize', formatEther((await accountBalance.getTotalPositionSize(bob.address, baseToken.address)).toString()))
-                console.log('carol getTotalPositionSize', formatEther((await accountBalance.getTotalPositionSize(carol.address, baseToken.address)).toString()))
 
                 // carol + bob = 0.09 + 0.2009999999
                 expect((await accountBalance.getMarketPositionSize(baseToken.address))[0]).to.eq(
