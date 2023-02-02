@@ -4,6 +4,7 @@ import { BigNumber } from "ethers"
 import { formatEther, formatUnits, parseEther, parseUnits } from "ethers/lib/utils"
 import { ethers, waffle } from "hardhat"
 import { format } from "path"
+import { formatPriceToPriceSqrt } from "../shared/utilities"
 import {
     AccountBalance,
     BaseToken,
@@ -81,35 +82,15 @@ describe("ClearingHouse fee updated", () => {
             liquidity: parseEther('10000'),
             deadline: ethers.constants.MaxUint256,
         })
-        // 
-        await clearingHouse.connect(trader).openPosition({
-            baseToken: baseToken.address,
-            isBaseToQuote: true,
-            isExactInput: false,
-            oppositeAmountBound: 0,
-            amount: parseEther("100"),
-            sqrtPriceLimitX96: 0,
-            deadline: ethers.constants.MaxUint256,
-            referralCode: ethers.constants.HashZero,
-        })
-        await clearingHouse.connect(trader).openPosition({
-            baseToken: baseToken.address,
-            isBaseToQuote: true,
-            isExactInput: false,
-            oppositeAmountBound: 0,
-            amount: parseEther("100"),
-            sqrtPriceLimitX96: 0,
-            deadline: ethers.constants.MaxUint256,
-            referralCode: ethers.constants.HashZero,
-        })
         mockedNFTPriceFeed.smocked.getPrice.will.return.with(async () => {
-            return parseUnits("96", 18)
+            return parseUnits("80", 18)
         })
-        console.log((await exchange.getInsuranceFundFeeRatio(baseToken.address, true)).toString())
-        console.log((await exchange.getInsuranceFundFeeRatio(baseToken.address, false)).toString())
-
+        console.log("befor repeg");
+        await exchange.connect(maker).isOverPriceSpread(baseToken.address);
         await clearingHouse.connect(maker).repeg(baseToken.address);
-        return
+        console.log("after repeg");
+        await exchange.connect(maker).isOverPriceSpread(baseToken.address);
+
         //estimate
         //short
         // await exchange.connect(trader).estimateSwap({
@@ -122,6 +103,7 @@ describe("ClearingHouse fee updated", () => {
         //     deadline: ethers.constants.MaxUint256,
         //     referralCode: ethers.constants.HashZero,
         // })
+        return
 
         // await exchange.connect(trader).estimateSwap({
         //     baseToken: baseToken.address,
