@@ -443,6 +443,9 @@ contract AccountBalance is IAccountBalance, BlockContext, ClearingHouseCallee, A
         // update for multiplier
         {
             (uint256 longMultiplier, uint256 shortMultiplier) = _getMarketMultiplier(baseToken);
+            if (longMultiplier == 1e18 && shortMultiplier == 1e18) {
+                return baseAfterMultiplier;
+            }
             if (accountInfo.takerPositionSize > 0) {
                 // in long
                 if (baseAfterMultiplier > 0) {
