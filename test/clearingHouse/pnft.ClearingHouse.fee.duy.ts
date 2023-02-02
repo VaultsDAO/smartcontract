@@ -85,24 +85,35 @@ describe("ClearingHouse fee updated", () => {
         mockedNFTPriceFeed.smocked.getPrice.will.return.with(async () => {
             return parseUnits("80", 18)
         })
-        console.log("befor repeg");
-        await exchange.connect(maker).isOverPriceSpread(baseToken.address);
-        await clearingHouse.connect(maker).repeg(baseToken.address);
-        console.log("after repeg");
-        await exchange.connect(maker).isOverPriceSpread(baseToken.address);
+        // console.log("befor repeg");
+        // await exchange.connect(maker).isOverPriceSpread(baseToken.address);
+        // await clearingHouse.connect(maker).repeg(baseToken.address);
+        // console.log("after repeg");
+        // await exchange.connect(maker).isOverPriceSpread(baseToken.address);
 
         //estimate
-        //short
-        // await exchange.connect(trader).estimateSwap({
-        //     baseToken: baseToken.address,
-        //     isBaseToQuote: true,
-        //     isExactInput: true,
-        //     oppositeAmountBound: 0,
-        //     amount: parseEther("100"),
-        //     sqrtPriceLimitX96: parseEther("0"),
-        //     deadline: ethers.constants.MaxUint256,
-        //     referralCode: ethers.constants.HashZero,
-        // })
+        // short 100 base
+        await exchange.connect(trader).estimateSwap({
+            baseToken: baseToken.address,
+            isBaseToQuote: true,
+            isExactInput: true,
+            oppositeAmountBound: 0,
+            amount: parseEther("100"),
+            sqrtPriceLimitX96: parseEther("0"),
+            deadline: ethers.constants.MaxUint256,
+            referralCode: ethers.constants.HashZero,
+        })
+        //long 100 base
+        await exchange.connect(trader).estimateSwap({
+            baseToken: baseToken.address,
+            isBaseToQuote: false,
+            isExactInput: false,
+            oppositeAmountBound: 0,
+            amount: parseEther("100"),
+            sqrtPriceLimitX96: parseEther("0"),
+            deadline: ethers.constants.MaxUint256,
+            referralCode: ethers.constants.HashZero,
+        })
         return
 
         // await exchange.connect(trader).estimateSwap({

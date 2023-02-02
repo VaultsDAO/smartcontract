@@ -307,7 +307,6 @@ contract OrderBook is
     // }
 
     function estimateSwap(ReplaySwapParams memory params) external override returns (ReplaySwapResponse memory) {
-        console.log("limit %d", params.sqrtPriceLimitX96);
         address pool = IMarketRegistry(_marketRegistry).getPool(params.baseToken);
         bool isExactInput = params.amount > 0;
         uint256 fee;

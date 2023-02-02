@@ -34,8 +34,10 @@ import { AccountMarket } from "./lib/AccountMarket.sol";
 import { OpenOrder } from "./lib/OpenOrder.sol";
 import { LiquidityLogic } from "./lib/LiquidityLogic.sol";
 import { ExchangeLogic } from "./lib/ExchangeLogic.sol";
+import { GenericLogic } from "./lib/GenericLogic.sol";
 import { IMarketRegistry } from "./interface/IMarketRegistry.sol";
 import { DataTypes } from "./types/DataTypes.sol";
+import { UniswapV3Broker } from "./lib/UniswapV3Broker.sol";
 import "hardhat/console.sol";
 
 // never inherit any new stateful contract. never change the orders of parent stateful contracts
@@ -628,25 +630,60 @@ contract ClearingHouse is
         require(contractArg.isContract(), errorMsg);
     }
 
+    struct InternalRepegParams {
+        uint160 sqrtMarkPrice;
+        uint256 oldMarkPrice;
+        uint256 newMarkPrice;
+        uint256 spotPrice;
+        uint160 sqrtSpotPrice;
+        int256 oldDeltaBase;
+        uint256 newDeltaBase;
+        uint256 oldLongPositionSize;
+        uint256 oldShortPositionSize;
+        uint256 newLongPositionSize;
+        uint256 newShortPositionSize;
+    }
+
     ///REPEG
     function repeg(address baseToken) external {
         //variable
-        uint256 markPrice = IExchange(_exchange)
-            .getSqrtMarkTwapX96(baseToken, 0)
-            .formatSqrtPriceX96ToPriceX96()
-            .formatX96ToX10_18();
-        uint256 spotPrice = IIndexPrice(baseToken).getIndexPrice(
+        IOrderBook.ReplaySwapResponse memory estimate;
+        InternalRepegParams memory repegParams;
+        (repegParams.sqrtMarkPrice, , , , , , ) = UniswapV3Broker.getSlot0(
+            IMarketRegistry(_marketRegistry).getPool(baseToken)
+        );
+        repegParams.oldMarkPrice = repegParams.sqrtMarkPrice.formatSqrtPriceX96ToPriceX96().formatX96ToX10_18();
+        repegParams.spotPrice = IIndexPrice(baseToken).getIndexPrice(
             IClearingHouseConfig(_clearingHouseConfig).getTwapInterval()
         );
 
-        uint160 sqrtSpotPrice = spotPrice.formatPriceX10_18ToSqrtPriceX96();
+        repegParams.sqrtSpotPrice = repegParams.spotPrice.formatPriceX10_18ToSqrtPriceX96();
 
         // check mark price != index price over 10% and over 1 hour
         // calculate delta base (11) of long short -> delta quote (1)
+        (repegParams.oldLongPositionSize, repegParams.oldShortPositionSize) = IAccountBalance(_accountBalance)
+            .getMarketPositionSize(baseToken);
+        repegParams.oldDeltaBase = repegParams.oldLongPositionSize.toInt256().sub(
+            repegParams.oldShortPositionSize.toInt256()
+        );
+        bool isBaseToQuote = repegParams.oldDeltaBase > 0 ? true : false;
+        estimate = IExchange(_exchange).estimateSwap(
+            DataTypes.OpenPositionParams({
+                baseToken: baseToken,
+                isBaseToQuote: isBaseToQuote,
+                isExactInput: isBaseToQuote,
+                oppositeAmountBound: 0,
+                amount: uint256(repegParams.oldDeltaBase.abs()),
+                sqrtPriceLimitX96: 0,
+                deadline: block.timestamp + 60,
+                referralCode: ""
+            })
+        );
+        uint256 deltaQuote = isBaseToQuote ? estimate.amountOut : estimate.amountIn;
+
         // remove 99.99% liquidity
         address pool = IMarketRegistry(_marketRegistry).getPool(baseToken);
         uint128 liquidity = IUniswapV3Pool(pool).liquidity();
-        console.log("liquidity  %d", liquidity);
         uint128 removedLiquidity = (liquidity * 999900) / 1e6;
         removeLiquidity(
             DataTypes.RemoveLiquidityParams({
@@ -655,66 +692,34 @@ contract ClearingHouse is
                 deadline: block.timestamp + 60
             })
         );
-        console.log("removed liquidity %d", IUniswapV3Pool(pool).liquidity());
         // calculate base amount for openPosition -> spot price
         // maker openPosition -> spot price
-
-        IOrderBook.ReplaySwapResponse memory estimate;
-        if (spotPrice > markPrice) {
-            //long
-            estimate = IExchange(_exchange).estimateSwap(
-                DataTypes.OpenPositionParams({
-                    baseToken: baseToken,
-                    isBaseToQuote: false,
-                    isExactInput: false,
-                    oppositeAmountBound: 0,
-                    amount: type(uint256).max / 1e10,
-                    sqrtPriceLimitX96: sqrtSpotPrice,
-                    deadline: block.timestamp + 60,
-                    referralCode: ""
-                })
-            );
-            _openPositionFor(
-                _msgSender(),
-                DataTypes.OpenPositionParams({
-                    baseToken: baseToken,
-                    isBaseToQuote: false,
-                    isExactInput: false,
-                    oppositeAmountBound: 0,
-                    amount: estimate.amountIn,
-                    sqrtPriceLimitX96: sqrtSpotPrice,
-                    deadline: block.timestamp + 60,
-                    referralCode: ""
-                })
-            );
-        } else {
-            //short
-            estimate = IExchange(_exchange).estimateSwap(
-                DataTypes.OpenPositionParams({
-                    baseToken: baseToken,
-                    isBaseToQuote: true,
-                    isExactInput: true,
-                    oppositeAmountBound: 0,
-                    amount: type(uint256).max / 1e10,
-                    sqrtPriceLimitX96: sqrtSpotPrice,
-                    deadline: block.timestamp + 60,
-                    referralCode: ""
-                })
-            );
-            _openPositionFor(
-                _msgSender(),
-                DataTypes.OpenPositionParams({
-                    baseToken: baseToken,
-                    isBaseToQuote: true,
-                    isExactInput: true,
-                    oppositeAmountBound: 0,
-                    amount: estimate.amountIn,
-                    sqrtPriceLimitX96: sqrtSpotPrice,
-                    deadline: block.timestamp + 60,
-                    referralCode: ""
-                })
-            );
-        }
+        bool isLong = repegParams.spotPrice > repegParams.oldMarkPrice;
+        estimate = IExchange(_exchange).estimateSwap(
+            DataTypes.OpenPositionParams({
+                baseToken: baseToken,
+                isBaseToQuote: !isLong,
+                isExactInput: !isLong,
+                oppositeAmountBound: 0,
+                amount: type(uint256).max / 1e10,
+                sqrtPriceLimitX96: repegParams.sqrtSpotPrice,
+                deadline: block.timestamp + 60,
+                referralCode: ""
+            })
+        );
+        _openPositionFor(
+            _msgSender(),
+            DataTypes.OpenPositionParams({
+                baseToken: baseToken,
+                isBaseToQuote: isLong,
+                isExactInput: isLong,
+                oppositeAmountBound: 0,
+                amount: estimate.amountIn,
+                sqrtPriceLimitX96: repegParams.sqrtSpotPrice,
+                deadline: block.timestamp + 60,
+                referralCode: ""
+            })
+        );
 
         // add 99.99% liquidity again
         addLiquidity(
@@ -735,7 +740,24 @@ contract ClearingHouse is
                 referralCode: ""
             })
         );
+
         // calculate delta quote (1) -> new delta base (22)
+        estimate = IExchange(_exchange).estimateSwap(
+            DataTypes.OpenPositionParams({
+                baseToken: baseToken,
+                isBaseToQuote: isBaseToQuote,
+                isExactInput: !isBaseToQuote,
+                oppositeAmountBound: 0,
+                amount: deltaQuote,
+                sqrtPriceLimitX96: 0,
+                deadline: block.timestamp + 60,
+                referralCode: ""
+            })
+        );
+        uint256 newDeltaBase = isBaseToQuote ? estimate.amountIn : estimate.amountOut;
+        (uint256 newMarkPrice, , , , , , ) = UniswapV3Broker.getSlot0(
+            IMarketRegistry(_marketRegistry).getPool(baseToken)
+        );
         // calculate scale -> new mark price => rate = (% delta price)
         // calculate scale for long short = (diff delta base on (11 - 22)) / (total_long + total_short)
         // if delta base < 0 -> decrase delta long short
@@ -745,6 +767,16 @@ contract ClearingHouse is
         // -> if long > short -> increase long and decrease short
         // -> if long < short -> decrease long and increase short
         // update scale for position size for long short
+        (repegParams.newLongPositionSize, repegParams.newShortPositionSize) = GenericLogic
+            .getNewPositionSizeForMultiplier(
+                repegParams.oldLongPositionSize,
+                repegParams.oldShortPositionSize,
+                repegParams.oldMarkPrice,
+                repegParams.newMarkPrice,
+                repegParams.newDeltaBase
+            );
+        console.log("newLongPositionSize %d", repegParams.newLongPositionSize);
+        console.log("newShortPositionSize %d", repegParams.newShortPositionSize);
     }
 
     function modifyLiquidity(address baseToken, uint256 newLiquidity) external {
