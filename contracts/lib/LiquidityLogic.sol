@@ -56,29 +56,26 @@ library LiquidityLogic {
 
         // for multiplier
         uint256 deltaQuote;
-        int256 oldDeltaBase;
-        {
-            (uint256 oldLongPositionSize, uint256 oldShortPositionSize) = IAccountBalance(
-                IClearingHouse(chAddress).getAccountBalance()
-            ).getMarketPositionSize(params.baseToken);
-            oldDeltaBase = oldLongPositionSize.toInt256().sub(oldShortPositionSize.toInt256());
-            if (oldDeltaBase != 0) {
-                bool isBaseToQuote = oldDeltaBase > 0 ? true : false;
-                IOrderBook.ReplaySwapResponse memory estimate = IExchange(IClearingHouse(chAddress).getExchange())
-                    .estimateSwap(
-                        DataTypes.OpenPositionParams({
-                            baseToken: params.baseToken,
-                            isBaseToQuote: isBaseToQuote,
-                            isExactInput: isBaseToQuote,
-                            oppositeAmountBound: 0,
-                            amount: uint256(oldDeltaBase.abs()),
-                            sqrtPriceLimitX96: 0,
-                            deadline: block.timestamp + 60,
-                            referralCode: ""
-                        })
-                    );
-                deltaQuote = isBaseToQuote ? estimate.amountOut : estimate.amountIn;
-            }
+        (uint256 oldLongPositionSize, uint256 oldShortPositionSize) = IAccountBalance(
+            IClearingHouse(chAddress).getAccountBalance()
+        ).getMarketPositionSize(params.baseToken);
+        int256 oldDeltaBase = oldLongPositionSize.toInt256().sub(oldShortPositionSize.toInt256());
+        if (oldDeltaBase != 0) {
+            bool isBaseToQuote = oldDeltaBase > 0 ? true : false;
+            IOrderBook.ReplaySwapResponse memory estimate = IExchange(IClearingHouse(chAddress).getExchange())
+                .estimateSwap(
+                    DataTypes.OpenPositionParams({
+                        baseToken: params.baseToken,
+                        isBaseToQuote: isBaseToQuote,
+                        isExactInput: isBaseToQuote,
+                        oppositeAmountBound: 0,
+                        amount: uint256(oldDeltaBase.abs()),
+                        sqrtPriceLimitX96: 0,
+                        deadline: block.timestamp + 60,
+                        referralCode: ""
+                    })
+                );
+            deltaQuote = isBaseToQuote ? estimate.amountOut : estimate.amountIn;
         }
         // for multiplier
 
@@ -87,6 +84,29 @@ library LiquidityLogic {
         // note that we no longer check available tokens here because CH will always auto-mint in UniswapV3MintCallback
         IOrderBook.AddLiquidityResponse memory response = IOrderBook(IClearingHouse(chAddress).getOrderBook())
             .addLiquidity(IOrderBook.AddLiquidityParams({ baseToken: params.baseToken, liquidity: params.liquidity }));
+
+        // for multiplier
+        uint256 newDeltaBase;
+        if (deltaQuote > 0) {
+            bool isBaseToQuote = oldDeltaBase > 0 ? true : false;
+            IOrderBook.ReplaySwapResponse memory estimate = IExchange(IClearingHouse(chAddress).getExchange())
+                .estimateSwap(
+                    DataTypes.OpenPositionParams({
+                        baseToken: params.baseToken,
+                        isBaseToQuote: isBaseToQuote,
+                        isExactInput: !isBaseToQuote,
+                        oppositeAmountBound: 0,
+                        amount: deltaQuote,
+                        sqrtPriceLimitX96: 0,
+                        deadline: block.timestamp + 60,
+                        referralCode: ""
+                    })
+                );
+            newDeltaBase = isBaseToQuote ? estimate.amountIn : estimate.amountOut;
+        }
+
+        console.log("newDeltaBase %d", newDeltaBase);
+        // for multiplier
 
         emit GenericLogic.LiquidityChanged(
             params.baseToken,
