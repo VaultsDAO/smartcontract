@@ -67,7 +67,7 @@
     },
     "exchange": {
         "address": "0x8299F2515c997639473e1286b1c69A1baCD1281f",
-        "implAddress": "0xA309d4F29fFD943bfa61fD3c87263038d7c57139"
+        "implAddress": "0x46818feC74ddbb8711fa83558FffCE25592b8982"
     },
     "insuranceFund": {
         "address": "0xFfF53AAF5C995e62d5514776f1cA9440b562D1e0",
@@ -88,11 +88,11 @@
         "address": "0x673dAc599fCb03E18e39c62eB8C0529645522c03"
     },
     "exchangeLogic": {
-        "address": "0x9c5AEF1bb07ec6A2f9577b3eFF8834877D3cA2fd"
+        "address": "0x37c1d644b920ba5cF6a02B704DC3A2F44470e055"
     },
     "clearingHouse": {
         "address": "0x7d034098afc2f4C656A7ee904891f9E743652C2b",
-        "implAddress": "0xe587F92f49D31Ed56Ac838B0E9b3347c6059A3bc"
+        "implAddress": "0x2649B9505Dcc9a5F3f4ABBA9c718Ba2582b1481e"
     },
     "testFaucet": {
         "address": "0xA4d92cf13312Ed26a00bdCE6505f72b7F588658e",
