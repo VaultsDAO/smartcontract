@@ -286,8 +286,8 @@ library GenericLogic {
             newMarkPrice,
             newDetalPositionSize
         );
-        newLongPositionSizeRate = newLongPositionSize.divMultiplier(longPositionSize);
-        newShortPositionSizeRate = newShortPositionSize.divMultiplier(shortPositionSize);
+        newLongPositionSizeRate = longPositionSize != 0 ? newLongPositionSize.divMultiplier(longPositionSize) : 0;
+        newShortPositionSizeRate = shortPositionSize != 0 ? newShortPositionSize.divMultiplier(shortPositionSize) : 0;
     }
 
     function getNewPositionSizeForMultiplier(
@@ -300,11 +300,17 @@ library GenericLogic {
         newLongPositionSize = longPositionSize;
         newShortPositionSize = shortPositionSize;
 
+        if ((longPositionSize + shortPositionSize) == 0) {
+            return (newLongPositionSize, newShortPositionSize);
+        }
+
         if (longPositionSize == shortPositionSize && oldMarkPrice == newMarkPrice) {
             return (newLongPositionSize, newShortPositionSize);
         }
 
         if (oldMarkPrice != newMarkPrice) {
+            // GL_IP: Invalid Price
+            require(oldMarkPrice > 0 && newMarkPrice > 0, "GL_IP");
             newLongPositionSize = FullMath.mulDiv(newLongPositionSize, oldMarkPrice, newMarkPrice);
             newShortPositionSize = FullMath.mulDiv(newShortPositionSize, oldMarkPrice, newMarkPrice);
         }
