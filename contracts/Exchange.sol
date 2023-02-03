@@ -149,6 +149,24 @@ contract Exchange is
         IUniswapV3SwapCallback(_clearingHouse).uniswapV3SwapCallback(amount0Delta, amount1Delta, data);
     }
 
+    function internalSwap(SwapParams memory params) external override returns (SwapResponse memory) {
+        _requireOnlyClearingHouse();
+        InternalSwapResponse memory response = _swap(params);
+        return
+            SwapResponse({
+                base: response.base.abs(),
+                quote: response.quote.abs(),
+                exchangedPositionSize: response.exchangedPositionSize,
+                exchangedPositionNotional: response.exchangedPositionNotional,
+                insuranceFundFee: 0,
+                platformFundFee: 0,
+                pnlToBeRealized: 0,
+                sqrtPriceAfterX96: 0,
+                tick: response.tick,
+                isPartialClose: false
+            });
+    }
+
     /// @param params The parameters of the swap
     /// @return The result of the swap
     /// @dev can only be called from ClearingHouse
