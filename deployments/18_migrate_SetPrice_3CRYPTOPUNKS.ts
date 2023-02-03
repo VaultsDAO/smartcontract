@@ -22,7 +22,7 @@ async function main() {
     // 
     const [admin, maker, priceAdmin, platformFund, trader, liquidator] = await ethers.getSigners()
 
-    var nftPriceFeedAddress = deployData.nftPriceFeedBAYC.address
+    var nftPriceFeedAddress = deployData.nftPriceFeedCRYPTOPUNKS.address
     var price = '1'
     
     // oracle price

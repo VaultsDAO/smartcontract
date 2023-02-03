@@ -38,8 +38,8 @@ async function main() {
     var uniFeeTier = "3000" // 0.3%
 
     var price = "1"
-    var baseTokenAddress = deployData.vMAYC.address
-    var nftPriceFeedAddress = deployData.nftPriceFeedMAYC.address
+    var baseTokenAddress = deployData.vCRYPTOPUNKS.address
+    var nftPriceFeedAddress = deployData.nftPriceFeedCRYPTOPUNKS.address
 
     const baseToken = (await ethers.getContractAt('BaseToken', baseTokenAddress)) as BaseToken;
 

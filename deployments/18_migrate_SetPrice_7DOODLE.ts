@@ -22,9 +22,9 @@ async function main() {
     // 
     const [admin, maker, priceAdmin, platformFund, trader, liquidator] = await ethers.getSigners()
 
-    var nftPriceFeedAddress = deployData.nftPriceFeedBAYC.address
+    var nftPriceFeedAddress = deployData.nftPriceFeedDOODLE.address
     var price = '1'
-    
+
     // oracle price
     {
         var priceFeed = (await hre.ethers.getContractAt('NftPriceFeed', nftPriceFeedAddress)) as NftPriceFeed;

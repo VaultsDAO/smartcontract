@@ -181,6 +181,13 @@ describe("Deployment check", () => {
                 deployData.uniswapV3Factory.address = uniV3Factory.address;
             }
         }
+        const GenericLogic = await ethers.getContractFactory("GenericLogic");
+        if (deployData.genericLogic.address == undefined || deployData.genericLogic.address == '') {
+            const genericLogic = await waitForDeploy(await GenericLogic.deploy())
+            {
+                deployData.genericLogic.address = genericLogic.address;
+            }
+        }
         const ClearingHouseConfig = await ethers.getContractFactory("ClearingHouseConfig");
         {
             const clearingHouseConfig = await waitForDeploy(await ClearingHouseConfig.deploy())
@@ -265,7 +272,12 @@ describe("Deployment check", () => {
                 deployData.accountBalance.address = transparentUpgradeableProxy.address;
             }
         }
-        const Exchange = await ethers.getContractFactory("Exchange");
+        var genericLogic = await ethers.getContractAt('GenericLogic', deployData.genericLogic.address);
+        const Exchange = await ethers.getContractFactory("Exchange", {
+            libraries: {
+                GenericLogic: genericLogic.address,
+            },
+        });
         if (deployData.exchange.implAddress == undefined || deployData.exchange.implAddress == '') {
             const exchange = await waitForDeploy(await Exchange.deploy())
             {
@@ -365,14 +377,6 @@ describe("Deployment check", () => {
                 deployData.collateralManager.address = transparentUpgradeableProxy.address;
             }
         }
-        const GenericLogic = await ethers.getContractFactory("GenericLogic");
-        if (deployData.genericLogic.address == undefined || deployData.genericLogic.address == '') {
-            const genericLogic = await waitForDeploy(await GenericLogic.deploy())
-            {
-                deployData.genericLogic.address = genericLogic.address;
-            }
-        }
-        var genericLogic = await ethers.getContractAt('GenericLogic', deployData.genericLogic.address);
         const LiquidityLogic = await ethers.getContractFactory("LiquidityLogic", {
             libraries: {
                 GenericLogic: genericLogic.address,
@@ -399,6 +403,7 @@ describe("Deployment check", () => {
         var exchangeLogic = await ethers.getContractAt('ExchangeLogic', deployData.exchangeLogic.address);
         let ClearingHouse = await ethers.getContractFactory("ClearingHouse", {
             libraries: {
+                GenericLogic: genericLogic.address,
                 LiquidityLogic: liquidityLogic.address,
                 ExchangeLogic: exchangeLogic.address,
             },
@@ -593,21 +598,31 @@ describe("Deployment check", () => {
                         'clearingHouse.connect(trader1).openPosition'
                     )
                 }
-                // {
-                //     await waitForTx(
-                //         await clearingHouse.connect(trader2).openPosition({
-                //             baseToken: token.address,
-                //             isBaseToQuote: false,
-                //             isExactInput: false,
-                //             oppositeAmountBound: ethers.constants.MaxUint256,
-                //             amount: parseEther("0.5"),
-                //             sqrtPriceLimitX96: 0,
-                //             deadline: ethers.constants.MaxUint256,
-                //             referralCode: ethers.constants.HashZero,
-                //         }),
-                //         'clearingHouse.connect(trader2).openPosition'
-                //     )
-                // }
+                {
+                    await waitForTx(
+                        await clearingHouse.connect(trader2).openPosition({
+                            baseToken: token.address,
+                            isBaseToQuote: false,
+                            isExactInput: false,
+                            oppositeAmountBound: ethers.constants.MaxUint256,
+                            amount: parseEther("0.5"),
+                            sqrtPriceLimitX96: 0,
+                            deadline: ethers.constants.MaxUint256,
+                            referralCode: ethers.constants.HashZero,
+                        }),
+                        'clearingHouse.connect(trader2).openPosition'
+                    )
+                }
+                {
+                    await waitForTx(
+                        await clearingHouse.connect(maker).removeLiquidity({
+                            baseToken: token.address,
+                            liquidity: parseEther("5000"),
+                            deadline: ethers.constants.MaxUint256,
+                        }),
+                        'clearingHouse.connect(maker).removeLiquidity'
+                    )
+                }
                 {
                     await waitForTx(
                         await clearingHouse.connect(trader1).closePosition({
@@ -620,25 +635,23 @@ describe("Deployment check", () => {
                         'clearingHouse.connect(trader1).closePosition'
                     )
                 }
-                // {
-                //     await waitForTx(
-                //         await clearingHouse.connect(trader2).closePosition({
-                //             baseToken: token.address,
-                //             sqrtPriceLimitX96: parseEther("0"),
-                //             oppositeAmountBound: parseEther("0"),
-                //             deadline: ethers.constants.MaxUint256,
-                //             referralCode: ethers.constants.HashZero,
-                //         }),
-                //         'clearingHouse.connect(trader2).closePosition'
-                //     )
-                // }
+                {
+                    await waitForTx(
+                        await clearingHouse.connect(trader2).closePosition({
+                            baseToken: token.address,
+                            sqrtPriceLimitX96: parseEther("0"),
+                            oppositeAmountBound: parseEther("0"),
+                            deadline: ethers.constants.MaxUint256,
+                            referralCode: ethers.constants.HashZero,
+                        }),
+                        'clearingHouse.connect(trader2).closePosition'
+                    )
+                }
                 {
                     await waitForTx(
                         await clearingHouse.connect(maker).removeLiquidity({
                             baseToken: token.address,
-                            liquidity: (
-                                await orderBook.getOpenOrder(token.address)
-                            ).liquidity,
+                            liquidity: parseEther("5000"),
                             deadline: ethers.constants.MaxUint256,
                         }),
                         'clearingHouse.connect(maker).removeLiquidity'

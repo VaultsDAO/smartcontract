@@ -662,7 +662,6 @@ contract ClearingHouse is
         //settleFundingGlobal
         GenericLogic.settleFundingGlobal(address(this), baseToken);
         //variable
-        IOrderBook.ReplaySwapResponse memory estimate;
         InternalRepegParams memory repegParams;
         (repegParams.oldSqrtMarkPrice, , , , , , ) = UniswapV3Broker.getSlot0(
             IMarketRegistry(_marketRegistry).getPool(baseToken)

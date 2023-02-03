@@ -3,7 +3,7 @@ import fs from "fs";
 import hre, { ethers } from "hardhat";
 
 import { parseEther } from "ethers/lib/utils";
-import { ClearingHouse, OrderBook, TestERC20, Vault } from "../typechain";
+import { ClearingHouse, Exchange, OrderBook, TestERC20, Vault } from "../typechain";
 
 import helpers from "./helpers";
 import { priceToTick } from "../test/helper/number";
@@ -27,31 +27,31 @@ async function main() {
     var orderBook = (await hre.ethers.getContractAt('OrderBook', deployData.orderBook.address)) as OrderBook;
     var clearingHouse = (await hre.ethers.getContractAt('ClearingHouse', deployData.clearingHouse.address)) as ClearingHouse;
 
-    var baseTokenAddress = deployData.vBAYC.address
+    var baseTokenAddress = deployData.vMAYC.address
+    let initLiquidity = parseEther('10000')
 
     const baseToken = await hre.ethers.getContractAt('BaseToken', baseTokenAddress);
-    // {
-    //     await waitForTx(
-    //         await clearingHouse.connect(maker).removeLiquidity({
-    //             baseToken: baseToken.address,
-    //             liquidity: (
-    //                 await orderBook.getOpenOrder(baseToken.address)
-    //             ).liquidity,
-    //             deadline: ethers.constants.MaxUint256,
-    //         }),
-    //         'clearingHouse.connect(maker).removeLiquidity'
-    //     )
-    // }
-    {
+    let liquidity = await orderBook.getLiquidity(baseToken.address)
+    if (initLiquidity.gt(liquidity)) {
         await waitForTx(
             await clearingHouse.connect(maker).addLiquidity({
                 baseToken: baseToken.address,
-                liquidity: parseEther('10000'),
+                liquidity: initLiquidity.sub(liquidity),
                 deadline: ethers.constants.MaxUint256,
             }),
             'clearingHouse.connect(maker).addLiquidity'
         )
-        deployData.testCheck.addLiquidity = true
+        await fs.writeFileSync(fileName, JSON.stringify(deployData, null, 4))
+    }
+    if (initLiquidity.lt(liquidity)) {
+        await waitForTx(
+            await clearingHouse.connect(maker).removeLiquidity({
+                baseToken: baseToken.address,
+                liquidity: liquidity.sub(initLiquidity),
+                deadline: ethers.constants.MaxUint256,
+            }),
+            'clearingHouse.connect(maker).removeLiquidity'
+        )
         await fs.writeFileSync(fileName, JSON.stringify(deployData, null, 4))
     }
 }

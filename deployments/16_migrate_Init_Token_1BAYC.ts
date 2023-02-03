@@ -35,15 +35,11 @@ async function main() {
     var collateralManager = await hre.ethers.getContractAt('CollateralManager', deployData.collateralManager.address);
     var clearingHouse = await hre.ethers.getContractAt('ClearingHouse', deployData.clearingHouse.address);
 
-    var price = "70" // 0.3%
+    var uniFeeTier = "3000" // 0.3%
+
+    var price = "1"
     var baseTokenAddress = deployData.vBAYC.address
     var nftPriceFeedAddress = deployData.nftPriceFeedBAYC.address
-
-    if (network == 'local') {
-        price = "100"
-    }
-
-    var uniFeeTier = "3000" // 0.3%
 
     const baseToken = (await ethers.getContractAt('BaseToken', baseTokenAddress)) as BaseToken;
 

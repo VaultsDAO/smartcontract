@@ -27,7 +27,7 @@ async function main() {
     var orderBook = (await hre.ethers.getContractAt('OrderBook', deployData.orderBook.address)) as OrderBook;
     var clearingHouse = (await hre.ethers.getContractAt('ClearingHouse', deployData.clearingHouse.address)) as ClearingHouse;
 
-    var baseTokenAddress = deployData.vBAYC.address
+    var baseTokenAddress = deployData.vDOODLE.address
     let initLiquidity = parseEther('10000')
 
     const baseToken = await hre.ethers.getContractAt('BaseToken', baseTokenAddress);

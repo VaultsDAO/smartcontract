@@ -18,11 +18,16 @@ async function main() {
     deployData = JSON.parse(dataText.toString())
     // 
     const TransparentUpgradeableProxy = await hre.ethers.getContractFactory('TransparentUpgradeableProxy');
-    const Exchange = await hre.ethers.getContractFactory("Exchange");
     // 
     var proxyAdmin = await hre.ethers.getContractAt('ProxyAdmin', deployData.proxyAdminAddress);
     // 
     if (deployData.exchange.implAddress == undefined || deployData.exchange.implAddress == '') {
+        var genericLogic = await hre.ethers.getContractAt('GenericLogic', deployData.genericLogic.address);
+        let Exchange = await hre.ethers.getContractFactory("Exchange", {
+            libraries: {
+                GenericLogic: genericLogic.address,
+            },
+        });
         const exchange = await waitForDeploy(await Exchange.deploy())
         {
             deployData.exchange.implAddress = exchange.address;
@@ -55,7 +60,9 @@ async function main() {
             network,
             deployData.exchange.implAddress,
             [],
-            {},
+            {
+                GenericLogic: genericLogic.address,
+            },
             "contracts/Exchange.sol:Exchange",
         )
     }
