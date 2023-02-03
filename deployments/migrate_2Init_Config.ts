@@ -89,8 +89,8 @@ async function deploy() {
     if ((await vault.getClearingHouse()).toLowerCase() != clearingHouse.address.toLowerCase()) {
         await waitForTx(await vault.setClearingHouse(clearingHouse.address), 'vault.setClearingHouse(clearingHouse.address)')
     }
-    if (network == 'arbitrum') {
-        if ((await vault.getWETH9()).toLowerCase() != clearingHouse.address.toLowerCase()) {
+    if (network == 'arbitrum' || network == 'local') {
+        if ((await vault.getWETH9()).toLowerCase() != deployData.wETH.address.toLowerCase()) {
             await waitForTx(await vault.setWETH9(deployData.wETH.address), 'vault.setWETH9(deployData.wETH.address)')
         }
     }
@@ -120,7 +120,7 @@ async function deploy() {
 
 // We recommend this pattern to be able to use async/await everywhere
 // and properly handle errors.
-// main().catch((error) => {
-//     console.error(error);
-//     process.exitCode = 1;
-// });
+main().catch((error) => {
+    console.error(error);
+    process.exitCode = 1;
+});

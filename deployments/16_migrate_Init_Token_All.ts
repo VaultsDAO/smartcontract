@@ -41,7 +41,6 @@ async function deploy() {
     var collateralManager = await hre.ethers.getContractAt('CollateralManager', deployData.collateralManager.address);
     var clearingHouse = await hre.ethers.getContractAt('ClearingHouse', deployData.clearingHouse.address);
 
-    const baseToken = (await ethers.getContractAt('BaseToken', baseTokenAddress)) as BaseToken;
     const vETH = (await ethers.getContractAt('QuoteToken', deployData.vETH.address)) as QuoteToken;
 
     var uniFeeTier = "3000" // 0.3%
@@ -70,6 +69,7 @@ async function deploy() {
         var baseTokenAddress = baseTokens[i].address
         var nftPriceFeedAddress = nftPriceFeeds[i].address
 
+        const baseToken = (await ethers.getContractAt('BaseToken', baseTokenAddress)) as BaseToken;
         // setting pool
         {
             let poolAddr = await uniswapV3Factory.getPool(baseToken.address, vETH.address, uniFeeTier)

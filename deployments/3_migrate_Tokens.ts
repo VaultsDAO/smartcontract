@@ -27,20 +27,23 @@ async function deploy() {
     // 
     if (network != 'arbitrum') {
         if (deployData.wETH.address == undefined || deployData.wETH.address == '') {
-            // const TestWETH9 = await hre.ethers.getContractFactory("TestWETH9")
-            // const wETH = (await waitForDeploy(await TestWETH9.deploy())) as TestWETH9
-            // {
-            //     deployData.wETH.address = wETH.address;
-            //     await fs.writeFileSync(fileName, JSON.stringify(deployData, null, 4))
-            //     console.log('TestWETH9 is deployed', wETH.address)
-            // }
-            const wETH = (await waitForDeploy(await TestERC20.deploy())) as TestERC20
-            {
-                deployData.wETH.address = wETH.address;
-                await fs.writeFileSync(fileName, JSON.stringify(deployData, null, 4))
-                console.log('wETH is deployed', wETH.address)
+            if (network == 'local') {
+                const TestWETH9 = await hre.ethers.getContractFactory("TestWETH9")
+                const wETH = (await waitForDeploy(await TestWETH9.deploy())) as TestWETH9
+                {
+                    deployData.wETH.address = wETH.address;
+                    await fs.writeFileSync(fileName, JSON.stringify(deployData, null, 4))
+                    console.log('TestWETH9 is deployed', wETH.address)
+                }
+            } else {
+                const wETH = (await waitForDeploy(await TestERC20.deploy())) as TestERC20
+                {
+                    deployData.wETH.address = wETH.address;
+                    await fs.writeFileSync(fileName, JSON.stringify(deployData, null, 4))
+                    console.log('wETH is deployed', wETH.address)
+                }
+                await wETH.__TestERC20_init(deployData.wETH.name, deployData.wETH.symbol, deployData.wETH.decimals)
             }
-            await wETH.__TestERC20_init(deployData.wETH.name, deployData.wETH.symbol, deployData.wETH.decimals)
         }
         {
             await verifyContract(

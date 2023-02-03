@@ -80,12 +80,10 @@ contract CollateralManager is ICollateralManager, OwnerPausable, CollateralManag
         emit CollateralValueDustChanged(collateralValueDustArg);
     }
 
-    function addCollateral(address token, Collateral.Config memory config)
-        external
-        checkRatio(config.collateralRatio)
-        checkRatio(config.discountRatio)
-        onlyOwner
-    {
+    function addCollateral(
+        address token,
+        Collateral.Config memory config
+    ) external checkRatio(config.collateralRatio) checkRatio(config.discountRatio) onlyOwner {
         // CM_CTE: collateral token already exists
         require(!isCollateral(token), "CM_CTE");
         // CM_CTNC: collateral token is not contract
@@ -140,11 +138,9 @@ contract CollateralManager is ICollateralManager, OwnerPausable, CollateralManag
         emit MmRatioBufferChanged(mmRatioBuffer);
     }
 
-    function setDebtNonSettlementTokenValueRatio(uint24 debtNonSettlementTokenValueRatio)
-        external
-        checkRatio(debtNonSettlementTokenValueRatio)
-        onlyOwner
-    {
+    function setDebtNonSettlementTokenValueRatio(
+        uint24 debtNonSettlementTokenValueRatio
+    ) external checkRatio(debtNonSettlementTokenValueRatio) onlyOwner {
         _debtNonSettlementTokenValueRatio = debtNonSettlementTokenValueRatio;
         emit DebtNonSettlementTokenValueRatioChanged(debtNonSettlementTokenValueRatio);
     }
@@ -154,11 +150,9 @@ contract CollateralManager is ICollateralManager, OwnerPausable, CollateralManag
         emit LiquidationRatioChanged(liquidationRatio);
     }
 
-    function setCLInsuranceFundFeeRatio(uint24 clInsuranceFundFeeRatio)
-        external
-        checkRatio(clInsuranceFundFeeRatio)
-        onlyOwner
-    {
+    function setCLInsuranceFundFeeRatio(
+        uint24 clInsuranceFundFeeRatio
+    ) external checkRatio(clInsuranceFundFeeRatio) onlyOwner {
         _clInsuranceFundFeeRatio = clInsuranceFundFeeRatio;
         emit CLInsuranceFundFeeRatioChanged(clInsuranceFundFeeRatio);
     }
@@ -268,7 +262,7 @@ contract CollateralManager is ICollateralManager, OwnerPausable, CollateralManag
 
     /// @inheritdoc ICollateralManager
     function isCollateral(address token) public view override returns (bool) {
-        return _collateralConfigMap[token].priceFeed != address(0);
+        return IVault(_vault).getSettlementToken() == token || _collateralConfigMap[token].priceFeed != address(0);
     }
 
     /// @inheritdoc ICollateralManager

@@ -12,7 +12,7 @@ import {
     NftPriceFeed,
     OrderBook,
     TestClearingHouse,
-    TestERC20,
+    TestWETH9,
     UniswapV3Pool,
     Vault,
 } from "../typechain"
@@ -82,7 +82,6 @@ describe("Deployment check", () => {
         deployData.clearingHouse = {} as ContractData
 
         let ProxyAdmin = await ethers.getContractFactory('ProxyAdmin');
-        const TestERC20 = await ethers.getContractFactory("TestERC20")
         const TransparentUpgradeableProxy = await ethers.getContractFactory('TransparentUpgradeableProxy');
         const BaseToken = await ethers.getContractFactory("BaseToken");
 
@@ -99,11 +98,11 @@ describe("Deployment check", () => {
             deployData.nftPriceFeedMAYC.address = priceFeed.address
         }
         {
-            const wETH = (await waitForDeploy(await TestERC20.deploy())) as TestERC20
+            const TestWETH9 = await ethers.getContractFactory("TestWETH9")
+            const wETH = (await waitForDeploy(await TestWETH9.deploy())) as TestWETH9
             {
                 deployData.wETH.address = wETH.address;
             }
-            await wETH.__TestERC20_init(deployData.wETH.name, deployData.wETH.symbol, deployData.wETH.decimals)
         }
         let QuoteToken = await ethers.getContractFactory("QuoteToken");
         if (deployData.vETH.implAddress == undefined || deployData.vETH.implAddress == '') {
@@ -451,6 +450,8 @@ describe("Deployment check", () => {
             var collateralManager = await ethers.getContractAt('CollateralManager', deployData.collateralManager.address);
             var clearingHouse = await ethers.getContractAt('ClearingHouse', deployData.clearingHouse.address);
 
+            await waitForTx(await vault.setWETH9(deployData.wETH.address), 'vault.setWETH9(deployData.wETH.address)')
+
             var uniFeeTier = 3000 // 1%
 
             await exchange.setAccountBalance(accountBalance.address)
@@ -498,7 +499,7 @@ describe("Deployment check", () => {
             {
                 const poolAddr = await uniswapV3Factory.getPool(vBAYC.address, vETH.address, uniFeeTier)
                 const uniPool = await ethers.getContractAt('UniswapV3Pool', poolAddr);
-                await uniPool.initialize(encodePriceSqrt('100', "1"))
+                await uniPool.initialize(encodePriceSqrt('1', "1"))
                 const uniFeeRatio = await uniPool.fee()
                 await waitForTx(
                     await uniPool.increaseObservationCardinalityNext((2 ^ 16) - 1),
@@ -511,7 +512,7 @@ describe("Deployment check", () => {
             {
                 const poolAddr = await uniswapV3Factory.getPool(vMAYC.address, vETH.address, uniFeeTier)
                 const uniPool = await ethers.getContractAt('UniswapV3Pool', poolAddr);
-                await uniPool.initialize(encodePriceSqrt('100', "1"))
+                await uniPool.initialize(encodePriceSqrt('1', "1"))
                 const uniFeeRatio = await uniPool.fee()
                 await waitForTx(
                     await uniPool.increaseObservationCardinalityNext((2 ^ 16) - 1),
@@ -534,43 +535,49 @@ describe("Deployment check", () => {
             var collateralManager = await ethers.getContractAt('CollateralManager', deployData.collateralManager.address);
             var clearingHouse = await ethers.getContractAt('ClearingHouse', deployData.clearingHouse.address);
 
-            var wETH = (await ethers.getContractAt('TestERC20', deployData.wETH.address)) as TestERC20;
+            var wETH = (await ethers.getContractAt('TestWETH9', deployData.wETH.address)) as TestWETH9;
             const vBAYC = (await ethers.getContractAt('BaseToken', deployData.vBAYC.address)) as BaseToken;
             const vMAYC = (await ethers.getContractAt('BaseToken', deployData.vMAYC.address)) as BaseToken;
 
             {
                 var priceFeed = await ethers.getContractAt('NftPriceFeed', deployData.nftPriceFeedBAYC.address);
                 await waitForTx(
-                    await priceFeed.setPrice(parseEther('100'))
+                    await priceFeed.setPrice(parseEther('1'))
                 )
             }
             {
                 var priceFeed = await ethers.getContractAt('NftPriceFeed', deployData.nftPriceFeedMAYC.address);
                 await waitForTx(
-                    await priceFeed.setPrice(parseEther('100'))
+                    await priceFeed.setPrice(parseEther('1'))
                 )
             }
             for (var token of [vBAYC, vMAYC]) {
                 {
+                    // await waitForTx(
+                    //     await wETH.mint(trader1.address, parseEther('1000'))
+                    // )
+                    // await waitForTx(
+                    //     await wETH.connect(trader1).approve(vault.address, ethers.constants.MaxUint256)
+                    // )
+                    // await waitForTx(
+                    //     await vault.connect(trader1).deposit(wETH.address, parseEther('1000'))
+                    // )
                     await waitForTx(
-                        await wETH.mint(trader1.address, parseEther('1000'))
-                    )
-                    await waitForTx(
-                        await wETH.connect(trader1).approve(vault.address, ethers.constants.MaxUint256)
-                    )
-                    await waitForTx(
-                        await vault.connect(trader1).deposit(wETH.address, parseEther('1000'))
+                        await vault.connect(trader1).depositEther({ value: parseEther('10') })
                     )
                 }
                 {
+                    // await waitForTx(
+                    //     await wETH.mint(trader2.address, parseEther('1000'))
+                    // )
+                    // await waitForTx(
+                    //     await wETH.connect(trader2).approve(vault.address, ethers.constants.MaxUint256)
+                    // )
+                    // await waitForTx(
+                    //     await vault.connect(trader2).deposit(wETH.address, parseEther('1000'))
+                    // )
                     await waitForTx(
-                        await wETH.mint(trader2.address, parseEther('1000'))
-                    )
-                    await waitForTx(
-                        await wETH.connect(trader2).approve(vault.address, ethers.constants.MaxUint256)
-                    )
-                    await waitForTx(
-                        await vault.connect(trader2).deposit(wETH.address, parseEther('1000'))
+                        await vault.connect(trader2).depositEther({ value: parseEther('10') })
                     )
                 }
                 {
