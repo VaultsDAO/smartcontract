@@ -52,7 +52,13 @@ const config: HardhatUserConfig = {
             url: "http://127.0.0.1:8545",
             gas: 8000000,
         },
-        arbitrumGoerli: {
+        arbitrumDev: {
+            url: "https://arbitrum-goerli.infura.io/v3/" + INFURA_KEY,
+            chainId: 421613,
+            gas: 8000000,
+            accounts: [PRIVATE_KEY, MAKER_ADMIN_KEY, PRICE_ADMIN_KEY, PLATFROM_ADMIN_KEY, TRADER1_KEY, TRADER2_KEY, TRADER3_KEY, TRADER4_KEY, HIEUQ_KEY],
+        },
+        arbitrumTest: {
             url: "https://arbitrum-goerli.infura.io/v3/" + INFURA_KEY,
             chainId: 421613,
             gas: 8000000,

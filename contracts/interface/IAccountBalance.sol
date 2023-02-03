@@ -20,6 +20,8 @@ interface IAccountBalance {
     /// @param amount The amount changed
     event PnlRealized(address indexed trader, int256 amount);
 
+    event MultiplierChanged(uint256 longMultiplier, uint256 shortMultiplier);
+
     /// @notice Modify trader account balance
     /// @dev Only used by `ClearingHouse` contract
     /// @param trader The address of the trader

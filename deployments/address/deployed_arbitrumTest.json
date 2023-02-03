@@ -89,9 +89,9 @@
     "priceAdminAddress": "0x9686203be0cae320bb4Dee971BB8a530A15EF489",
     "platformFundAddress": "0x618B9BD8C290D55af7fBD5185b178071Fec8DF36",
     "makerFundAddress": "0x9cEDf5C18B8c93E4DE45A446C9caDFF98DB1a756",
-    "proxyAdminAddress": "",
+    "proxyAdminAddress": "0x7D28E9a84771CF2E6700716EE75FE3fE3a14A1fE",
     "uniswapV3Factory": {
-        "address": ""
+        "address": "0x4893376342d5D7b3e31d4184c08b265e5aB2A3f6"
     },
     "clearingHouseConfig": {
         "address": "",

@@ -81,8 +81,11 @@ contract AccountBalance is IAccountBalance, BlockContext, ClearingHouseCallee, A
                 shortRate
             );
         }
+
         console.log("longMultiplierX10_18 %d", _marketMap[baseToken].longMultiplierX10_18);
         console.log("shortMultiplierX10_18 %d", _marketMap[baseToken].shortMultiplierX10_18);
+
+        emit MultiplierChanged(_marketMap[baseToken].longMultiplierX10_18, _marketMap[baseToken].shortMultiplierX10_18);
     }
 
     /// @inheritdoc IAccountBalance
@@ -547,7 +550,21 @@ contract AccountBalance is IAccountBalance, BlockContext, ClearingHouseCallee, A
         }
         console.log("total long  %d", _marketMap[baseToken].longPositionSize);
         console.log("total short %d", _marketMap[baseToken].shortPositionSize);
+
+        _resetMultiplier(baseToken);
+
         return (accountInfo.takerPositionSize, accountInfo.takerOpenNotional);
+    }
+
+    function _resetMultiplier(address baseToken) internal {
+        if (_marketMap[baseToken].shortPositionSize == 0 && _marketMap[baseToken].longPositionSize == 0) {
+            _marketMap[baseToken].longMultiplierX10_18 = 1e18;
+            _marketMap[baseToken].shortMultiplierX10_18 = 1e18;
+            emit MultiplierChanged(
+                _marketMap[baseToken].longMultiplierX10_18,
+                _marketMap[baseToken].shortMultiplierX10_18
+            );
+        }
     }
 
     function _modifyOwedRealizedPnl(address trader, int256 amount) internal {
@@ -590,6 +607,7 @@ contract AccountBalance is IAccountBalance, BlockContext, ClearingHouseCallee, A
                     ? _marketMap[baseToken].longPositionSize - info.takerPositionSize.abs()
                     : 0;
             }
+            _resetMultiplier(baseToken);
         }
         delete _accountMarketMap[trader][baseToken];
 

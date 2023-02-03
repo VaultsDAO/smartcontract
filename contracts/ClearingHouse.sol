@@ -631,6 +631,12 @@ contract ClearingHouse is
     }
 
     function isAbleRepeg(address baseToken) public view returns (bool) {
+        (uint256 longPositionSize, uint256 shortPositionSize) = IAccountBalance(
+            IClearingHouse(_marketRegistry).getAccountBalance()
+        ).getMarketPositionSize(baseToken);
+        if (longPositionSize + shortPositionSize == 0) {
+            return true;
+        }
         if (!IExchange(_exchange).isOverPriceSpread(baseToken)) {
             return false;
         }
