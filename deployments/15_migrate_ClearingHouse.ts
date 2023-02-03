@@ -8,6 +8,12 @@ import { ProxyAdmin } from "../typechain/openzeppelin/ProxyAdmin";
 const { waitForDeploy, verifyContract, upgradeContract } = helpers;
 
 async function main() {
+    await deploy();
+}
+
+export default deploy;
+
+async function deploy() {
     const network = hre.network.name;
     let fileName = process.cwd() + '/deployments/address/deployed_' + network + '.json';
     let deployData: DeployData;
@@ -77,6 +83,7 @@ async function main() {
         await upgradeContract(proxyAdmin as ProxyAdmin, deployData.clearingHouse.address, deployData.clearingHouse.implAddress)
     }
     {
+        var genericLogic = await hre.ethers.getContractAt('GenericLogic', deployData.genericLogic.address);
         var liquidityLogic = await hre.ethers.getContractAt('LiquidityLogic', deployData.liquidityLogic.address);
         var exchangeLogic = await hre.ethers.getContractAt('ExchangeLogic', deployData.liquidityLogic.address);
         await verifyContract(
@@ -123,7 +130,7 @@ async function main() {
 
 // We recommend this pattern to be able to use async/await everywhere
 // and properly handle errors.
-main().catch((error) => {
-    console.error(error);
-    process.exitCode = 1;
-});
+// main().catch((error) => {
+//     console.error(error);
+//     process.exitCode = 1;
+// });

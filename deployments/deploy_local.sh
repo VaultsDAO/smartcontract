@@ -1,5 +1,7 @@
 # npm run build
 
+npx hardhat run deployments/0_migrate_Deploy.ts --network local --no-compile
+
 npx hardhat run deployments/1_migrate_Admin.ts --network local --no-compile
 
 # npx hardhat run deployments/2_migrate_PriceFeed_1BAYC.ts --network local --no-compile

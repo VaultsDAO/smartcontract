@@ -9,6 +9,12 @@ import { parseEther } from "ethers/lib/utils";
 const { waitForDeploy, verifyContract, upgradeContract } = helpers;
 
 async function main() {
+    await deploy();
+}
+
+export default deploy;
+
+async function deploy() {
     const network = hre.network.name;
     let fileName = process.cwd() + '/deployments/address/deployed_' + network + '.json';
     let deployData: DeployData;
@@ -88,7 +94,7 @@ async function main() {
 
 // We recommend this pattern to be able to use async/await everywhere
 // and properly handle errors.
-main().catch((error) => {
-    console.error(error);
-    process.exitCode = 1;
-});
+// main().catch((error) => {
+//     console.error(error);
+//     process.exitCode = 1;
+// });

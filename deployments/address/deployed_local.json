@@ -1,15 +1,35 @@
 {
     "verifiedContracts": {},
     "nftPriceFeedBAYC": {
-        "address": "0x8fE6c72802316e090940Df35a71598e5Ea788C6C",
+        "address": "0xD92e7D8EA77981Eb7C4D0A1Dd76e4F9c520eBDFB",
         "symbol": "BAYC_ETH"
     },
     "nftPriceFeedMAYC": {
-        "address": "0x8ee950AE703bDefDfaccEbcA4e793CbBC890423E",
+        "address": "0x59B0022201C9ebD371c1aDD2E7Bbd37966bDa59f",
         "symbol": "MAYC_ETH"
     },
+    "nftPriceFeedCRYPTOPUNKS": {
+        "address": "0xc5ea3AEE463328E30A9a896C119A7A40a6fD27EE",
+        "symbol": "CRYPTOPUNKS_ETH"
+    },
+    "nftPriceFeedMOONBIRD": {
+        "address": "0x1B69EC2A3206595310C4510F153842a675A3eed9",
+        "symbol": "MOONBIRD_ETH"
+    },
+    "nftPriceFeedAZUKI": {
+        "address": "0x7a553881a893077f407bEF5f070f559e0549B4b5",
+        "symbol": "AZUKI_ETH"
+    },
+    "nftPriceFeedCLONEX": {
+        "address": "0x254B0acdeDD6E2698689aef807df729d0E1B5f16",
+        "symbol": "CLONEX_ETH"
+    },
+    "nftPriceFeedDOODLE": {
+        "address": "0x37f30F5164ad3cC01dE71c31D521121E603715C8",
+        "symbol": "DOODLE_ETH"
+    },
     "wETH": {
-        "address": "0x6FC41e755213f3B41d934aaCdfF96D91b1103Ee3",
+        "address": "0x0d9FD736262918ce879dF2AACe447f859ffEe76F",
         "name": "Wrapped Ether",
         "symbol": "WETH",
         "decimals": 18
@@ -18,85 +38,115 @@
         "name": "vETH",
         "symbol": "vETH",
         "decimals": 18,
-        "address": "0xE340E961b2c86a763d9Eb0F9292c94F031a152e6",
-        "implAddress": "0x540F5FBC30F3e6817d568ffFc4125bf856C82680"
+        "address": "0xfCD947529c1644bf13ED974040a0419EF86565C6",
+        "implAddress": "0x8eAd07BEc788866F3c9b705ee9c5aEf153205d2a"
     },
     "baseToken": {
-        "implAddress": "0x6DcB774018ef7De2CB04CF4a294249320D3131c9"
+        "implAddress": "0x31047F50673A1673b77455208538303B7f914E4e"
     },
     "vBAYC": {
-        "address": "0x860772f6177387f3F480CCEeFc9878BB0F7444c9",
-        "name": "BoredApeYachtClub",
+        "address": "0x72D53F661D23f3e47A7102C240B660923796bEFe",
+        "name": "vBAYC",
         "symbol": "vBAYC",
         "decimals": 18
     },
     "vMAYC": {
-        "address": "0x772032fcaDDA5a740bd7b68A13a921dd3C0F59Fa",
-        "name": "MutantApeYachtClub",
+        "address": "0x07c0d50c646160D6dC0070c6c72d4ba4b2780767",
+        "name": "vMAYC",
         "symbol": "vMAYC",
+        "decimals": 18
+    },
+    "vCRYPTOPUNKS": {
+        "address": "0x37B3Fb93F5C418E9Fd19601d75b6ee297f66F006",
+        "name": "vCRYPTOPUNKS",
+        "symbol": "vCRYPTOPUNKS",
+        "decimals": 18
+    },
+    "vMOONBIRD": {
+        "address": "0xb61A1b0C81593cd053FA68dfFeE8144763a341f8",
+        "name": "vMOONBIRD",
+        "symbol": "vMOONBIRD",
+        "decimals": 18
+    },
+    "vAZUKI": {
+        "address": "0x4d7B1B66dE6C5d6561AfB96079e6e66Bb9FCE9fc",
+        "name": "vAZUKI",
+        "symbol": "vAZUKI",
+        "decimals": 18
+    },
+    "vCLONEX": {
+        "address": "0x759C0c555ef6029D714652dB95b610eE9f2dffdB",
+        "name": "vCLONEX",
+        "symbol": "vCLONEX",
+        "decimals": 18
+    },
+    "vDOODLE": {
+        "address": "0x35d4DB258d15035EC27FD0e43C29FCa13b62E031",
+        "name": "vDOODLE",
+        "symbol": "vDOODLE",
         "decimals": 18
     },
     "priceAdminAddress": "0x9686203be0cae320bb4Dee971BB8a530A15EF489",
     "platformFundAddress": "0xBeA7b64C4273E247c323E6c565876AE1adfd2C42",
     "makerFundAddress": "0x131b6b7b9a3b6993AF27f8e6A8d8D6BC166b5688",
-    "proxyAdminAddress": "0x68363ed45452ff62FEB4CDeE78C39B4752eF2040",
+    "proxyAdminAddress": "0x5f4FF2Be91B76FeAa77f8ebab20357A58082f0B3",
     "uniswapV3Factory": {
-        "address": "0xEb2139c2ddca7bA80454EF772652eFF5BaC194Cb"
+        "address": "0x0895316633382954418671CF29aC983dddB79e07"
     },
     "clearingHouseConfig": {
-        "address": "0x9A5dc892b5a68764a51333964E8aF200f0DA3321",
-        "implAddress": "0x053707B6Fb9421559fd7771B9433EFaf1824b392"
+        "address": "0x4Bb87Dd2ED0d4e69264582d5B6C3E8d3A7838419",
+        "implAddress": "0x72f9900edacA85Fd581918af42977422b25F0fC2"
     },
     "marketRegistry": {
-        "address": "0x4d5Bbb7faDd4f7dF850e19E1862E0D72b0323e07",
-        "implAddress": "0xdd02Acca74Ce5d8Dd4A6b1d9a5D94eFdBBC6b84B"
+        "address": "0x7F3Ce4cb6Da7233E745218e65B468D88370F3C67",
+        "implAddress": "0xA32593FE4Ec60a09691a99bEe93c70d3c31F6e34"
     },
     "orderBook": {
-        "address": "0x2da0D4c42F09B385023e6a8990AD5eBf671c6264",
-        "implAddress": "0x595E2614b76C61d4261A0Ff14A6DcFb50127Cb38"
+        "address": "0x2253C8456DcA319482BC7f76c461464d8dA36f2b",
+        "implAddress": "0x70127139c49D0b8b106de9E14D47fbF138156F97"
     },
     "accountBalance": {
-        "address": "0x82d8BcBF71CC600A59ac86EEb97cf3E5673e7B90",
-        "implAddress": "0xE8884b26e380A535fd38b2AAdC554942c7c25b45"
+        "address": "0x5fD51919185b59372702831228a62583E1368056",
+        "implAddress": "0x00008D6D673D51162eecF02E9aC93C779d2B2F1c"
     },
     "exchange": {
-        "address": "0x167b9602194d94612C72a82505D990F9Ba0d6b43",
-        "implAddress": "0x34dAf8Aa9a34e46Bce882ebC5830bdDa825425e1"
+        "address": "0x234A4140f1EF82067552137e544eC983Caa9701C",
+        "implAddress": "0xC42D23722bf30aFFd15467b9d11103B19D758e71"
     },
     "insuranceFund": {
-        "address": "0xd949a14920b56d1F3498db0a0a5E338276106cb1",
-        "implAddress": "0x1bBc3493FA33D57E3ACC0d036ADB4b31a417Faa2"
+        "address": "0xc6b3c0f13A013Ba12c1161586DBBC843fc9c76E4",
+        "implAddress": "0x812CF6A11Fa0f526a3dC48935b86ea3Fd53e71Ba"
     },
     "vault": {
-        "address": "0xfFacBf37a2b8D9287e9180fBf9315FE39D746ae6",
-        "implAddress": "0x3Df5f7e3d30244a1852ab6a99F23b563D41b5488"
+        "address": "0xCa99e4Fb00fd504e2471928641db8dbE66a8d0A6",
+        "implAddress": "0x9D420a0554578EB2E8E2270a3a5BF557909baEea"
     },
     "collateralManager": {
-        "address": "0x2376E9552B6Fc06b4b61209D9161C65c325C2851",
-        "implAddress": "0x55Ab90AAbEafa5A3F6ec712eb46E4BdA8f4aa869"
+        "address": "0xED4d9071ae239451dFf0E22883B00B508a5c72e6",
+        "implAddress": "0xf193c01bbF1f0ff6a7f2c445BC14218647449d39"
     },
     "genericLogic": {
-        "address": "0xbf0Ea46DD3B16be79CAb9723f7717653bF320fcd"
+        "address": "0xeC78aaD009D086202F48d9428C5459439Fa38755"
     },
     "liquidityLogic": {
-        "address": "0x71392B642331a6208e77491248d2457C051D673f"
+        "address": "0xc09f9B1365c294aF99A1EE81e7d82fC54c47e572"
     },
     "exchangeLogic": {
-        "address": "0xbf8162c7D0a8CaeCe79A4ccCED34C80EFbcfB9A3"
+        "address": "0x4758d31eeF0B706d449CbbB411046da8B23c9CD5"
     },
     "clearingHouse": {
-        "address": "0x232feaf56441B950Bf106501589589F2971f6d15",
-        "implAddress": "0xCD5eb4e8F819c5c311Fa2CB9aD0EbaeeF3e7b5A1"
+        "address": "0x234b566dF5d9Da07fD783bC0bbF3F7aFC2833DBB",
+        "implAddress": "0xC656fEEc5FE427dEa77eA4DFD071061dffDcc4CD"
     },
     "testFaucet": {
         "address": "",
         "implAddress": ""
     },
     "testCheck": {
-        "addLiquidity": true,
-        "deposit": true,
-        "openPosition": true,
-        "closePosition": true,
-        "removeLiquidity": true
+        "addLiquidity": false,
+        "deposit": false,
+        "openPosition": false,
+        "closePosition": false,
+        "removeLiquidity": false
     }
 }
