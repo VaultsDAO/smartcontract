@@ -137,6 +137,7 @@ describe("ClearingHouse multiplier", () => {
                     deadline: ethers.constants.MaxUint256,
                 })
             }
+            await clearingHouse.repeg(baseToken.address)
         }
 
         await clearingHouse.connect(trader1).closePosition({

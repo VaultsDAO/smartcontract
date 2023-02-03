@@ -676,132 +676,62 @@ contract ClearingHouse is
         repegParams.spotPrice = IIndexPrice(baseToken).getIndexPrice(
             IClearingHouseConfig(_clearingHouseConfig).getTwapInterval()
         );
-
         repegParams.sqrtSpotPrice = repegParams.spotPrice.formatPriceX10_18ToSqrtPriceX96();
 
-        // check mark price != index price over 10% and over 1 hour
-        // calculate delta base (11) of long short -> delta quote (1)
-        // for multiplier
-        (
-            repegParams.oldLongPositionSize,
-            repegParams.oldShortPositionSize,
-            repegParams.oldDeltaBase,
-            repegParams.deltaQuote
-        ) = GenericLogic.getInfoMultiplier(address(this), baseToken);
-        // for multiplier
+        if (repegParams.spotPrice != repegParams.oldMarkPrice) {
+            // check mark price != index price over 10% and over 1 hour
+            // calculate delta base (11) of long short -> delta quote (1)
+            // for multiplier
+            (
+                repegParams.oldLongPositionSize,
+                repegParams.oldShortPositionSize,
+                repegParams.oldDeltaBase,
+                repegParams.deltaQuote
+            ) = GenericLogic.getInfoMultiplier(address(this), baseToken);
+            // for multiplier
 
-        // remove 99.99% liquidity
-        address pool = IMarketRegistry(_marketRegistry).getPool(baseToken);
-        uint128 liquidity = IUniswapV3Pool(pool).liquidity();
-        uint128 removedLiquidity = uint256(liquidity).mul(9999).div(10000).toUint128();
-        LiquidityLogic.removeLiquidity(
-            address(this),
-            DataTypes.RemoveLiquidityParams({
-                baseToken: baseToken,
-                liquidity: removedLiquidity,
-                deadline: block.timestamp + 60
-            })
-        );
-
-        // calculate base amount for openPosition -> spot price
-        // maker openPosition -> spot price
-        bool isRepegUp = repegParams.spotPrice > repegParams.oldMarkPrice;
-        // estimate = IExchange(_exchange).estimateSwap(
-        //     DataTypes.OpenPositionParams({
-        //         baseToken: baseToken,
-        //         isBaseToQuote: !isRepegUp,
-        //         isExactInput: !isRepegUp,
-        //         oppositeAmountBound: 0,
-        //         amount: type(uint256).max.div(1e10),
-        //         sqrtPriceLimitX96: repegParams.sqrtSpotPrice,
-        //         deadline: block.timestamp + 60,
-        //         referralCode: ""
-        //     })
-        // );
-        // _openPositionFor(
-        //     _msgSender(),
-        //     DataTypes.OpenPositionParams({
-        //         baseToken: baseToken,
-        //         isBaseToQuote: isLong,
-        //         isExactInput: isLong,
-        //         oppositeAmountBound: 0,
-        //         amount: estimate.amountIn,
-        //         sqrtPriceLimitX96: repegParams.sqrtSpotPrice,
-        //         deadline: block.timestamp + 60,
-        //         referralCode: ""
-        //     })
-        // );
-        //internal swap
-        IExchange.SwapResponse memory swapResponse = IExchange(_exchange).internalSwap(
-            IExchange.SwapParams({
-                trader: msg.sender,
-                baseToken: baseToken,
-                isBaseToQuote: !isRepegUp,
-                isExactInput: true,
-                isClose: false,
-                amount: type(uint256).max.div(1e10),
-                sqrtPriceLimitX96: repegParams.sqrtSpotPrice
-            })
-        );
-        // add 99.99% liquidity again
-        LiquidityLogic.addLiquidity(
-            address(this),
-            DataTypes.AddLiquidityParams({
-                baseToken: baseToken,
-                liquidity: removedLiquidity,
-                deadline: block.timestamp + 60
-            })
-        );
-
-        console.log("added liquidity %d", IUniswapV3Pool(pool).liquidity());
-        // maker closePosition -> spot price
-        // closePosition(
-        //     DataTypes.ClosePositionParams({
-        //         baseToken: baseToken,
-        //         sqrtPriceLimitX96: 0,
-        //         oppositeAmountBound: 0,
-        //         deadline: block.timestamp + 60,
-        //         referralCode: ""
-        //     })
-        // );
-        IExchange(_exchange).internalSwap(
-            IExchange.SwapParams({
-                trader: msg.sender,
-                baseToken: baseToken,
-                isBaseToQuote: isRepegUp,
-                isExactInput: true,
-                isClose: false,
-                amount: isRepegUp ? swapResponse.base : swapResponse.quote,
-                sqrtPriceLimitX96: 0
-            })
-        );
-
-        // calculate delta quote (1) -> new delta base (22)
-        // calculate scale -> new mark price => rate = (% delta price)
-        // calculate scale for long short = (diff delta base on (11 - 22)) / (total_long + total_short)
-        // if delta base < 0 -> decrase delta long short
-        // -> if long > short -> decrease long and increase short
-        // -> if long < short -> increase long and decrease short
-        // if delta base > 0 -> increase delta long short
-        // -> if long > short -> increase long and decrease short
-        // -> if long < short -> decrease long and increase short
-        // update scale for position size for long short
-        (repegParams.newSqrtMarkPrice, , , , , , ) = UniswapV3Broker.getSlot0(
-            IMarketRegistry(_marketRegistry).getPool(baseToken)
-        );
-        repegParams.newMarkPrice = repegParams.newSqrtMarkPrice.formatSqrtPriceX96ToPriceX96().formatX96ToX10_18();
-        // for multiplier
-        GenericLogic.updateInfoMultiplier(
-            address(this),
-            baseToken,
-            repegParams.oldLongPositionSize,
-            repegParams.oldShortPositionSize,
-            repegParams.oldDeltaBase,
-            repegParams.oldMarkPrice,
-            repegParams.newMarkPrice,
-            repegParams.deltaQuote
-        );
-        // for multiplier
-        IExchange(_exchange).updateOverPriceSpreadTimestamp(baseToken);
+            // calculate base amount for openPosition -> spot price
+            // maker openPosition -> spot price
+            bool isRepegUp = repegParams.spotPrice > repegParams.oldMarkPrice;
+            //internal swap
+            IExchange(_exchange).internalSwap(
+                IExchange.SwapParams({
+                    trader: msg.sender,
+                    baseToken: baseToken,
+                    isBaseToQuote: !isRepegUp,
+                    isExactInput: true,
+                    isClose: false,
+                    amount: type(uint256).max.div(1e10),
+                    sqrtPriceLimitX96: repegParams.sqrtSpotPrice
+                })
+            );
+            // calculate delta quote (1) -> new delta base (22)
+            // calculate scale -> new mark price => rate = (% delta price)
+            // calculate scale for long short = (diff delta base on (11 - 22)) / (total_long + total_short)
+            // if delta base < 0 -> decrase delta long short
+            // -> if long > short -> decrease long and increase short
+            // -> if long < short -> increase long and decrease short
+            // if delta base > 0 -> increase delta long short
+            // -> if long > short -> increase long and decrease short
+            // -> if long < short -> decrease long and increase short
+            // update scale for position size for long short
+            (repegParams.newSqrtMarkPrice, , , , , , ) = UniswapV3Broker.getSlot0(
+                IMarketRegistry(_marketRegistry).getPool(baseToken)
+            );
+            repegParams.newMarkPrice = repegParams.newSqrtMarkPrice.formatSqrtPriceX96ToPriceX96().formatX96ToX10_18();
+            // for multiplier
+            GenericLogic.updateInfoMultiplier(
+                address(this),
+                baseToken,
+                repegParams.oldLongPositionSize,
+                repegParams.oldShortPositionSize,
+                repegParams.oldDeltaBase,
+                repegParams.oldMarkPrice,
+                repegParams.newMarkPrice,
+                repegParams.deltaQuote
+            );
+            // for multiplier
+            IExchange(_exchange).updateOverPriceSpreadTimestamp(baseToken);
+        }
     }
 }
