@@ -28,6 +28,7 @@ import { ExchangeStorageV1 } from "./storage/ExchangeStorage.sol";
 import { IExchange } from "./interface/IExchange.sol";
 import { OpenOrder } from "./lib/OpenOrder.sol";
 import { DataTypes } from "./types/DataTypes.sol";
+import { GenericLogic } from "./lib/GenericLogic.sol";
 import "hardhat/console.sol";
 
 // never inherit any new stateful contract. never change the orders of parent stateful contracts
@@ -830,25 +831,7 @@ contract Exchange is
     }
 
     function getInsuranceFundFeeRatio(address baseToken, bool isBaseToQuote) public view returns (uint256) {
-        (, uint256 markTwap, uint256 indexTwap) = _getFundingGrowthGlobalAndTwaps(baseToken);
-        int256 deltaTwapRatio = (markTwap.toInt256().sub(indexTwap.toInt256())).mulDiv(1e6, indexTwap);
-        IMarketRegistry.MarketInfo memory marketInfo = IMarketRegistry(_marketRegistry).getMarketInfo(baseToken);
-        // delta <= 2.5%
-        if (deltaTwapRatio.abs() <= marketInfo.optimalDeltaTwapRatio) {
-            return marketInfo.insuranceFundFeeRatio;
-        }
-        if ((isBaseToQuote && deltaTwapRatio > 0) || (!isBaseToQuote && deltaTwapRatio < 0)) {
-            return 0;
-        }
-        // 2.5% < delta <= 5%
-        if (
-            marketInfo.optimalDeltaTwapRatio < deltaTwapRatio.abs() &&
-            deltaTwapRatio.abs() <= marketInfo.unhealthyDeltaTwapRatio
-        ) {
-            return deltaTwapRatio.abs().mul(marketInfo.optimalFundingRatio).div(1e6);
-        }
-        // 5% < delta
-        return deltaTwapRatio.abs();
+        return GenericLogic.getInsuranceFundFeeRatio(address(this), _marketRegistry, baseToken, isBaseToQuote);
     }
 
     function getGlobalFundingGrowthInfo(
@@ -860,7 +843,12 @@ contract Exchange is
 
     function getFundingGrowthGlobalAndTwaps(
         address baseToken
-    ) public view returns (DataTypes.Growth memory fundingGrowthGlobal, uint256 markTwap, uint256 indexTwap) {
+    )
+        external
+        view
+        override
+        returns (DataTypes.Growth memory fundingGrowthGlobal, uint256 markTwap, uint256 indexTwap)
+    {
         (fundingGrowthGlobal, markTwap, indexTwap) = _getFundingGrowthGlobalAndTwaps(baseToken);
     }
 

@@ -9,6 +9,7 @@ import { IClearingHouseConfig } from "../interface/IClearingHouseConfig.sol";
 import { IOrderBook } from "../interface/IOrderBook.sol";
 import { IExchange } from "../interface/IExchange.sol";
 import { IVault } from "../interface/IVault.sol";
+import { IMarketRegistry } from "../interface/IMarketRegistry.sol";
 import { FullMath } from "@uniswap/v3-core/contracts/libraries/FullMath.sol";
 import { PerpSafeCast } from "./PerpSafeCast.sol";
 import { PerpMath } from "./PerpMath.sol";
@@ -242,6 +243,33 @@ library GenericLogic {
             IIndexPrice(baseToken).getIndexPrice(
                 IClearingHouseConfig(IClearingHouse(chAddress).getClearingHouseConfig()).getTwapInterval()
             );
+    }
+
+    function getInsuranceFundFeeRatio(
+        address exchange,
+        address marketRegistry,
+        address baseToken,
+        bool isBaseToQuote
+    ) public view returns (uint256) {
+        (, uint256 markTwap, uint256 indexTwap) = IExchange(exchange).getFundingGrowthGlobalAndTwaps(baseToken);
+        int256 deltaTwapRatio = (markTwap.toInt256().sub(indexTwap.toInt256())).mulDiv(1e6, indexTwap);
+        IMarketRegistry.MarketInfo memory marketInfo = IMarketRegistry(marketRegistry).getMarketInfo(baseToken);
+        // delta <= 2.5%
+        if (deltaTwapRatio.abs() <= marketInfo.optimalDeltaTwapRatio) {
+            return marketInfo.insuranceFundFeeRatio;
+        }
+        if ((isBaseToQuote && deltaTwapRatio > 0) || (!isBaseToQuote && deltaTwapRatio < 0)) {
+            return 0;
+        }
+        // 2.5% < delta <= 5%
+        if (
+            marketInfo.optimalDeltaTwapRatio < deltaTwapRatio.abs() &&
+            deltaTwapRatio.abs() <= marketInfo.unhealthyDeltaTwapRatio
+        ) {
+            return deltaTwapRatio.abs().mul(marketInfo.optimalFundingRatio).div(1e6);
+        }
+        // 5% < delta
+        return deltaTwapRatio.abs();
     }
 
     function getNewPositionSizeForMultiplierRate(

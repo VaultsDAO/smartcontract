@@ -137,6 +137,10 @@ interface IExchange {
     /// @return clearingHouse `ClearingHouseConfig` contract address
     function getClearingHouseConfig() external view returns (address clearingHouse);
 
+    function getFundingGrowthGlobalAndTwaps(
+        address baseToken
+    ) external view returns (DataTypes.Growth memory fundingGrowthGlobal, uint256 markTwap, uint256 indexTwap);
+
     function estimateSwap(
         DataTypes.OpenPositionParams memory params
     ) external returns (IOrderBook.ReplaySwapResponse memory response);
