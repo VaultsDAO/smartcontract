@@ -129,12 +129,18 @@ describe("ClearingHouse multiplier", () => {
                     liquidity: parseEther(rndInt.toString()),
                     deadline: ethers.constants.MaxUint256,
                 })
+                mockedNFTPriceFeed.smocked.getPrice.will.return.with(async () => {
+                    return parseUnits("1.2345", 18)
+                })
             } else {
                 rndInt = (Math.floor(Math.random() * 1000000) % 20) + 1;
                 await clearingHouse.connect(maker).removeLiquidity({
                     baseToken: baseToken.address,
                     liquidity: parseEther(rndInt.toString()),
                     deadline: ethers.constants.MaxUint256,
+                })
+                mockedNFTPriceFeed.smocked.getPrice.will.return.with(async () => {
+                    return parseUnits("0.8765", 18)
                 })
             }
             await clearingHouse.repeg(baseToken.address)
