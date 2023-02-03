@@ -698,33 +698,44 @@ contract ClearingHouse is
         );
         // calculate base amount for openPosition -> spot price
         // maker openPosition -> spot price
-        bool isLong = repegParams.spotPrice > repegParams.oldMarkPrice;
-        estimate = IExchange(_exchange).estimateSwap(
-            DataTypes.OpenPositionParams({
+        bool isRepegUp = repegParams.spotPrice > repegParams.oldMarkPrice;
+        // estimate = IExchange(_exchange).estimateSwap(
+        //     DataTypes.OpenPositionParams({
+        //         baseToken: baseToken,
+        //         isBaseToQuote: !isRepegUp,
+        //         isExactInput: !isRepegUp,
+        //         oppositeAmountBound: 0,
+        //         amount: type(uint256).max.div(1e10),
+        //         sqrtPriceLimitX96: repegParams.sqrtSpotPrice,
+        //         deadline: block.timestamp + 60,
+        //         referralCode: ""
+        //     })
+        // );
+        // _openPositionFor(
+        //     _msgSender(),
+        //     DataTypes.OpenPositionParams({
+        //         baseToken: baseToken,
+        //         isBaseToQuote: isLong,
+        //         isExactInput: isLong,
+        //         oppositeAmountBound: 0,
+        //         amount: estimate.amountIn,
+        //         sqrtPriceLimitX96: repegParams.sqrtSpotPrice,
+        //         deadline: block.timestamp + 60,
+        //         referralCode: ""
+        //     })
+        // );
+        //internal swap
+        IExchange.SwapResponse memory swapResponse = IExchange(_exchange).internalSwap(
+            IExchange.SwapParams({
+                trader: msg.sender,
                 baseToken: baseToken,
-                isBaseToQuote: !isLong,
-                isExactInput: !isLong,
-                oppositeAmountBound: 0,
+                isBaseToQuote: !isRepegUp,
+                isExactInput: true,
+                isClose: false,
                 amount: type(uint256).max.div(1e10),
-                sqrtPriceLimitX96: repegParams.sqrtSpotPrice,
-                deadline: block.timestamp + 60,
-                referralCode: ""
+                sqrtPriceLimitX96: repegParams.sqrtSpotPrice
             })
         );
-        _openPositionFor(
-            _msgSender(),
-            DataTypes.OpenPositionParams({
-                baseToken: baseToken,
-                isBaseToQuote: isLong,
-                isExactInput: isLong,
-                oppositeAmountBound: 0,
-                amount: estimate.amountIn,
-                sqrtPriceLimitX96: repegParams.sqrtSpotPrice,
-                deadline: block.timestamp + 60,
-                referralCode: ""
-            })
-        );
-
         // add 99.99% liquidity again
         addLiquidity(
             DataTypes.AddLiquidityParams({
@@ -735,13 +746,24 @@ contract ClearingHouse is
         );
         console.log("added liquidity %d", IUniswapV3Pool(pool).liquidity());
         // maker closePosition -> spot price
-        closePosition(
-            DataTypes.ClosePositionParams({
+        // closePosition(
+        //     DataTypes.ClosePositionParams({
+        //         baseToken: baseToken,
+        //         sqrtPriceLimitX96: 0,
+        //         oppositeAmountBound: 0,
+        //         deadline: block.timestamp + 60,
+        //         referralCode: ""
+        //     })
+        // );
+        IExchange(_exchange).internalSwap(
+            IExchange.SwapParams({
+                trader: msg.sender,
                 baseToken: baseToken,
-                sqrtPriceLimitX96: 0,
-                oppositeAmountBound: 0,
-                deadline: block.timestamp + 60,
-                referralCode: ""
+                isBaseToQuote: isRepegUp,
+                isExactInput: true,
+                isClose: false,
+                amount: isRepegUp ? swapResponse.base : swapResponse.quote,
+                sqrtPriceLimitX96: 0
             })
         );
 
