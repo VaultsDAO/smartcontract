@@ -757,19 +757,4 @@ contract ClearingHouse is
         );
         // for multiplier
     }
-
-    function modifyLiquidity(address baseToken, uint256 newLiquidity) external {
-        // calculate delta base (11) of long short -> delta quote (1)
-        // add or remove liquidity
-        // calculate delta quote (1) -> new delta base (22)
-        // calculate scale -> new mark price => rate = (% delta price)
-        // calculate scale for long short = (diff delta base on (11 - 22)) / (total_long + total_short)
-        // if delta base < 0 -> decrase delta long short
-        // -> if long > short -> decrease long and increase short
-        // -> if long < short -> increase long and decrease short
-        // if delta base > 0 -> increase delta long short
-        // -> if long > short -> increase long and decrease short
-        // -> if long < short -> decrease long and increase short
-        // update scale for position size for long short
-    }
 }
