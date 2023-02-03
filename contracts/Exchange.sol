@@ -229,6 +229,9 @@ contract Exchange is
         require(!_isOverPriceLimitWithTick(params.baseToken, response.tick), "EX_OPLAS");
         // }
 
+        // updateOverPriceSpreadTimestamp for repeg
+        _updateOverPriceSpreadTimestamp(params.baseToken);
+
         // when takerPositionSize < 0, it's a short position
         bool isReducingPosition = takerPositionSize == 0 ? false : takerPositionSize < 0 != params.isBaseToQuote;
         // when reducing/not increasing the position size, it's necessary to realize pnl
@@ -876,6 +879,10 @@ contract Exchange is
 
     // OverPriceSpreadTimestamp
     function updateOverPriceSpreadTimestamp(address baseToken) external override {
+        _updateOverPriceSpreadTimestamp(baseToken);
+    }
+
+    function _updateOverPriceSpreadTimestamp(address baseToken) internal {
         if (_isOverPriceSpread(baseToken)) {
             if (_lastOverPriceSpreadTimestampMap[baseToken] == 0) {
                 _lastOverPriceSpreadTimestampMap[baseToken] = _blockTimestamp();

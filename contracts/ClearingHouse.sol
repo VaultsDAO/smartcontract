@@ -634,6 +634,9 @@ contract ClearingHouse is
         if (!IExchange(_exchange).isOverPriceSpread(baseToken)) {
             return false;
         }
+        if (!IExchange(_exchange).isOverPriceSpreadTimestamp(baseToken)) {
+            return false;
+        }
         return true;
     }
 
