@@ -89,6 +89,8 @@ contract MarketRegistry is IMarketRegistry, ClearingHouseCallee, MarketRegistryS
         _optimalDeltaTwapRatioMap[baseToken] = 25000; // 2.5%
         _unhealthyDeltaTwapRatioMap[baseToken] = 50000; // 5%
         _optimalFundingRatioMap[baseToken] = 250000; // 25%
+        // _DURATION_REPEG_OVER_PRICE_SPREAD
+        _durationRepegOverPriceSpreadMap[baseToken] = 900; // 900 second
 
         emit PoolAdded(baseToken, feeRatio, pool);
         return pool;

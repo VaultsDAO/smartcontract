@@ -148,13 +148,21 @@ export function createClearingHouseFixture(
             const accountBalanceFactory = await ethers.getContractFactory("TestAccountBalance")
             accountBalance = (await accountBalanceFactory.deploy()) as TestAccountBalance
 
-            const exchangeFactory = await ethers.getContractFactory("TestExchange")
+            const exchangeFactory = await ethers.getContractFactory("TestExchange", {
+                libraries: {
+                    GenericLogic: genericLogic.address,
+                },
+            })
             exchange = (await exchangeFactory.deploy()) as TestExchange
         } else {
             const accountBalanceFactory = await ethers.getContractFactory("AccountBalance")
             accountBalance = (await accountBalanceFactory.deploy()) as AccountBalance
 
-            const exchangeFactory = await ethers.getContractFactory("Exchange")
+            const exchangeFactory = await ethers.getContractFactory("Exchange", {
+                libraries: {
+                    GenericLogic: genericLogic.address,
+                },
+            })
             exchange = (await exchangeFactory.deploy()) as Exchange
         }
 
@@ -230,6 +238,7 @@ export function createClearingHouseFixture(
         if (canMockTime) {
             const clearingHouseFactory = await ethers.getContractFactory("TestClearingHouse", {
                 libraries: {
+                    GenericLogic: genericLogic.address,
                     LiquidityLogic: liquidityLogic.address,
                     ExchangeLogic: exchangeLogic.address,
                 },
@@ -251,6 +260,7 @@ export function createClearingHouseFixture(
         } else {
             const clearingHouseFactory = await ethers.getContractFactory("ClearingHouse", {
                 libraries: {
+                    GenericLogic: genericLogic.address,
                     LiquidityLogic: liquidityLogic.address,
                     ExchangeLogic: exchangeLogic.address,
                 },
