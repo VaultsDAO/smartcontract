@@ -640,6 +640,7 @@ contract ClearingHouse is
         uint256 newDeltaBase;
         uint256 oldLongPositionSize;
         uint256 oldShortPositionSize;
+        uint256 deltaQuote;
         uint256 newLongPositionSize;
         uint256 newShortPositionSize;
     }
@@ -661,25 +662,14 @@ contract ClearingHouse is
 
         // check mark price != index price over 10% and over 1 hour
         // calculate delta base (11) of long short -> delta quote (1)
-        (repegParams.oldLongPositionSize, repegParams.oldShortPositionSize) = IAccountBalance(_accountBalance)
-            .getMarketPositionSize(baseToken);
-        repegParams.oldDeltaBase = repegParams.oldLongPositionSize.toInt256().sub(
-            repegParams.oldShortPositionSize.toInt256()
-        );
-        bool isBaseToQuote = repegParams.oldDeltaBase > 0 ? true : false;
-        estimate = IExchange(_exchange).estimateSwap(
-            DataTypes.OpenPositionParams({
-                baseToken: baseToken,
-                isBaseToQuote: isBaseToQuote,
-                isExactInput: isBaseToQuote,
-                oppositeAmountBound: 0,
-                amount: uint256(repegParams.oldDeltaBase.abs()),
-                sqrtPriceLimitX96: 0,
-                deadline: block.timestamp + 60,
-                referralCode: ""
-            })
-        );
-        uint256 deltaQuote = isBaseToQuote ? estimate.amountOut : estimate.amountIn;
+        // for multiplier
+        (
+            repegParams.oldLongPositionSize,
+            repegParams.oldShortPositionSize,
+            repegParams.oldDeltaBase,
+            repegParams.deltaQuote
+        ) = GenericLogic.getInfoMultiplier(address(this), baseToken);
+        // for multiplier
 
         // remove 99.99% liquidity
         address pool = IMarketRegistry(_marketRegistry).getPool(baseToken);
@@ -742,22 +732,6 @@ contract ClearingHouse is
         );
 
         // calculate delta quote (1) -> new delta base (22)
-        estimate = IExchange(_exchange).estimateSwap(
-            DataTypes.OpenPositionParams({
-                baseToken: baseToken,
-                isBaseToQuote: isBaseToQuote,
-                isExactInput: !isBaseToQuote,
-                oppositeAmountBound: 0,
-                amount: deltaQuote,
-                sqrtPriceLimitX96: 0,
-                deadline: block.timestamp + 60,
-                referralCode: ""
-            })
-        );
-        uint256 newDeltaBase = isBaseToQuote ? estimate.amountIn : estimate.amountOut;
-        (uint256 newMarkPrice, , , , , , ) = UniswapV3Broker.getSlot0(
-            IMarketRegistry(_marketRegistry).getPool(baseToken)
-        );
         // calculate scale -> new mark price => rate = (% delta price)
         // calculate scale for long short = (diff delta base on (11 - 22)) / (total_long + total_short)
         // if delta base < 0 -> decrase delta long short
@@ -767,16 +741,21 @@ contract ClearingHouse is
         // -> if long > short -> increase long and decrease short
         // -> if long < short -> decrease long and increase short
         // update scale for position size for long short
-        (repegParams.newLongPositionSize, repegParams.newShortPositionSize) = GenericLogic
-            .getNewPositionSizeForMultiplier(
-                repegParams.oldLongPositionSize,
-                repegParams.oldShortPositionSize,
-                repegParams.oldMarkPrice,
-                repegParams.newMarkPrice,
-                repegParams.newDeltaBase
-            );
-        console.log("newLongPositionSize %d", repegParams.newLongPositionSize);
-        console.log("newShortPositionSize %d", repegParams.newShortPositionSize);
+        (repegParams.newMarkPrice, , , , , , ) = UniswapV3Broker.getSlot0(
+            IMarketRegistry(_marketRegistry).getPool(baseToken)
+        );
+        // for multiplier
+        GenericLogic.updateInfoMultiplier(
+            address(this),
+            baseToken,
+            repegParams.oldLongPositionSize,
+            repegParams.oldShortPositionSize,
+            repegParams.oldDeltaBase,
+            repegParams.oldMarkPrice,
+            repegParams.newMarkPrice,
+            repegParams.deltaQuote
+        );
+        // for multiplier
     }
 
     function modifyLiquidity(address baseToken, uint256 newLiquidity) external {
