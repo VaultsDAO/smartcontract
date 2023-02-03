@@ -630,9 +630,17 @@ contract ClearingHouse is
         require(contractArg.isContract(), errorMsg);
     }
 
+    function isAbleRepeg(address baseToken) public view returns (bool) {
+        if (!IExchange(_exchange).isOverPriceSpread(baseToken)) {
+            return false;
+        }
+        return true;
+    }
+
     struct InternalRepegParams {
-        uint160 sqrtMarkPrice;
+        uint160 oldSqrtMarkPrice;
         uint256 oldMarkPrice;
+        uint160 newSqrtMarkPrice;
         uint256 newMarkPrice;
         uint256 spotPrice;
         uint160 sqrtSpotPrice;
@@ -641,19 +649,22 @@ contract ClearingHouse is
         uint256 oldLongPositionSize;
         uint256 oldShortPositionSize;
         uint256 deltaQuote;
-        uint256 newLongPositionSize;
-        uint256 newShortPositionSize;
     }
 
     ///REPEG
     function repeg(address baseToken) external {
+        // check isAbleRepeg
+        // CH_NRP: not repeg
+        require(isAbleRepeg(baseToken), "CH_NRP");
+        //settleFundingGlobal
+        GenericLogic.settleFundingGlobal(address(this), baseToken);
         //variable
         IOrderBook.ReplaySwapResponse memory estimate;
         InternalRepegParams memory repegParams;
-        (repegParams.sqrtMarkPrice, , , , , , ) = UniswapV3Broker.getSlot0(
+        (repegParams.oldSqrtMarkPrice, , , , , , ) = UniswapV3Broker.getSlot0(
             IMarketRegistry(_marketRegistry).getPool(baseToken)
         );
-        repegParams.oldMarkPrice = repegParams.sqrtMarkPrice.formatSqrtPriceX96ToPriceX96().formatX96ToX10_18();
+        repegParams.oldMarkPrice = repegParams.oldSqrtMarkPrice.formatSqrtPriceX96ToPriceX96().formatX96ToX10_18();
         repegParams.spotPrice = IIndexPrice(baseToken).getIndexPrice(
             IClearingHouseConfig(_clearingHouseConfig).getTwapInterval()
         );
@@ -741,9 +752,10 @@ contract ClearingHouse is
         // -> if long > short -> increase long and decrease short
         // -> if long < short -> decrease long and increase short
         // update scale for position size for long short
-        (repegParams.newMarkPrice, , , , , , ) = UniswapV3Broker.getSlot0(
+        (repegParams.newSqrtMarkPrice, , , , , , ) = UniswapV3Broker.getSlot0(
             IMarketRegistry(_marketRegistry).getPool(baseToken)
         );
+        repegParams.newMarkPrice = repegParams.newSqrtMarkPrice.formatSqrtPriceX96ToPriceX96().formatX96ToX10_18();
         // for multiplier
         GenericLogic.updateInfoMultiplier(
             address(this),
