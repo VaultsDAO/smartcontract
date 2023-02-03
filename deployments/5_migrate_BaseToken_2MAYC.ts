@@ -21,19 +21,10 @@ async function main() {
     deployData = JSON.parse(dataText.toString())
     // 
     const TransparentUpgradeableProxy = await hre.ethers.getContractFactory('TransparentUpgradeableProxy');
-    const BaseToken = await hre.ethers.getContractFactory("BaseToken");
     // 
     var proxyAdmin = await hre.ethers.getContractAt('ProxyAdmin', deployData.proxyAdminAddress);
     const vETH = (await hre.ethers.getContractAt('QuoteToken', deployData.vETH.address)) as BaseToken;
     // 
-    if (deployData.baseToken.implAddress == undefined || deployData.baseToken.implAddress == '') {
-        let baseToken = await waitForDeploy(await BaseToken.deploy());
-        {
-            deployData.baseToken.implAddress = baseToken.address;
-            await fs.writeFileSync(fileName, JSON.stringify(deployData, null, 4))
-            console.log('baseToken is deployed', baseToken.address)
-        }
-    }
     var baseToken = await hre.ethers.getContractAt('BaseToken', deployData.baseToken.implAddress);
     if (deployData.vMAYC.address == undefined || deployData.vMAYC.address == '') {
         var initializeData = baseToken.interface.encodeFunctionData('initialize', [deployData.vMAYC.name, deployData.vMAYC.symbol, deployData.nftPriceFeedMAYC.address]);
