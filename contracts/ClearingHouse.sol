@@ -674,7 +674,7 @@ contract ClearingHouse is
         // remove 99.99% liquidity
         address pool = IMarketRegistry(_marketRegistry).getPool(baseToken);
         uint128 liquidity = IUniswapV3Pool(pool).liquidity();
-        uint128 removedLiquidity = (liquidity * 999900) / 1e6;
+        uint128 removedLiquidity = uint256(liquidity).mul(9999).div(10000).toUint128();
         removeLiquidity(
             DataTypes.RemoveLiquidityParams({
                 baseToken: baseToken,
@@ -691,7 +691,7 @@ contract ClearingHouse is
                 isBaseToQuote: !isLong,
                 isExactInput: !isLong,
                 oppositeAmountBound: 0,
-                amount: type(uint256).max / 1e10,
+                amount: type(uint256).max.div(1e10),
                 sqrtPriceLimitX96: repegParams.sqrtSpotPrice,
                 deadline: block.timestamp + 60,
                 referralCode: ""
