@@ -802,5 +802,6 @@ contract ClearingHouse is
             repegParams.deltaQuote
         );
         // for multiplier
+        IExchange(_exchange).updateOverPriceSpreadTimestamp(baseToken);
     }
 }

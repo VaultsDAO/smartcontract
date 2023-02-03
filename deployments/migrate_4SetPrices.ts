@@ -20,15 +20,20 @@ async function deploy() {
     const network = hre.network.name;
     let fileName = process.cwd() + '/deployments/address/deployed_' + network + '.json';
     let deployData: DeployData;
-    if (!(await fs.existsSync(fileName))) {
-        throw 'deployed file is not existsed'
+    {
+        if (!(await fs.existsSync(fileName))) {
+            throw 'deployed file is not existsed'
+        }
+        let dataText = await fs.readFileSync(fileName)
+        deployData = JSON.parse(dataText.toString())
     }
-    let dataText = await fs.readFileSync(fileName)
-    deployData = JSON.parse(dataText.toString())
+    let priceData: PriceData;
+    {
+        let dataText = await fs.readFileSync(process.cwd() + '/deployments/address/prices.json')
+        priceData = JSON.parse(dataText.toString())
+    }
     // 
     const [admin, maker, priceAdmin, platformFund, trader, liquidator] = await ethers.getSigners()
-
-    var price = '1'
 
     let nftPriceFeeds = [
         deployData.nftPriceFeedBAYC,
@@ -39,11 +44,21 @@ async function deploy() {
         deployData.nftPriceFeedCLONEX,
         deployData.nftPriceFeedDOODLE,
     ];
+    let priceKeys = [
+        'priceBAYC',
+        'priceMAYC',
+        'priceCRYPTOPUNKS',
+        'priceMOONBIRD',
+        'priceAZUKI',
+        'priceCLONEX',
+        'priceDOODLE'
+    ];
     for (let i = 0; i < nftPriceFeeds.length; i++) {
         var nftPriceFeedAddress = nftPriceFeeds[i].address
         var priceFeed = (await hre.ethers.getContractAt('NftPriceFeed', nftPriceFeedAddress)) as NftPriceFeed;
         await waitForTx(
-            await priceFeed.connect(priceAdmin).setPrice(parseEther(price))
+            await priceFeed.connect(priceAdmin).setPrice(parseEther(priceData[priceKeys[i]])),
+            'await priceFeed.connect(priceAdmin).setPrice(' + priceData[priceKeys[i]] + ')',
         )
     }
 }

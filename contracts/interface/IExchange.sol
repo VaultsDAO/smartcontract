@@ -147,7 +147,7 @@ interface IExchange {
 
     function estimateSwap(
         DataTypes.OpenPositionParams memory params
-    ) external returns (IOrderBook.ReplaySwapResponse memory response);
+    ) external view returns (IOrderBook.ReplaySwapResponse memory response);
 
     function internalSwap(SwapParams memory params) external returns (SwapResponse memory);
 }

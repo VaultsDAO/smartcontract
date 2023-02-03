@@ -52,6 +52,12 @@ const config: HardhatUserConfig = {
             url: "http://127.0.0.1:8545",
             gas: 8000000,
         },
+        mainnet: {
+            url: "https://mainnet.infura.io/v3/" + INFURA_KEY,
+            chainId: 1,
+            gas: 8000000,
+            accounts: [],
+        },
         arbitrumDev: {
             url: "https://arbitrum-goerli.infura.io/v3/" + INFURA_KEY,
             chainId: 421613,

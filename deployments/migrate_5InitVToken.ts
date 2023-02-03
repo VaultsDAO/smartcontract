@@ -6,7 +6,7 @@ import { encodePriceSqrt } from "../test/shared/utilities";
 import { AccountBalance, BaseToken, Exchange, MarketRegistry, NftPriceFeed, OrderBook, QuoteToken, UniswapV3Pool } from "../typechain";
 import { getMaxTickRange } from "../test/helper/number";
 import helpers from "./helpers";
-import { parseEther } from "ethers/lib/utils";
+import { formatEther, parseEther } from "ethers/lib/utils";
 const { waitForTx, tryWaitForTx } = helpers;
 
 
@@ -20,11 +20,18 @@ async function deploy() {
     const network = hre.network.name;
     let fileName = process.cwd() + '/deployments/address/deployed_' + network + '.json';
     let deployData: DeployData;
-    if (!(await fs.existsSync(fileName))) {
-        throw 'deployed file is not existsed'
+    {
+        if (!(await fs.existsSync(fileName))) {
+            throw 'deployed file is not existsed'
+        }
+        let dataText = await fs.readFileSync(fileName)
+        deployData = JSON.parse(dataText.toString())
     }
-    let dataText = await fs.readFileSync(fileName)
-    deployData = JSON.parse(dataText.toString())
+    let priceData: PriceData;
+    {
+        let dataText = await fs.readFileSync(process.cwd() + '/deployments/address/prices.json')
+        priceData = JSON.parse(dataText.toString())
+    }
     // 
 
     const [admin, maker, priceAdmin, platformFund, trader, liquidator] = await ethers.getSigners()
@@ -45,8 +52,6 @@ async function deploy() {
 
     var uniFeeTier = "3000" // 0.3%
 
-    var price = "1"
-
     let baseTokens = [
         deployData.vBAYC,
         deployData.vMAYC,
@@ -65,10 +70,32 @@ async function deploy() {
         deployData.nftPriceFeedCLONEX,
         deployData.nftPriceFeedDOODLE,
     ];
+    let priceKeys = [
+        'priceBAYC',
+        'priceMAYC',
+        'priceCRYPTOPUNKS',
+        'priceMOONBIRD',
+        'priceAZUKI',
+        'priceCLONEX',
+        'priceDOODLE'
+    ];
     for (let i = 0; i < baseTokens.length; i++) {
         var baseTokenAddress = baseTokens[i].address
         var nftPriceFeedAddress = nftPriceFeeds[i].address
+        var initPrice = formatEther(priceData[priceKeys[i]]);
 
+        // oracle price
+        {
+            var priceFeed = (await hre.ethers.getContractAt('NftPriceFeed', nftPriceFeedAddress)) as NftPriceFeed;
+            if ((await priceFeed.priceFeedAdmin()).toLowerCase() != priceAdmin.address.toLowerCase()) {
+                await waitForTx(
+                    await priceFeed.setPriceFeedAdmin(priceAdmin.address), 'priceFeed.setPriceFeedAdmin(priceAdmin.address)'
+                )
+            }
+            await waitForTx(
+                await priceFeed.connect(priceAdmin).setPrice(parseEther(initPrice)), 'priceFeed.connect(priceAdmin).setPrice(parseEther(price))'
+            )
+        }
         const baseToken = (await ethers.getContractAt('BaseToken', baseTokenAddress)) as BaseToken;
         // setting pool
         {
@@ -99,7 +126,7 @@ async function deploy() {
             const poolAddr = await uniswapV3Factory.getPool(baseToken.address, vETH.address, uniFeeTier)
             const uniPool = (await ethers.getContractAt('UniswapV3Pool', poolAddr) as UniswapV3Pool);
             await tryWaitForTx(
-                await uniPool.initialize(encodePriceSqrt(price, "1")), 'uniPool.initialize(encodePriceSqrt(price, "1"))'
+                await uniPool.initialize(encodePriceSqrt(initPrice, "1")), 'uniPool.initialize(encodePriceSqrt(price, "1"))'
             )
             await tryWaitForTx(
                 await uniPool.increaseObservationCardinalityNext((2 ^ 16) - 1),
@@ -116,18 +143,6 @@ async function deploy() {
                     await exchange.setMaxTickCrossedWithinBlock(baseToken.address, maxTickCrossedWithinBlock), 'exchange.setMaxTickCrossedWithinBlock(baseToken.address, maxTickCrossedWithinBlock)'
                 )
             }
-        }
-        // oracle price
-        {
-            var priceFeed = (await hre.ethers.getContractAt('NftPriceFeed', nftPriceFeedAddress)) as NftPriceFeed;
-            if ((await priceFeed.priceFeedAdmin()).toLowerCase() != priceAdmin.address.toLowerCase()) {
-                await waitForTx(
-                    await priceFeed.setPriceFeedAdmin(priceAdmin.address), 'priceFeed.setPriceFeedAdmin(priceAdmin.address)'
-                )
-            }
-            await waitForTx(
-                await priceFeed.connect(priceAdmin).setPrice(parseEther(price)), 'priceFeed.connect(priceAdmin).setPrice(parseEther(price))'
-            )
         }
         // 
         {

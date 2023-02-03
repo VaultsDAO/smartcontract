@@ -80,5 +80,5 @@ interface IOrderBook {
     /// @return exchange The `Exchange` contract address
     function getExchange() external view returns (address exchange);
 
-    function estimateSwap(ReplaySwapParams memory params) external returns (ReplaySwapResponse memory response);
+    function estimateSwap(ReplaySwapParams memory params) external view returns (ReplaySwapResponse memory response);
 }

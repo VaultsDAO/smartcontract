@@ -65,3 +65,13 @@ type DeployData = {
         removeLiquidity: boolean,
     }
 }
+
+type PriceData = {
+    priceBAYC: string,
+    priceMAYC: string,
+    priceCRYPTOPUNKS: string,
+    priceMOONBIRD: string,
+    priceAZUKI: string,
+    priceCLONEX: string,
+    priceDOODLE: string
+}

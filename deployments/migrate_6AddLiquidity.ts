@@ -43,13 +43,13 @@ async function deploy() {
         deployData.vDOODLE,
     ];
     let initLiquidities = [
-        parseEther('10000'),
-        parseEther('10000'),
-        parseEther('10000'),
-        parseEther('10000'),
-        parseEther('10000'),
-        parseEther('10000'),
-        parseEther('10000'),
+        parseEther('1000'),
+        parseEther('1000'),
+        parseEther('1000'),
+        parseEther('1000'),
+        parseEther('1000'),
+        parseEther('1000'),
+        parseEther('1000'),
     ];
 
     for (let i = 0; i < baseTokens.length; i++) {

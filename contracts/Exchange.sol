@@ -901,7 +901,7 @@ contract Exchange is
 
     function estimateSwap(
         DataTypes.OpenPositionParams memory params
-    ) external override returns (IOrderBook.ReplaySwapResponse memory response) {
+    ) external view override returns (IOrderBook.ReplaySwapResponse memory response) {
         IMarketRegistry.MarketInfo memory marketInfo = IMarketRegistry(_marketRegistry).getMarketInfo(params.baseToken);
         uint24 uniswapFeeRatio = marketInfo.uniswapFeeRatio;
         (, int256 signedScaledAmountForReplaySwap) = SwapMath.calcScaledAmountForSwaps(
