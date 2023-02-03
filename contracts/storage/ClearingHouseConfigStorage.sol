@@ -13,6 +13,7 @@ abstract contract ClearingHouseConfigStorageV1 {
     uint24 internal _maxFundingRate;
     uint32 internal _twapInterval;
     uint256 internal _settlementTokenBalanceCap;
+    uint256 internal _durationRepegOverPriceSpread;
 
     address[10] private __gap1;
     uint256[10] private __gap2;

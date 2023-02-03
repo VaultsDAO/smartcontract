@@ -88,7 +88,6 @@ contract Exchange is
     // uint24 internal constant _MAX_TICK_CROSSED_WITHIN_BLOCK_CAP = 1000; // 10%
     uint24 internal constant _MAX_TICK_CROSSED_WITHIN_BLOCK_CAP = 1774544; // 10%
     uint24 internal constant _MAX_PRICE_SPREAD_RATIO = 0.1e6; // 10% in decimal 6
-    uint24 internal constant _DURATION_REPEG_OVER_PRICE_SPREAD = 900; // 15 minutes
 
     //
     // EXTERNAL NON-VIEW
@@ -896,7 +895,8 @@ contract Exchange is
     function isOverPriceSpreadTimestamp(address baseToken) external view override returns (bool) {
         return
             _lastOverPriceSpreadTimestampMap[baseToken] > 0 &&
-            _lastOverPriceSpreadTimestampMap[baseToken] <= (_blockTimestamp() - _DURATION_REPEG_OVER_PRICE_SPREAD);
+            _lastOverPriceSpreadTimestampMap[baseToken] <=
+            (_blockTimestamp() - IClearingHouseConfig(_clearingHouseConfig).getDurationRepegOverPriceSpread());
     }
 
     function estimateSwap(
