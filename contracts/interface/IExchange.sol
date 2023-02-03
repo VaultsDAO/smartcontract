@@ -141,6 +141,10 @@ interface IExchange {
         address baseToken
     ) external view returns (DataTypes.Growth memory fundingGrowthGlobal, uint256 markTwap, uint256 indexTwap);
 
+    function updateOverPriceSpreadTimestamp(address baseToken) external;
+
+    function isOverPriceSpreadTimestamp(address baseToken) external view returns (bool);
+
     function estimateSwap(
         DataTypes.OpenPositionParams memory params
     ) external returns (IOrderBook.ReplaySwapResponse memory response);

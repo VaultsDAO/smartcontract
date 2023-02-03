@@ -433,6 +433,10 @@ contract Exchange is
 
     /// @inheritdoc IExchange
     function isOverPriceSpread(address baseToken) external view override returns (bool) {
+        return _isOverPriceSpread(baseToken);
+    }
+
+    function _isOverPriceSpread(address baseToken) internal view returns (bool) {
         uint256 markPrice = getSqrtMarkTwapX96(baseToken, 0).formatSqrtPriceX96ToPriceX96().formatX96ToX10_18();
         uint256 indexTwap = IIndexPrice(baseToken).getIndexPrice(
             IClearingHouseConfig(_clearingHouseConfig).getTwapInterval()
@@ -868,6 +872,23 @@ contract Exchange is
         returns (DataTypes.Growth memory fundingGrowthGlobal, uint256 markTwap, uint256 indexTwap)
     {
         (fundingGrowthGlobal, markTwap, indexTwap) = _getFundingGrowthGlobalAndTwaps(baseToken);
+    }
+
+    // OverPriceSpreadTimestamp
+    function updateOverPriceSpreadTimestamp(address baseToken) external override {
+        if (_isOverPriceSpread(baseToken)) {
+            if (_lastOverPriceSpreadTimestampMap[baseToken] == 0) {
+                _lastOverPriceSpreadTimestampMap[baseToken] = _blockTimestamp();
+            }
+        } else {
+            _lastOverPriceSpreadTimestampMap[baseToken] = 0;
+        }
+    }
+
+    function isOverPriceSpreadTimestamp(address baseToken) external view override returns (bool) {
+        return
+            _lastOverPriceSpreadTimestampMap[baseToken] > 0 &&
+            _lastOverPriceSpreadTimestampMap[baseToken] <= (_blockTimestamp() - 900);
     }
 
     function estimateSwap(

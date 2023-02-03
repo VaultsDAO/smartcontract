@@ -10,13 +10,14 @@ abstract contract ExchangeStorageV1 {
     address internal _orderBook;
     address internal _accountBalance;
     address internal _clearingHouseConfig;
-    
+
     address[10] private __gap1;
     uint256[10] private __gap2;
 
     mapping(address => int24) internal _lastUpdatedTickMap;
     mapping(address => uint256) internal _firstTradedTimestampMap;
     mapping(address => uint256) internal _lastSettledTimestampMap;
+    mapping(address => uint256) internal _lastOverPriceSpreadTimestampMap;
     mapping(address => DataTypes.Growth) internal _globalFundingGrowthX96Map;
 
     // key: base token
