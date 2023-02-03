@@ -171,6 +171,8 @@ interface IClearingHouse {
     /// @param delegateApproval The address of DelegateApproval
     event DelegateApprovalChanged(address indexed delegateApproval);
 
+    event Repeg(uint256 oldMarkPrice, uint256 newMarkPrice);
+
     /// @notice Maker can call `addLiquidity` to provide liquidity on Uniswap V3 pool
     /// @dev Tx will fail if adding `base == 0 && quote == 0` / `liquidity == 0`
     /// @dev - `AddLiquidityParams.useTakerBalance` is only accept `false` now
