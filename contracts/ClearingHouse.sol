@@ -658,7 +658,7 @@ contract ClearingHouse is
     function repeg(address baseToken) external {
         // check isAbleRepeg
         // CH_NRP: not repeg
-        require(isAbleRepeg(baseToken), "CH_NRP");
+        // require(isAbleRepeg(baseToken), "CH_NRP");
         //settleFundingGlobal
         GenericLogic.settleFundingGlobal(address(this), baseToken);
         //variable
@@ -689,13 +689,15 @@ contract ClearingHouse is
         address pool = IMarketRegistry(_marketRegistry).getPool(baseToken);
         uint128 liquidity = IUniswapV3Pool(pool).liquidity();
         uint128 removedLiquidity = uint256(liquidity).mul(9999).div(10000).toUint128();
-        removeLiquidity(
+        LiquidityLogic.removeLiquidity(
+            address(this),
             DataTypes.RemoveLiquidityParams({
                 baseToken: baseToken,
                 liquidity: removedLiquidity,
                 deadline: block.timestamp + 60
             })
         );
+
         // calculate base amount for openPosition -> spot price
         // maker openPosition -> spot price
         bool isRepegUp = repegParams.spotPrice > repegParams.oldMarkPrice;
@@ -737,13 +739,15 @@ contract ClearingHouse is
             })
         );
         // add 99.99% liquidity again
-        addLiquidity(
+        LiquidityLogic.addLiquidity(
+            address(this),
             DataTypes.AddLiquidityParams({
                 baseToken: baseToken,
                 liquidity: removedLiquidity,
                 deadline: block.timestamp + 60
             })
         );
+
         console.log("added liquidity %d", IUniswapV3Pool(pool).liquidity());
         // maker closePosition -> spot price
         // closePosition(

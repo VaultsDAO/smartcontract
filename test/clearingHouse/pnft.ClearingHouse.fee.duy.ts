@@ -83,11 +83,11 @@ describe("ClearingHouse fee updated", () => {
             deadline: ethers.constants.MaxUint256,
         })
         mockedNFTPriceFeed.smocked.getPrice.will.return.with(async () => {
-            return parseUnits("80", 18)
+            return parseUnits("120", 18)
         })
         console.log("before repeg");
         await exchange.connect(maker).isOverPriceSpread(baseToken.address);
-        await clearingHouse.connect(maker).repeg(baseToken.address);
+        await clearingHouse.connect(trader).repeg(baseToken.address);
         console.log("after repeg");
         await exchange.connect(maker).isOverPriceSpread(baseToken.address);
 
