@@ -83,7 +83,6 @@ async function deploy() {
         var baseTokenAddress = baseTokens[i].address
         var nftPriceFeedAddress = nftPriceFeeds[i].address
         var initPrice = formatEther(priceData[priceKeys[i]]);
-
         // oracle price
         {
             var priceFeed = (await hre.ethers.getContractAt('NftPriceFeed', nftPriceFeedAddress)) as NftPriceFeed;
@@ -97,8 +96,18 @@ async function deploy() {
             )
         }
         const baseToken = (await ethers.getContractAt('BaseToken', baseTokenAddress)) as BaseToken;
-        // setting pool
+        // deploy clearingHouse
         {
+            if (!(await baseToken.isInWhitelist(clearingHouse.address))) {
+                await waitForTx(await baseToken.addWhitelist(clearingHouse.address), 'baseToken.addWhitelist(clearingHouse.address)')
+            }
+            if (!(await baseToken.totalSupply()).eq(ethers.constants.MaxUint256)) {
+                await waitForTx(await baseToken.mintMaximumTo(clearingHouse.address), 'baseToken.mintMaximumTo(clearingHouse.address)')
+            }
+        }
+        {
+            var maxTickCrossedWithinBlock: number = getMaxTickRange()
+            // setting pool
             let poolAddr = await uniswapV3Factory.getPool(baseToken.address, vETH.address, uniFeeTier)
             if (poolAddr == ethers.constants.AddressZero) {
                 await waitForTx(await uniswapV3Factory.createPool(baseToken.address, vETH.address, uniFeeTier), 'uniswapV3Factory.createPool(baseToken.address, vETH.address, uniFeeTier)')
@@ -111,20 +120,6 @@ async function deploy() {
             if (!(await vETH.isInWhitelist(uniPool.address))) {
                 await waitForTx(await vETH.addWhitelist(uniPool.address), 'vETH.addWhitelist(uniPool.address)')
             }
-        }
-        // deploy clearingHouse
-        if (!(await baseToken.isInWhitelist(clearingHouse.address))) {
-            await waitForTx(await baseToken.addWhitelist(clearingHouse.address), 'baseToken.addWhitelist(clearingHouse.address)')
-        }
-        if (!(await baseToken.totalSupply()).eq(ethers.constants.MaxUint256)) {
-            await waitForTx(await baseToken.mintMaximumTo(clearingHouse.address), 'baseToken.mintMaximumTo(clearingHouse.address)')
-        }
-        // initMarket
-        var maxTickCrossedWithinBlock: number = getMaxTickRange()
-        // baseToken
-        {
-            const poolAddr = await uniswapV3Factory.getPool(baseToken.address, vETH.address, uniFeeTier)
-            const uniPool = (await ethers.getContractAt('UniswapV3Pool', poolAddr) as UniswapV3Pool);
             await tryWaitForTx(
                 await uniPool.initialize(encodePriceSqrt(initPrice, "1")), 'uniPool.initialize(encodePriceSqrt(price, "1"))'
             )
@@ -138,14 +133,13 @@ async function deploy() {
                     await marketRegistry.addPool(baseToken.address, uniFeeRatio), 'marketRegistry.addPool(baseToken.address, uniFeeRatio)'
                 )
             }
+        }
+        {
             if ((await exchange.getMaxTickCrossedWithinBlock(baseToken.address)).toString() != maxTickCrossedWithinBlock.toString()) {
                 await tryWaitForTx(
                     await exchange.setMaxTickCrossedWithinBlock(baseToken.address, maxTickCrossedWithinBlock), 'exchange.setMaxTickCrossedWithinBlock(baseToken.address, maxTickCrossedWithinBlock)'
                 )
             }
-        }
-        // 
-        {
             if ((await marketRegistry.getInsuranceFundFeeRatio(baseToken.address)).toString() != '1500') {
                 await waitForTx(
                     await marketRegistry.setInsuranceFundFeeRatio(baseToken.address, '1500'), 'marketRegistry.setInsuranceFundFeeRatio(baseToken.address, 1500)'

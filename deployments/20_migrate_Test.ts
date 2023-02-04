@@ -84,10 +84,10 @@ async function deploy() {
             var baseTokenAddress = baseTokens[i].address
             var nftPriceFeedAddress = nftPriceFeeds[i].address
 
-            {
-                var priceFeed = await hre.ethers.getContractAt('NftPriceFeed', nftPriceFeedAddress);
-                await priceFeed.connect(priceAdmin).setPrice(parseEther('1')), 'priceFeed.connect(priceAdmin).setPrice(parseEther(1))'
-            }
+            // {
+            //     var priceFeed = await hre.ethers.getContractAt('NftPriceFeed', nftPriceFeedAddress);
+            //     await priceFeed.connect(priceAdmin).setPrice(parseEther('1')), 'priceFeed.connect(priceAdmin).setPrice(parseEther(1))'
+            // }
 
             var baseToken = await hre.ethers.getContractAt('BaseToken', baseTokenAddress);
 

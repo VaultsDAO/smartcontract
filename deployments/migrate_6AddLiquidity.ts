@@ -67,9 +67,7 @@ async function deploy() {
                 }),
                 'clearingHouse.connect(maker).addLiquidity'
             )
-            await fs.writeFileSync(fileName, JSON.stringify(deployData, null, 4))
-        }
-        if (initLiquidity.lt(liquidity)) {
+        } else if (initLiquidity.lt(liquidity)) {
             await waitForTx(
                 await clearingHouse.connect(maker).removeLiquidity({
                     baseToken: baseToken.address,
@@ -78,7 +76,6 @@ async function deploy() {
                 }),
                 'clearingHouse.connect(maker).removeLiquidity'
             )
-            await fs.writeFileSync(fileName, JSON.stringify(deployData, null, 4))
         }
     }
 }
