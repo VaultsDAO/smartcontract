@@ -70,7 +70,7 @@ interface IOrderBook {
     /// @dev `ReplaySwapResponse.insuranceFundFee = fee * insuranceFundFeeRatio`
     /// @param params ReplaySwap params, detail on `IOrderBook.ReplaySwapParams`
     /// @return response The swap result encoded in `ReplaySwapResponse`
-    function replaySwap(ReplaySwapParams memory params) external returns (ReplaySwapResponse memory response);
+    function replaySwap(ReplaySwapParams memory params) external view returns (ReplaySwapResponse memory response);
 
     /// @notice Get open order ids of a trader in the given market
     /// @param baseToken The base token address

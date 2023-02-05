@@ -499,7 +499,7 @@ contract Exchange is
     }
 
     /// @return tick the resulting tick (derived from price) after replaying the swap
-    function _replaySwap(InternalReplaySwapParams memory params) internal returns (int24 tick) {
+    function _replaySwap(InternalReplaySwapParams memory params) internal view returns (int24 tick) {
         IMarketRegistry.MarketInfo memory marketInfo = IMarketRegistry(_marketRegistry).getMarketInfo(params.baseToken);
         uint24 uniswapFeeRatio = marketInfo.uniswapFeeRatio;
         (, int256 signedScaledAmountForReplaySwap) = SwapMath.calcScaledAmountForSwaps(

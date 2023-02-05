@@ -146,7 +146,7 @@ contract OrderBook is
     }
 
     /// @inheritdoc IOrderBook
-    function replaySwap(ReplaySwapParams memory params) external override returns (ReplaySwapResponse memory) {
+    function replaySwap(ReplaySwapParams memory params) external view override returns (ReplaySwapResponse memory) {
         _requireOnlyExchange();
 
         address pool = IMarketRegistry(_marketRegistry).getPool(params.baseToken);
@@ -306,7 +306,7 @@ contract OrderBook is
     //     return UniswapV3Broker.getAmount0Amount1ForLiquidity(pool, lowerTick, upperTick, liquidity);
     // }
 
-    function estimateSwap(ReplaySwapParams memory params) external override view returns (ReplaySwapResponse memory) {
+    function estimateSwap(ReplaySwapParams memory params) external view override returns (ReplaySwapResponse memory) {
         address pool = IMarketRegistry(_marketRegistry).getPool(params.baseToken);
         bool isExactInput = params.amount > 0;
         uint256 fee;

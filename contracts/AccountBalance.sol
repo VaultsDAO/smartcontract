@@ -633,18 +633,27 @@ contract AccountBalance is IAccountBalance, BlockContext, ClearingHouseCallee, A
     function _getPositionValue(address baseToken, int256 positionSize) internal view returns (int256) {
         if (positionSize == 0) return 0;
 
-        uint256 indexTwap = _getReferencePrice(baseToken);
+        uint256 markTwap = _getReferencePrice(baseToken); // pnft use mark price
+        // uint256 indexTwap = _getReferencePrice(baseToken);
         // both positionSize & indexTwap are in 10^18 already
         // overflow inspection:
         // only overflow when position value in USD(18 decimals) > 2^255 / 10^18
-        return positionSize.mulDiv(indexTwap.toInt256(), 1e18);
+        return positionSize.mulDiv(markTwap.toInt256(), 1e18);
     }
+
+    // function _getReferencePrice(address baseToken) internal view returns (uint256) {
+    //     return
+    //         IBaseToken(baseToken).isClosed()
+    //             ? IBaseToken(baseToken).getClosedPrice()
+    //             : IIndexPrice(baseToken).getIndexPrice(IClearingHouseConfig(_clearingHouseConfig).getTwapInterval());
+    // }
 
     function _getReferencePrice(address baseToken) internal view returns (uint256) {
         return
-            IBaseToken(baseToken).isClosed()
-                ? IBaseToken(baseToken).getClosedPrice()
-                : IIndexPrice(baseToken).getIndexPrice(IClearingHouseConfig(_clearingHouseConfig).getTwapInterval());
+            IExchange(IOrderBook(_orderBook).getExchange())
+                .getSqrtMarkTwapX96(baseToken, IClearingHouseConfig(_clearingHouseConfig).getTwapInterval())
+                .formatSqrtPriceX96ToPriceX96()
+                .formatX96ToX10_18();
     }
 
     /// @return netQuoteBalance = quote.balance + totalQuoteInPools
