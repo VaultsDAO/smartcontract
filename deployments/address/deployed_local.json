@@ -2,31 +2,31 @@
     "verifiedContracts": {},
     "nftPriceFeedBAYC": {
         "address": "0x8B65870981c8AeA33977B998AE361c87108B6830",
-        "symbol": "BAYC_ETH"
+        "symbol": "BAYC-ETH"
     },
     "nftPriceFeedMAYC": {
         "address": "0x770E78AfCd2111824ea5e62DFbc8ff675afad3A7",
-        "symbol": "MAYC_ETH"
+        "symbol": "MAYC-ETH"
     },
     "nftPriceFeedCRYPTOPUNKS": {
         "address": "0x4f21fc2dE6F07B395267B70E25f06CEAa0F28E3D",
-        "symbol": "CRYPTOPUNKS_ETH"
+        "symbol": "CRYPTOPUNKS-ETH"
     },
     "nftPriceFeedMOONBIRD": {
         "address": "0xc7d092623d0ad259552B33535385A0d3e9e63b3F",
-        "symbol": "MOONBIRD_ETH"
+        "symbol": "MOONBIRD-ETH"
     },
     "nftPriceFeedAZUKI": {
         "address": "0xE4473d6c2b22C080F9C233e9Df378d26ce132E38",
-        "symbol": "AZUKI_ETH"
+        "symbol": "AZUKI-ETH"
     },
     "nftPriceFeedCLONEX": {
         "address": "0xAcAA0c53886697687096C25C19FFc85bF6f86bDb",
-        "symbol": "CLONEX_ETH"
+        "symbol": "CLONEX-ETH"
     },
     "nftPriceFeedDOODLE": {
         "address": "0x4457fA0e679b615e714106Bb7Ac648Ffd5724427",
-        "symbol": "DOODLE_ETH"
+        "symbol": "DOODLE-ETH"
     },
     "wETH": {
         "address": "0xfA8B13036108BF6007F1205aa827345Eb31a5BB0",

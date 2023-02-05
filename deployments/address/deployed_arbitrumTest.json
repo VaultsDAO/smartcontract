@@ -2,31 +2,31 @@
     "verifiedContracts": {},
     "nftPriceFeedBAYC": {
         "address": "",
-        "symbol": "BAYC_ETH"
+        "symbol": "BAYC-ETH"
     },
     "nftPriceFeedMAYC": {
         "address": "",
-        "symbol": "MAYC_ETH"
+        "symbol": "MAYC-ETH"
     },
     "nftPriceFeedCRYPTOPUNKS": {
         "address": "",
-        "symbol": "CRYPTOPUNKS_ETH"
+        "symbol": "CRYPTOPUNKS-ETH"
     },
     "nftPriceFeedMOONBIRD": {
         "address": "",
-        "symbol": "MOONBIRD_ETH"
+        "symbol": "MOONBIRD-ETH"
     },
     "nftPriceFeedAZUKI": {
         "address": "",
-        "symbol": "AZUKI_ETH"
+        "symbol": "AZUKI-ETH"
     },
     "nftPriceFeedCLONEX": {
         "address": "",
-        "symbol": "CLONEX_ETH"
+        "symbol": "CLONEX-ETH"
     },
     "nftPriceFeedDOODLE": {
         "address": "",
-        "symbol": "DOODLE_ETH"
+        "symbol": "DOODLE-ETH"
     },
     "wETH": {
         "address": "",
