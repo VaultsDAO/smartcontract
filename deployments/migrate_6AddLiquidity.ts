@@ -42,14 +42,15 @@ async function deploy() {
         deployData.vCLONEX,
         deployData.vDOODLE,
     ];
+    // 50 ETH -> 1%
     let initLiquidities = [
-        parseEther('1000'),
-        parseEther('1000'),
-        parseEther('1000'),
-        parseEther('1000'),
-        parseEther('1000'),
-        parseEther('1000'),
-        parseEther('1000'),
+        parseEther('1175'),
+        parseEther('2582'),
+        parseEther('1246'),
+        parseEther('3647'),
+        parseEther('2630'),
+        parseEther('4379'),
+        parseEther('3995'),
     ];
 
     for (let i = 0; i < baseTokens.length; i++) {

@@ -41,7 +41,7 @@ async function deploy() {
     if (deployData.vETH.address == undefined || deployData.vETH.address == '') {
         var quoteToken = await hre.ethers.getContractAt('QuoteToken', deployData.vETH.implAddress);
         var initializeData = quoteToken.interface.encodeFunctionData('initialize', [deployData.vETH.name, deployData.vETH.symbol]);
-        for (let i = 0; i < 20; i++) {
+        for (let i = 0; i < 32; i++) {
             var transparentUpgradeableProxy = await waitForDeploy(
                 await TransparentUpgradeableProxy.deploy(
                     deployData.vETH.implAddress,

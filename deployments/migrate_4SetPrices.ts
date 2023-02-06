@@ -6,7 +6,7 @@ import { encodePriceSqrt } from "../test/shared/utilities";
 import { AccountBalance, BaseToken, MarketRegistry, NftPriceFeed, OrderBook, QuoteToken, UniswapV3Pool } from "../typechain";
 import { getMaxTickRange } from "../test/helper/number";
 import helpers from "./helpers";
-import { parseEther } from "ethers/lib/utils";
+import { formatEther, parseEther } from "ethers/lib/utils";
 const { waitForTx, tryWaitForTx } = helpers;
 
 
@@ -55,10 +55,12 @@ async function deploy() {
     ];
     for (let i = 0; i < nftPriceFeeds.length; i++) {
         var nftPriceFeedAddress = nftPriceFeeds[i].address
+        var initPrice = formatEther(priceData[priceKeys[i]]);
+        console.log(initPrice);
+        console.log(parseEther(initPrice).toString())
         var priceFeed = (await hre.ethers.getContractAt('NftPriceFeed', nftPriceFeedAddress)) as NftPriceFeed;
         await waitForTx(
-            await priceFeed.connect(priceAdmin).setPrice(parseEther(priceData[priceKeys[i]])),
-            'await priceFeed.connect(priceAdmin).setPrice(' + priceData[priceKeys[i]] + ')',
+            await priceFeed.connect(priceAdmin).setPrice(parseEther(initPrice)), 'priceFeed.connect(priceAdmin).setPrice(parseEther(price))'
         )
     }
 }

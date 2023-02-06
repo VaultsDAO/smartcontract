@@ -6,7 +6,7 @@ import { encodePriceSqrt } from "../test/shared/utilities";
 import { AccountBalance, BaseToken, Exchange, MarketRegistry, NftPriceFeed, OrderBook, QuoteToken, UniswapV3Pool } from "../typechain";
 import { getMaxTickRange } from "../test/helper/number";
 import helpers from "./helpers";
-import { formatEther, parseEther } from "ethers/lib/utils";
+import { formatEther, formatUnits, parseEther } from "ethers/lib/utils";
 const { waitForTx, tryWaitForTx } = helpers;
 
 

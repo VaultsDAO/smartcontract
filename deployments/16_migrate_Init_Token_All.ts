@@ -20,11 +20,18 @@ async function deploy() {
     const network = hre.network.name;
     let fileName = process.cwd() + '/deployments/address/deployed_' + network + '.json';
     let deployData: DeployData;
-    if (!(await fs.existsSync(fileName))) {
-        throw 'deployed file is not existsed'
+    {
+        if (!(await fs.existsSync(fileName))) {
+            throw 'deployed file is not existsed'
+        }
+        let dataText = await fs.readFileSync(fileName)
+        deployData = JSON.parse(dataText.toString())
     }
-    let dataText = await fs.readFileSync(fileName)
-    deployData = JSON.parse(dataText.toString())
+    let priceData: PriceData;
+    {
+        let dataText = await fs.readFileSync(process.cwd() + '/deployments/address/prices.json')
+        priceData = JSON.parse(dataText.toString())
+    }
     // 
 
     const [admin, maker, priceAdmin, platformFund, trader, liquidator] = await ethers.getSigners()
@@ -45,8 +52,6 @@ async function deploy() {
 
     var uniFeeTier = "3000" // 0.3%
 
-    var price = "1"
-
     let baseTokens = [
         deployData.vBAYC,
         deployData.vMAYC,
@@ -65,9 +70,19 @@ async function deploy() {
         deployData.nftPriceFeedCLONEX,
         deployData.nftPriceFeedDOODLE,
     ];
+    let priceKeys = [
+        'priceBAYC',
+        'priceMAYC',
+        'priceCRYPTOPUNKS',
+        'priceMOONBIRD',
+        'priceAZUKI',
+        'priceCLONEX',
+        'priceDOODLE'
+    ];
     for (let i = 0; i < baseTokens.length; i++) {
         var baseTokenAddress = baseTokens[i].address
         var nftPriceFeedAddress = nftPriceFeeds[i].address
+        var price = parseEther(priceData[priceKeys[i]]);
 
         const baseToken = (await ethers.getContractAt('BaseToken', baseTokenAddress)) as BaseToken;
         // setting pool
@@ -126,7 +141,7 @@ async function deploy() {
                 )
             }
             await waitForTx(
-                await priceFeed.connect(priceAdmin).setPrice(parseEther(price)), 'priceFeed.connect(priceAdmin).setPrice(parseEther(price))'
+                await priceFeed.connect(priceAdmin).setPrice(price), 'priceFeed.connect(priceAdmin).setPrice(parseEther(price))'
             )
         }
         // 
