@@ -55,6 +55,9 @@ async function deploy() {
                 deployData.vETH.address = transparentUpgradeableProxy.address;
                 await fs.writeFileSync(fileName, JSON.stringify(deployData, null, 4))
                 console.log('vETH TransparentUpgradeableProxy is deployed', transparentUpgradeableProxy.address)
+                if (deployData.vETH.address.toLowerCase().startsWith("0xf")) {
+                    break
+                }
             }
         }
     }

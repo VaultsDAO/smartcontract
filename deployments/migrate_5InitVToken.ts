@@ -79,7 +79,12 @@ async function deploy() {
         'priceCLONEX',
         'priceDOODLE'
     ];
-    for (let i = 0; i < baseTokens.length; i++) {
+    for (let i = 4; i < 7; i++) {
+        console.log(
+            '--------------------------------------',
+            priceKeys[i].substring(5),
+            '--------------------------------------',
+        )
         var baseTokenAddress = baseTokens[i].address
         var nftPriceFeedAddress = nftPriceFeeds[i].address
         var initPrice = formatEther(priceData[priceKeys[i]]);

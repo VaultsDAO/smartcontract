@@ -1,35 +1,35 @@
 {
     "verifiedContracts": {},
     "nftPriceFeedBAYC": {
-        "address": "",
+        "address": "0x77e38fF6cf10e3553aFF00DC92b66BDb2aBDED15",
         "symbol": "BAYC-ETH"
     },
     "nftPriceFeedMAYC": {
-        "address": "",
+        "address": "0x5bE4a4f54C5bc78D7888dD9BC3a28D4AA73ffC84",
         "symbol": "MAYC-ETH"
     },
     "nftPriceFeedCRYPTOPUNKS": {
-        "address": "",
+        "address": "0xCEC661EFBC418acA4b8FE767D51Cca2af653A7af",
         "symbol": "CRYPTOPUNKS-ETH"
     },
     "nftPriceFeedMOONBIRD": {
-        "address": "",
+        "address": "0x34FaeC59537E6999792D1294055CF21df25d533f",
         "symbol": "MOONBIRD-ETH"
     },
     "nftPriceFeedAZUKI": {
-        "address": "",
+        "address": "0xA3dec929A1B916BC4E3F848c87FAFCC7a71A4a8E",
         "symbol": "AZUKI-ETH"
     },
     "nftPriceFeedCLONEX": {
-        "address": "",
+        "address": "0x23B3699387E8F0642fA9012931E2b256FFbD54d8",
         "symbol": "CLONEX-ETH"
     },
     "nftPriceFeedDOODLE": {
-        "address": "",
+        "address": "0xfD16993304716CB833c7b54b0Ba45F9674c6e87A",
         "symbol": "DOODLE-ETH"
     },
     "wETH": {
-        "address": "",
+        "address": "0x48880ee400B7cb952F8704d6a78c403C0c35B01D",
         "name": "Wrapped Ether",
         "symbol": "WETH",
         "decimals": 18
@@ -38,50 +38,50 @@
         "name": "vETH",
         "symbol": "vETH",
         "decimals": 18,
-        "address": "",
-        "implAddress": ""
+        "address": "0xFbFbA39D19B5d6CD35Ff32E19000Acd0Ed99EeBC",
+        "implAddress": "0x5f20A53174d6D37765deA2555dC9b1796a1516Ff"
     },
     "baseToken": {
-        "implAddress": ""
+        "implAddress": "0x02cbdce98721EBD335FaECF1f625a339615dE6cF"
     },
     "vBAYC": {
-        "address": "",
+        "address": "0xdeE687bA93f13BDE15AC3De159B8c6fc570b7D96",
         "name": "vBAYC",
         "symbol": "vBAYC",
         "decimals": 18
     },
     "vMAYC": {
-        "address": "",
+        "address": "0x6EB340bc858381aea9F035c8CF2069eFA9950331",
         "name": "vMAYC",
         "symbol": "vMAYC",
         "decimals": 18
     },
     "vCRYPTOPUNKS": {
-        "address": "",
+        "address": "0x3FdC349332Ea18Ef59267E12ddF8633481B91605",
         "name": "vCRYPTOPUNKS",
         "symbol": "vCRYPTOPUNKS",
         "decimals": 18
     },
     "vMOONBIRD": {
-        "address": "",
+        "address": "0x83737c312fAFee21F0C088097Eb51FDcD0b35119",
         "name": "vMOONBIRD",
         "symbol": "vMOONBIRD",
         "decimals": 18
     },
     "vAZUKI": {
-        "address": "",
+        "address": "0x5fA09ab4a1Ab508979EB5D10D6bCB127Afc2aA37",
         "name": "vAZUKI",
         "symbol": "vAZUKI",
         "decimals": 18
     },
     "vCLONEX": {
-        "address": "",
+        "address": "0x91B8F27BC7E863f7e0507F9EcF7f77A156540D5C",
         "name": "vCLONEX",
         "symbol": "vCLONEX",
         "decimals": 18
     },
     "vDOODLE": {
-        "address": "",
+        "address": "0xd724E38b23Ce64D2dBbab3c8a4e676aE9Be5FBCB",
         "name": "vDOODLE",
         "symbol": "vDOODLE",
         "decimals": 18
@@ -89,58 +89,58 @@
     "priceAdminAddress": "0x9686203be0cae320bb4Dee971BB8a530A15EF489",
     "platformFundAddress": "0x618B9BD8C290D55af7fBD5185b178071Fec8DF36",
     "makerFundAddress": "0x9cEDf5C18B8c93E4DE45A446C9caDFF98DB1a756",
-    "proxyAdminAddress": "",
+    "proxyAdminAddress": "0x77590b05b5D35413EfADcc3EC78a52ddd02741C2",
     "uniswapV3Factory": {
         "address": "0x4893376342d5D7b3e31d4184c08b265e5aB2A3f6"
     },
     "clearingHouseConfig": {
-        "address": "",
-        "implAddress": ""
+        "address": "0xe144D58FF12220a63bb2Ead4D75c7F08074A7277",
+        "implAddress": "0xad588667337535443e9A507b99893eB252D3ea57"
     },
     "marketRegistry": {
-        "address": "",
-        "implAddress": ""
+        "address": "0xdB302c5D514B6ebBDD410F484A60f5afAf035E62",
+        "implAddress": "0xbFC2630E20CEBaA06BC89d698fd3bD76c054b5be"
     },
     "orderBook": {
-        "address": "",
-        "implAddress": ""
+        "address": "0x01C70a7AE66b07Ec30ABd391127f95f22B3C3e3c",
+        "implAddress": "0xF5695C864f44F41738A3397D9DeD93eC24faceBb"
     },
     "accountBalance": {
-        "address": "",
-        "implAddress": ""
+        "address": "0xB294B0F15EF2C902c6D80928bCC54eb6566aDaC4",
+        "implAddress": "0x7bB2835360786A73e767C48943F36485a5dEdb52"
     },
     "exchange": {
-        "address": "",
-        "implAddress": ""
+        "address": "0xF653965d60EdF584b311b0df9673565Bc7C5359f",
+        "implAddress": "0x32c4a74Ae8a86db1286B137b59a3CDf8A2d9e72a"
     },
     "insuranceFund": {
-        "address": "",
-        "implAddress": ""
+        "address": "0x64f357D491967fF8961eDb6AD845BA8321C21B5B",
+        "implAddress": "0xFfc41EDbfB3D699982214A70DD2d00Cd448A1572"
     },
     "vault": {
-        "address": "",
-        "implAddress": ""
+        "address": "0x7673d9fB58769853056Bdf60CB88b0f8b6cde8D2",
+        "implAddress": "0x690f2E1530C5cF7AbD770dF909df6B026AF26999"
     },
     "collateralManager": {
-        "address": "",
-        "implAddress": ""
+        "address": "0x4a050D735119aa388643A05CecB852eA55278562",
+        "implAddress": "0x86189a491Af2c60517F4E1Fd043186b328aF6B50"
     },
     "genericLogic": {
-        "address": ""
+        "address": "0x48562491df33e6a23626FE24da25dc1Ea495AC33"
     },
     "liquidityLogic": {
-        "address": ""
+        "address": "0x3a656664f35e3fFbb4aa0844D2a2a48BD04E891d"
     },
     "exchangeLogic": {
-        "address": ""
+        "address": "0x7BF660dA27F40E8B7e97277f82F6be4f417459E2"
     },
     "clearingHouse": {
-        "address": "",
-        "implAddress": ""
+        "address": "0xa621Ea45F69B71509BBAbbab57C4133F3C47Ac1e",
+        "implAddress": "0xB6501A98A5090ED4b1072186F9458e7E61B117C6"
     },
     "testFaucet": {
-        "address": "",
-        "implAddress": ""
+        "address": "0xF48f84206110989756F8737B3605580a1728dF03",
+        "implAddress": "0x9408f7153D02f02e93E758c2CB908e0613C468C2"
     },
     "testCheck": {
         "addLiquidity": false,
