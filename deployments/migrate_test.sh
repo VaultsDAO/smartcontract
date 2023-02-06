@@ -8,3 +8,4 @@ npx hardhat run deployments/migrate_4SetPrices.ts --network arbitrumTest --no-co
 npx hardhat run deployments/migrate_5InitVToken.ts --network arbitrumTest --no-compile
 npx hardhat run deployments/migrate_6AddLiquidity.ts --network arbitrumTest --no-compile
 npx hardhat run deployments/migrate_7Faucet.ts --network arbitrumTest --no-compile
+npx hardhat run deployments/migrate_8Trade.ts --network arbitrumTest --no-compile

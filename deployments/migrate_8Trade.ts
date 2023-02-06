@@ -47,16 +47,20 @@ async function deploy() {
 
     var wETH = (await hre.ethers.getContractAt('TestERC20', deployData.wETH.address)) as TestERC20;
 
-    var depositForTrader = async function name(traderAddress: string) {
-        let balance = await vault.getBalanceByToken(traderAddress, wETH.address)
-        if (balance.lt(parseEther('1000'))) {
+    var depositForTrader = async function name(trader: SignerWithAddress) {
+        let balance = await vault.getBalanceByToken(trader.address, wETH.address)
+        if (balance.lt(parseEther('10000'))) {
             await waitForTx(
-                await wETH.approve(vault.address, ethers.constants.MaxUint256),
+                await wETH.connect(admin).mint(trader.address, parseEther('10000').sub(balance)),
+                'wETH.mint(' + vault.address + ', ' + formatEther(parseEther('10000').sub(balance)) + ')'
+            )
+            await waitForTx(
+                await wETH.connect(trader).approve(vault.address, ethers.constants.MaxUint256),
                 'wETH.approve(' + vault.address + ', ethers.constants.MaxUint256)'
             )
             await waitForTx(
-                await vault.deposit(wETH.address, parseEther('1000').sub(balance)),
-                'vault.deposit(' + wETH.address + ', ' + parseEther('1000').sub(balance) + ')'
+                await vault.connect(trader).deposit(wETH.address, parseEther('10000').sub(balance)),
+                'vault.deposit(' + wETH.address + ', ' + formatEther(parseEther('10000').sub(balance)) + ')'
             )
         }
     }
@@ -88,7 +92,7 @@ async function deploy() {
         let trader: SignerWithAddress
 
         if (markTwap.gt(indexPrice)) {
-            let newPrice = (indexPrice.multipliedBy(1 - 0.001 * rndInt))
+            let newPrice = (indexPrice.multipliedBy(1 - 0.0001 * rndInt))
             for (let idx = 0; idx < 10; idx++) {
                 let rndTrader = Math.floor(Math.random() * 1000000) % 4 + 1
                 if (rndTrader == 1) {
@@ -106,7 +110,7 @@ async function deploy() {
                 }
                 break
             }
-            await depositForTrader(trader.address)
+            await depositForTrader(trader)
             await waitForTx(
                 await clearingHouse.connect(trader).openPosition({
                     baseToken: baseToken.address,
@@ -139,7 +143,7 @@ async function deploy() {
                 }
                 break
             }
-            await depositForTrader(trader.address)
+            await depositForTrader(trader)
             await waitForTx(
                 await clearingHouse.connect(trader).openPosition({
                     baseToken: baseToken.address,
