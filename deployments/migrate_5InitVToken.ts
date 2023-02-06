@@ -79,7 +79,7 @@ async function deploy() {
         'priceCLONEX',
         'priceDOODLE'
     ];
-    for (let i = 4; i < 7; i++) {
+    for (let i = 0; i < 7; i++) {
         console.log(
             '--------------------------------------',
             priceKeys[i].substring(5),
@@ -111,7 +111,6 @@ async function deploy() {
             }
         }
         {
-            var maxTickCrossedWithinBlock: number = getMaxTickRange()
             // setting pool
             let poolAddr = await uniswapV3Factory.getPool(baseToken.address, vETH.address, uniFeeTier)
             if (poolAddr == ethers.constants.AddressZero) {
@@ -140,6 +139,7 @@ async function deploy() {
             }
         }
         {
+            var maxTickCrossedWithinBlock: number = 488
             if ((await exchange.getMaxTickCrossedWithinBlock(baseToken.address)).toString() != maxTickCrossedWithinBlock.toString()) {
                 await tryWaitForTx(
                     await exchange.setMaxTickCrossedWithinBlock(baseToken.address, maxTickCrossedWithinBlock), 'exchange.setMaxTickCrossedWithinBlock(baseToken.address, maxTickCrossedWithinBlock)'
