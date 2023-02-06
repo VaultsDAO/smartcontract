@@ -97,6 +97,8 @@ describe("ClearingHouse multiplier", () => {
 
         await setup(currPrice);
 
+        await clearingHouseConfig.setDurationRepegOverPriceSpread(0)
+
         // maker add liquidity
         await clearingHouse.connect(maker).addLiquidity({
             baseToken: baseToken.address,
@@ -104,16 +106,22 @@ describe("ClearingHouse multiplier", () => {
             deadline: ethers.constants.MaxUint256,
         })
         let prices = [
-            "71999659555555555555",
-            "14924448077923568107",
+            "71022863666244721554",
+            "15196068696338998071",
             "63990000000000000000",
-            "7480000000000000000",
-            "14379264373305034783",
-            "5188831389460711919",
-            "6233693637962864448"
+            "7597335277777777777",
+            "15428716118911291230",
+            "5165343879481401594",
+            "6260450469664299665"
         ];
         for (let i = 0; i < prices.length; i++) {
             const estimatePrice = prices[i]
+
+            mockedNFTPriceFeed.smocked.getPrice.will.return.with(async () => {
+                return parseUnits('1000', 18)
+            })
+
+            await clearingHouse.repeg(baseToken.address)
 
             mockedNFTPriceFeed.smocked.getPrice.will.return.with(async () => {
                 return parseUnits(estimatePrice, 0)

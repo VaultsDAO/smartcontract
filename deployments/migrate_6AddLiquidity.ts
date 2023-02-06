@@ -44,13 +44,13 @@ async function deploy() {
     ];
     // 50 ETH -> 1%
     let initLiquidities = [
-        parseEther('1175'),
-        parseEther('2582'),
+        parseEther('1183'),
+        parseEther('2558'),
         parseEther('1246'),
-        parseEther('3647'),
-        parseEther('2630'),
-        parseEther('4379'),
-        parseEther('3995'),
+        parseEther('3618'),
+        parseEther('2539'),
+        parseEther('4388'),
+        parseEther('3986'),
     ];
 
     for (let i = 0; i < baseTokens.length; i++) {
