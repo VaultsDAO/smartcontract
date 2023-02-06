@@ -18,6 +18,7 @@ contract ClearingHouseConfig is IClearingHouseConfig, SafeOwnable, ClearingHouse
     event SettlementTokenBalanceCapChanged(uint256 cap);
     event MaxFundingRateChanged(uint24 rate);
     event BackstopLiquidityProviderChanged(address indexed account, bool indexed isProvider);
+    event DurationRepegOverPriceSpreadChanged(uint256 duration);
 
     //
     // MODIFIER
@@ -44,8 +45,8 @@ contract ClearingHouseConfig is IClearingHouseConfig, SafeOwnable, ClearingHouse
         _maxFundingRate = 0.1e6; // max funding rate, 10% in decimal 6
         // _twapInterval = 15 minutes;
         _twapInterval = 0;
-        _settlementTokenBalanceCap = 0;
-        _durationRepegOverPriceSpread = 15 minutes;
+        _settlementTokenBalanceCap = type(uint256).max;
+        _durationRepegOverPriceSpread = 8 hours;
     }
 
     function setImRatio(uint24 imRatioArg) external checkRatio(imRatioArg) onlyOwner {
@@ -94,6 +95,11 @@ contract ClearingHouseConfig is IClearingHouseConfig, SafeOwnable, ClearingHouse
     function setBackstopLiquidityProvider(address account, bool isProvider) external onlyOwner {
         _backstopLiquidityProviderMap[account] = isProvider;
         emit BackstopLiquidityProviderChanged(account, isProvider);
+    }
+
+    function setDurationRepegOverPriceSpread(uint24 durationRepegOverPriceSpreadArg) external onlyOwner {
+        _durationRepegOverPriceSpread = durationRepegOverPriceSpreadArg;
+        emit DurationRepegOverPriceSpreadChanged(_durationRepegOverPriceSpread);
     }
 
     //

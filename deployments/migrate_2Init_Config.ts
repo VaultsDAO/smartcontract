@@ -116,6 +116,11 @@ async function deploy() {
             await clearingHouseConfig.setImRatio('200000'), 'await clearingHouseConfig.setImRatio(200000)'
         )
     }
+    if ((await clearingHouseConfig.getDurationRepegOverPriceSpread()).toString() != '28800') {
+        await waitForTx(
+            await clearingHouseConfig.setDurationRepegOverPriceSpread('28800'), 'await clearingHouseConfig.setDurationRepegOverPriceSpread(28800)'
+        )
+    }
 }
 
 // We recommend this pattern to be able to use async/await everywhere

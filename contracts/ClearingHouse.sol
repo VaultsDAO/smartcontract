@@ -640,9 +640,9 @@ contract ClearingHouse is
         if (!IExchange(_exchange).isOverPriceSpread(baseToken)) {
             return false;
         }
-        // if (!IExchange(_exchange).isOverPriceSpreadTimestamp(baseToken)) {
-        //     return false;
-        // }
+        if (!IExchange(_exchange).isOverPriceSpreadTimestamp(baseToken)) {
+            return false;
+        }
         return true;
     }
 
@@ -664,7 +664,7 @@ contract ClearingHouse is
     function repeg(address baseToken) external {
         // check isAbleRepeg
         // CH_NRP: not repeg
-        // require(isAbleRepeg(baseToken), "CH_NRP");
+        require(isAbleRepeg(baseToken), "CH_NRP");
         //settleFundingGlobal
         GenericLogic.settleFundingGlobal(address(this), baseToken);
         //variable

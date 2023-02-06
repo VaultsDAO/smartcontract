@@ -87,7 +87,7 @@ contract Exchange is
     uint256 internal constant _FULLY_CLOSED_RATIO = 1e18;
     // uint24 internal constant _MAX_TICK_CROSSED_WITHIN_BLOCK_CAP = 1000; // 10%
     uint24 internal constant _MAX_TICK_CROSSED_WITHIN_BLOCK_CAP = 1774544; // 10%
-    uint24 internal constant _MAX_PRICE_SPREAD_RATIO = 0.1e6; // 10% in decimal 6
+    uint24 internal constant _MAX_PRICE_SPREAD_RATIO = 0.05e6; // 5% in decimal 6
 
     //
     // EXTERNAL NON-VIEW
@@ -113,7 +113,7 @@ contract Exchange is
 
     /// @param accountBalanceArg: AccountBalance contract address
     function setAccountBalance(address accountBalanceArg) external onlyOwner {
-        // accountBalance is 0
+        // accountBalance  0
         require(accountBalanceArg != address(0), "E_AB0");
         _accountBalance = accountBalanceArg;
         emit AccountBalanceChanged(accountBalanceArg);
@@ -447,7 +447,10 @@ contract Exchange is
         console.log("markPrice %d", markPrice);
         console.log("indexTwap %d", indexTwap);
         uint256 spread = markPrice > indexTwap ? markPrice.sub(indexTwap) : indexTwap.sub(markPrice);
-        return spread > PerpMath.mulRatio(indexTwap, _MAX_PRICE_SPREAD_RATIO);
+        // get market info
+        IMarketRegistry.MarketInfo memory marketInfo = IMarketRegistry(_marketRegistry).getMarketInfo(baseToken);
+
+        return spread > PerpMath.mulRatio(indexTwap, marketInfo.unhealthyDeltaTwapRatio);
     }
 
     //
@@ -897,6 +900,10 @@ contract Exchange is
             _lastOverPriceSpreadTimestampMap[baseToken] > 0 &&
             _lastOverPriceSpreadTimestampMap[baseToken] <=
             (_blockTimestamp() - IClearingHouseConfig(_clearingHouseConfig).getDurationRepegOverPriceSpread());
+    }
+
+    function getOverPriceSpreadTimestamp(address baseToken) external view returns (uint256) {
+        return _lastOverPriceSpreadTimestampMap[baseToken];
     }
 
     function estimateSwap(
