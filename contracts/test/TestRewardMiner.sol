@@ -16,9 +16,18 @@ contract TestRewardMiner is RewardMiner {
         uint256 periodDurationArg,
         uint256[] memory starts,
         uint256[] memory ends,
-        uint256[] memory totals
+        uint256[] memory totals,
+        uint256 limitClaimPeriodArg
     ) external initializer {
-        RewardMiner.initialize(clearingHouseArg, pnftTokenArg, periodDurationArg, starts, ends, totals);
+        RewardMiner.initialize(
+            clearingHouseArg,
+            pnftTokenArg,
+            periodDurationArg,
+            starts,
+            ends,
+            totals,
+            limitClaimPeriodArg
+        );
         _testBlockTimestamp = block.timestamp;
     }
 

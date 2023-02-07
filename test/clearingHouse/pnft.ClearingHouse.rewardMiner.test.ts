@@ -31,7 +31,7 @@ import { initMarket } from "../helper/marketHelper"
 import { IGNORABLE_DUST, priceToTick } from "../helper/number"
 import { deposit } from "../helper/token"
 import { filterLogs } from "../shared/utilities"
-import { ClearingHouseFixture, createClearingHouseFixture } from "./fixtures"
+import { ClearingHouseFixture, createClearingHouseFixture, mockPNTTokenFixture } from "./fixtures"
 
 describe("ClearingHouse rewardMiner", () => {
 
@@ -94,6 +94,9 @@ describe("ClearingHouse rewardMiner", () => {
         //     liquidity: parseEther('10000'),
         //     deadline: ethers.constants.MaxUint256,
         // })
+
+        let mockPNTToken = await mockPNTTokenFixture()
+
         const periodDuration = 43200;
         const starts = [
             1,
@@ -136,13 +139,14 @@ describe("ClearingHouse rewardMiner", () => {
         ]
         rewardMiner.__TestRewardMiner_init(
             admin.address,
-            collateral.address,
+            mockPNTToken.address,
             periodDuration,
             starts,
             ends,
             totals,
+            360,
         )
-        await collateral.mint(rewardMiner.address, parseEther('60000000'))
+        await mockPNTToken.mint(rewardMiner.address, parseEther('60000000'))
 
         await rewardMiner.mint(trader1.address, parseEther('1000'))
         await rewardMiner.mint(trader2.address, parseEther('1000'))
@@ -155,7 +159,7 @@ describe("ClearingHouse rewardMiner", () => {
             formatEther((await rewardMiner.getClaimable(trader1.address))),
             formatEther((await rewardMiner.getClaimable(trader2.address))),
         )
-        for (let i = 0; i < 1440; i++) {
+        for (let i = 0; i < 400; i++) {
             await rewardMiner.mint(trader1.address, parseEther('1000'))
             await rewardMiner.mint(trader2.address, parseEther('3000'))
             await rewardMiner.setBlockTimestamp((await rewardMiner.getBlockTimestamp()).add(periodDuration).toString())
@@ -183,8 +187,8 @@ describe("ClearingHouse rewardMiner", () => {
             formatEther((await rewardMiner.getClaimable(trader1.address))),
             formatEther((await rewardMiner.getClaimable(trader2.address))),
 
-            formatEther((await collateral.balanceOf(trader1.address))),
-            formatEther((await collateral.balanceOf(trader2.address))),
+            formatEther((await mockPNTToken.balanceOf(trader1.address))),
+            formatEther((await mockPNTToken.balanceOf(trader2.address))),
         )
 
         return
@@ -254,8 +258,8 @@ describe("ClearingHouse rewardMiner", () => {
             formatEther((await rewardMiner.getClaimable(trader1.address))),
             formatEther((await rewardMiner.getClaimable(trader2.address))),
 
-            formatEther((await collateral.balanceOf(trader1.address))),
-            formatEther((await collateral.balanceOf(trader2.address))),
+            formatEther((await mockPNTToken.balanceOf(trader1.address))),
+            formatEther((await mockPNTToken.balanceOf(trader2.address))),
         )
         await rewardMiner.setBlockTimestamp((await rewardMiner.getBlockTimestamp()).add(1000).toString())
         console.log(

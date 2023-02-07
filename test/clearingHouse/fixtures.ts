@@ -11,6 +11,7 @@ import {
     Exchange,
     InsuranceFund,
     MarketRegistry,
+    MockPNFTToken,
     OrderBook,
     RewardMiner,
     TestClearingHouse,
@@ -336,6 +337,13 @@ export async function uniswapV3BrokerFixture(): Promise<UniswapV3BrokerFixture> 
     const uniswapV3Broker = (await uniswapV3BrokerFactory.deploy()) as TestUniswapV3Broker
     await uniswapV3Broker.initialize(factory.address)
     return { uniswapV3Broker }
+}
+
+export async function mockPNTTokenFixture(): Promise<MockPNFTToken> {
+    const MockPNFTToken = await ethers.getContractFactory("MockPNFTToken")
+    const mockPNFTToken = (await MockPNFTToken.deploy()) as MockPNFTToken
+    await mockPNFTToken.__MockPNFTToken_init('', '', 18)
+    return mockPNFTToken
 }
 
 interface MockedClearingHouseFixture {

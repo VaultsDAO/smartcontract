@@ -109,6 +109,7 @@ describe("ClearingHouse random trade liquidity repeg close", () => {
                 parseEther('4000'),
                 parseEther('5000'),
             ],
+            360,
         )
         await collateral.mint(rewardMiner.address, parseEther('60000'))
         await clearingHouse.setRewardMiner(rewardMiner.address)

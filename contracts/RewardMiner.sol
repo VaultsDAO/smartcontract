@@ -4,7 +4,10 @@ pragma abicoder v2;
 
 import { AddressUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/AddressUpgradeable.sol";
 import { SafeMathUpgradeable } from "@openzeppelin/contracts-upgradeable/math/SafeMathUpgradeable.sol";
+import { SignedSafeMathUpgradeable } from "@openzeppelin/contracts-upgradeable/math/SignedSafeMathUpgradeable.sol";
 import { IERC20Upgradeable } from "@openzeppelin/contracts-upgradeable/token/ERC20/SafeERC20Upgradeable.sol";
+import { PerpSafeCast } from "./lib/PerpSafeCast.sol";
+import { PerpMath } from "./lib/PerpMath.sol";
 import { OwnerPausable } from "./base/OwnerPausable.sol";
 import { IRewardMiner } from "./interface/IRewardMiner.sol";
 import { BlockContext } from "./base/BlockContext.sol";
@@ -14,6 +17,11 @@ import "hardhat/console.sol";
 contract RewardMiner is IRewardMiner, BlockContext, OwnerPausable {
     using AddressUpgradeable for address;
     using SafeMathUpgradeable for uint256;
+    using SignedSafeMathUpgradeable for int256;
+    using PerpSafeCast for uint256;
+    using PerpSafeCast for int256;
+    using PerpMath for uint256;
+    using PerpMath for int256;
 
     event Mint(address trader, uint256 amount);
     event Spend(address trader, uint256 amount);
@@ -39,6 +47,7 @@ contract RewardMiner is IRewardMiner, BlockContext, OwnerPausable {
     address internal _pnftToken;
     uint256 internal _start;
     uint256 internal _periodDuration;
+    uint256 internal _limitClaimPeriod;
     PeriodConfig[] public _periodConfigs;
     //
     mapping(uint256 => PeriodData) public _periodDataMap;
@@ -64,7 +73,8 @@ contract RewardMiner is IRewardMiner, BlockContext, OwnerPausable {
         uint256 periodDurationArg,
         uint256[] memory starts,
         uint256[] memory ends,
-        uint256[] memory totals
+        uint256[] memory totals,
+        uint256 limitClaimPeriodArg
     ) public initializer {
         // ClearingHouse address is not contract
         // _isContract(clearingHouseArg, "RM_CHNC");
@@ -77,6 +87,8 @@ contract RewardMiner is IRewardMiner, BlockContext, OwnerPausable {
         _clearingHouse = clearingHouseArg;
         _pnftToken = pnftTokenArg;
         _periodDuration = periodDurationArg;
+        _limitClaimPeriod = limitClaimPeriodArg;
+
         for (uint256 i = 0; i < ends.length; i++) {
             // RM_ISE: invalid start end
             require(starts[i] <= ends[i], "RM_ISE");
@@ -93,6 +105,20 @@ contract RewardMiner is IRewardMiner, BlockContext, OwnerPausable {
 
     function _isContract(address contractArg, string memory errorMsg) internal view {
         require(contractArg.isContract(), errorMsg);
+    }
+
+    function setClearingHouse(address clearingHouseArg) external {
+        _isContract(clearingHouseArg, "RM_CHNC");
+        _clearingHouse = clearingHouseArg;
+    }
+
+    // function setPnftToken(address pnftTokenArg) external {
+    //     _isContract(pnftTokenArg, "RM_PTNC");
+    //     _pnftToken = pnftTokenArg;
+    // }
+
+    function setLimitClaimPeriod(uint256 limitClaimPeriodArg) external {
+        _limitClaimPeriod = limitClaimPeriodArg;
     }
 
     function getAllocation() external view returns (uint256 allocation) {
@@ -174,7 +200,11 @@ contract RewardMiner is IRewardMiner, BlockContext, OwnerPausable {
         uint256 periodNumber = _getPeriodNumber();
         uint256 lastPeriodNumber = _lastClaimPeriodNumberMap[trader];
         if (_periodNumbers.length > 0) {
-            for (int256 i = int256(_periodNumbers.length - 1); i >= 0; i--) {
+            int256 endPeriod = 0;
+            if (_limitClaimPeriod > 0 && (_periodNumbers.length - 1).toInt256() >= _limitClaimPeriod.toInt256()) {
+                endPeriod = (_periodNumbers.length - 1).toInt256().sub(_limitClaimPeriod.toInt256());
+            }
+            for (int256 i = (_periodNumbers.length - 1).toInt256(); i >= endPeriod; i--) {
                 PeriodData storage periodData = _periodDataMap[_periodNumbers[uint256(i)]];
                 if (
                     periodData.amount > 0 &&
@@ -224,5 +254,9 @@ contract RewardMiner is IRewardMiner, BlockContext, OwnerPausable {
 
     function claim() external returns (uint256 amount) {
         return _claim(_msgSender());
+    }
+
+    function emergencyWithdraw(uint256 amount) external onlyOwner {
+        IERC20Upgradeable(_pnftToken).transfer(_msgSender(), amount);
     }
 }
