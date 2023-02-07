@@ -56,17 +56,26 @@ async function deploy() {
         3960,
     ]
     const totals = [
-        parseEther('25000'),
-        parseEther('22500'),
-        parseEther('20250'),
-        parseEther('18225'),
-        parseEther('16403'),
-        parseEther('14762'),
-        parseEther('13286'),
-        parseEther('11957'),
-        parseEther('10762'),
-        parseEther('9686'),
-        parseEther('3836'),
+        parseEther('25000.00'),
+        parseEther('22500.00'),
+        parseEther('20250.00'),
+        parseEther('18225.00'),
+        parseEther('16402.50'),
+        parseEther('14762.25'),
+        parseEther('13286.03'),
+        parseEther('11957.42'),
+        parseEther('10761.68'),
+        parseEther('9685.51'),
+        parseEther('3836.28'),
+    ]
+    const initData = [
+        deployData.clearingHouse.address,
+        deployData.pNFTToken.address,
+        periodDuration,
+        starts,
+        ends,
+        totals,
+        360,
     ]
     // 
     var proxyAdmin = await hre.ethers.getContractAt('ProxyAdmin', deployData.proxyAdminAddress);
@@ -81,11 +90,7 @@ async function deploy() {
     }
     if (deployData.rewardMiner.address == undefined || deployData.rewardMiner.address == '') {
         let rewardMiner = await hre.ethers.getContractAt('RewardMiner', deployData.rewardMiner.implAddress);
-        var initializeData = rewardMiner.interface.encodeFunctionData('initialize', [
-            deployData.clearingHouse.address,
-            deployData.pNFTToken.address,
-            periodDuration,
-        ]);
+        var initializeData = rewardMiner.interface.encodeFunctionData('initialize', initData);
         var transparentUpgradeableProxy = await waitForDeploy(
             await TransparentUpgradeableProxy.deploy(
                 deployData.rewardMiner.implAddress,
@@ -114,11 +119,7 @@ async function deploy() {
     }
     {
         var rewardMiner = await hre.ethers.getContractAt('RewardMiner', deployData.rewardMiner.implAddress);
-        var initializeData = rewardMiner.interface.encodeFunctionData('initialize', [
-            deployData.clearingHouse.address,
-            deployData.pNFTToken.address,
-            periodDuration,
-        ]);
+        var initializeData = rewardMiner.interface.encodeFunctionData('initialize', initData);
         await verifyContract(
             deployData,
             network,

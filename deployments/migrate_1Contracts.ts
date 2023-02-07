@@ -16,6 +16,8 @@ import migrateInsuranceFund from "./12_migrate_InsuranceFund";
 import migrateVault from "./13_migrate_Vault";
 import migrateCollateralManager from "./14_migrate_CollateralManager";
 import migrateClearingHouse from "./15_migrate_ClearingHouse";
+import migratePNFTToken from "./20_migrate_PNFTToken";
+import migrateRewardMiner from "./21_migrate_RewardMiner";
 
 async function main() {
     await deploy();
@@ -136,6 +138,20 @@ async function deploy() {
         console.log('migrateClearingHouse -- START --')
         await migrateClearingHouse();
         console.log('migrateClearingHouse -- END --')
+    }
+    await delay(0)
+    // import migratePNFTToken from "./20_migrate_PNFTToken";
+    {
+        console.log('migratePNFTToken -- START --')
+        await migratePNFTToken();
+        console.log('migratePNFTToken -- END --')
+    }
+    await delay(0)
+    // import migrateRewardMiner from "./21_migrate_RewardMiner";
+    {
+        console.log('migrateRewardMiner -- START --')
+        await migrateRewardMiner();
+        console.log('migrateRewardMiner -- END --')
     }
 }
 

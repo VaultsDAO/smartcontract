@@ -125,17 +125,17 @@ describe("ClearingHouse rewardMiner", () => {
             3960,
         ]
         const totals = [
-            parseEther('25000'),
-            parseEther('22500'),
-            parseEther('20250'),
-            parseEther('18225'),
-            parseEther('16403'),
-            parseEther('14762'),
-            parseEther('13286'),
-            parseEther('11957'),
-            parseEther('10762'),
-            parseEther('9686'),
-            parseEther('3836'),
+            parseEther('25000.00'),
+            parseEther('22500.00'),
+            parseEther('20250.00'),
+            parseEther('18225.00'),
+            parseEther('16402.50'),
+            parseEther('14762.25'),
+            parseEther('13286.03'),
+            parseEther('11957.42'),
+            parseEther('10761.68'),
+            parseEther('9685.51'),
+            parseEther('3836.28'),
         ]
         rewardMiner.__TestRewardMiner_init(
             admin.address,

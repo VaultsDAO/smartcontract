@@ -9,3 +9,4 @@ npx hardhat run deployments/migrate_5InitVToken.ts --network arbitrumDev --no-co
 npx hardhat run deployments/migrate_6AddLiquidity.ts --network arbitrumDev --no-compile
 npx hardhat run deployments/migrate_7Faucet.ts --network arbitrumDev --no-compile
 npx hardhat run deployments/migrate_8Trade.ts --network arbitrumDev --no-compile
+npx hardhat run deployments/migrate_9StartMiner.ts --network arbitrumDev --no-compile

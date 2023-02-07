@@ -14,8 +14,13 @@ contract MockPNFTToken is ERC20PresetMinterPauserUpgradeable {
         grantRole(MINTER_ROLE, minter);
     }
 
-    function adminTransfer(address sender, address recipient, uint256 amount) public virtual {
+    function adminTransfer(address sender, address recipient, uint256 amount) external {
         require(hasRole(MINTER_ROLE, _msgSender()), "MockPNFTToken: must have minter role to transfer");
         _transfer(sender, recipient, amount);
+    }
+
+    function adminBurn(address recipient, uint256 amount) external {
+        require(hasRole(MINTER_ROLE, _msgSender()), "MockPNFTToken: must have minter role to transfer");
+        _burn(recipient, amount);
     }
 }
