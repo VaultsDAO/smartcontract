@@ -49,26 +49,35 @@ async function deploy() {
     const vETH = (await ethers.getContractAt('QuoteToken', deployData.vETH.address)) as QuoteToken;
     const vBAYC = (await ethers.getContractAt('BaseToken', deployData.vBAYC.address)) as BaseToken;
     const vMAYC = (await ethers.getContractAt('BaseToken', deployData.vMAYC.address)) as BaseToken;
+    const vDOODLE = (await ethers.getContractAt('BaseToken', deployData.vDOODLE.address)) as BaseToken;
 
     var priceFeedBAYC = (await hre.ethers.getContractAt('NftPriceFeed', deployData.nftPriceFeedBAYC.address)) as NftPriceFeed;
     var priceFeedMAYC = (await hre.ethers.getContractAt('NftPriceFeed', deployData.nftPriceFeedMAYC.address)) as NftPriceFeed;
 
     var uniFeeTier = 3000 // 0.3%
 
+    // let platformFundFeeRatio = await marketRegistry.getPlatformFundFeeRatio(vDOODLE.address)
+    // console.log('getPlatformFundFeeRatio', marketRegistry.address, vDOODLE.address, platformFundFeeRatio.toString())
+
+    let [longMultiplier, shortMultiplier] = await accountBalance.getMarketMultiplier(vBAYC.address)
+    console.log('getMarketMultiplier', longMultiplier.toString(), shortMultiplier.toString())
+
+    return
+
     // let totalPositionSize = await accountBalance.getTotalPositionSize('0x088D8A4a03266870EDcbbbADdA3F475f404dB9B2', vMAYC.address)
     // let totalOpenNotional = await accountBalance.getTotalOpenNotional('0x088D8A4a03266870EDcbbbADdA3F475f404dB9B2', vMAYC.address)
     // console.log('getTotalUser', formatEther(totalPositionSize), formatEther(totalOpenNotional))
 
-    await waitForTx(
-        await clearingHouse.connect(hieuq).closePosition({
-            baseToken: vMAYC.address,
-            oppositeAmountBound: 0,
-            sqrtPriceLimitX96: 0,
-            deadline: ethers.constants.MaxUint256,
-            referralCode: ethers.constants.HashZero,
-        }),
-        'clearingHouse.connect(hieuq).closePosition'
-    )
+    // await waitForTx(
+    //     await clearingHouse.connect(hieuq).closePosition({
+    //         baseToken: vMAYC.address,
+    //         oppositeAmountBound: 0,
+    //         sqrtPriceLimitX96: 0,
+    //         deadline: ethers.constants.MaxUint256,
+    //         referralCode: ethers.constants.HashZero,
+    //     }),
+    //     'clearingHouse.connect(hieuq).closePosition'
+    // )
 
     // await waitForTx(
     //     await clearingHouse.connect(hieuq).openPosition({
@@ -284,7 +293,7 @@ async function deploy() {
 
 // We recommend this pattern to be able to use async/await everywhere
 // and properly handle errors.
-// main().catch((error) => {
-//     console.error(error);
-//     process.exitCode = 1;
-// });
+main().catch((error) => {
+    console.error(error);
+    process.exitCode = 1;
+});

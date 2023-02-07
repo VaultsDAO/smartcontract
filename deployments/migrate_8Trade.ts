@@ -94,7 +94,7 @@ async function deploy() {
         let trader: SignerWithAddress
 
         if (markTwap.gt(indexPrice)) {
-            let newPrice = (indexPrice.multipliedBy(1 - tickRate * rndInt))
+            let newPrice = (markTwap.multipliedBy(1 - tickRate * rndInt))
             for (let idx = 0; idx < 10; idx++) {
                 let rndTrader = Math.floor(Math.random() * 1000000) % 4 + 1
                 if (rndTrader == 1) {
@@ -127,7 +127,7 @@ async function deploy() {
                 'clearingHouse.connect(trader).openPosition short'
             )
         } else {
-            let newPrice = (indexPrice.multipliedBy(1 + tickRate * rndInt))
+            let newPrice = (markTwap.multipliedBy(1 + tickRate * rndInt))
             for (let idx = 0; idx < 10; idx++) {
                 let rndTrader = Math.floor(Math.random() * 1000000) % 4 + 1
                 if (rndTrader == 1) {

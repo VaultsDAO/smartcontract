@@ -44,7 +44,7 @@ async function deploy() {
     ];
     // 50 ETH -> 1%
     let initLiquidities = [
-        parseEther('1183'),
+        parseEther('2366'),// 100E for 1%
         parseEther('2558'),
         parseEther('1246'),
         parseEther('3618'),
