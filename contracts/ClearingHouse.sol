@@ -190,6 +190,12 @@ contract ClearingHouse is
         emit PlatformFundChanged(platformFundArg);
     }
 
+    function setRewardMiner(address rewardMinerArg) external onlyOwner {
+        require(rewardMinerArg.isContract(), "CH_RMNC");
+        _rewardMiner = rewardMinerArg;
+        emit RewardMinerChanged(rewardMinerArg);
+    }
+
     /// @inheritdoc IClearingHouse
     function addLiquidity(
         DataTypes.AddLiquidityParams memory params
@@ -304,29 +310,29 @@ contract ClearingHouse is
     // }
 
     /// @inheritdoc IClearingHouse
-    function quitMarket(address trader, address baseToken) external override returns (uint256 base, uint256 quote) {
-        // CH_MNC: Market not closed
-        require(IBaseToken(baseToken).isClosed(), "CH_MNC");
+    // function quitMarket(address trader, address baseToken) external override returns (uint256 base, uint256 quote) {
+    //     // CH_MNC: Market not closed
+    //     require(IBaseToken(baseToken).isClosed(), "CH_MNC");
 
-        _settleFunding(trader, baseToken);
+    //     _settleFunding(trader, baseToken);
 
-        int256 positionSize = _getTakerPosition(trader, baseToken);
+    //     int256 positionSize = _getTakerPosition(trader, baseToken);
 
-        // if position is 0, no need to do settlement accounting
-        if (positionSize == 0) {
-            return (0, 0);
-        }
+    //     // if position is 0, no need to do settlement accounting
+    //     if (positionSize == 0) {
+    //         return (0, 0);
+    //     }
 
-        (int256 positionNotional, int256 openNotional, int256 realizedPnl, uint256 closedPrice) = IAccountBalance(
-            _accountBalance
-        ).settlePositionInClosedMarket(trader, baseToken);
+    //     (int256 positionNotional, int256 openNotional, int256 realizedPnl, uint256 closedPrice) = IAccountBalance(
+    //         _accountBalance
+    //     ).settlePositionInClosedMarket(trader, baseToken);
 
-        emit PositionClosed(trader, baseToken, positionSize, positionNotional, openNotional, realizedPnl, closedPrice);
+    //     emit PositionClosed(trader, baseToken, positionSize, positionNotional, openNotional, realizedPnl, closedPrice);
 
-        _settleBadDebt(trader);
+    //     _settleBadDebt(trader);
 
-        return (positionSize.abs(), positionNotional.abs());
-    }
+    //     return (positionSize.abs(), positionNotional.abs());
+    // }
 
     /// @inheritdoc IUniswapV3MintCallback
     /// @dev namings here follow Uniswap's convention
@@ -417,6 +423,11 @@ contract ClearingHouse is
     /// @inheritdoc IClearingHouse
     function getAccountBalance() external view override returns (address) {
         return _accountBalance;
+    }
+
+    /// @inheritdoc IClearingHouse
+    function getRewardMiner() external view override returns (address) {
+        return _rewardMiner;
     }
 
     /// @inheritdoc IClearingHouse

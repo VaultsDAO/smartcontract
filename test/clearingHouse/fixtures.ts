@@ -12,10 +12,12 @@ import {
     InsuranceFund,
     MarketRegistry,
     OrderBook,
+    RewardMiner,
     TestClearingHouse,
     TestERC20,
     TestExchange,
     TestLimitOrderBook,
+    TestRewardMiner,
     TestUniswapV3Broker,
     UniswapV3Factory,
     UniswapV3Pool,
@@ -49,6 +51,7 @@ export interface ClearingHouseFixture {
     baseToken2: BaseToken
     mockedNFTPriceFeed2: MockContract
     pool2: UniswapV3Pool
+    rewardMiner: RewardMiner | TestRewardMiner
 }
 
 export interface ClearingHouseWithDelegateApprovalFixture extends ClearingHouseFixture {
@@ -235,6 +238,7 @@ export function createClearingHouseFixture(
 
         // deploy clearingHouse
         let clearingHouse: ClearingHouse | TestClearingHouse
+        let rewardMiner: RewardMiner | TestRewardMiner
         if (canMockTime) {
             const clearingHouseFactory = await ethers.getContractFactory("TestClearingHouse", {
                 libraries: {
@@ -257,6 +261,9 @@ export function createClearingHouseFixture(
                 maker.address,
             )
             clearingHouse = testClearingHouse
+
+            const TestRewardMiner = await ethers.getContractFactory("TestRewardMiner")
+            rewardMiner = (await TestRewardMiner.deploy()) as TestRewardMiner
         } else {
             const clearingHouseFactory = await ethers.getContractFactory("ClearingHouse", {
                 libraries: {
@@ -278,6 +285,8 @@ export function createClearingHouseFixture(
                 platformFund.address,
                 maker.address,
             )
+            const RewardMiner = await ethers.getContractFactory("RewardMiner")
+            rewardMiner = (await RewardMiner.deploy()) as RewardMiner
         }
 
         await clearingHouseConfig.setSettlementTokenBalanceCap(ethers.constants.MaxUint256)
@@ -316,6 +325,7 @@ export function createClearingHouseFixture(
             baseToken2,
             mockedNFTPriceFeed2,
             pool2,
+            rewardMiner,
         }
     }
 }

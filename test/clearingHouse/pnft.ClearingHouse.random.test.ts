@@ -16,6 +16,7 @@ import {
     TestAccountBalance,
     TestClearingHouse,
     TestERC20,
+    TestRewardMiner,
     UniswapV3Pool,
     Vault,
 } from "../../typechain"
@@ -30,6 +31,7 @@ import {
 import { initMarket } from "../helper/marketHelper"
 import { IGNORABLE_DUST, priceToTick } from "../helper/number"
 import { deposit } from "../helper/token"
+import { forwardBothTimestamps } from "../shared/time"
 import { filterLogs } from "../shared/utilities"
 import { ClearingHouseFixture, createClearingHouseFixture } from "./fixtures"
 
@@ -52,6 +54,7 @@ describe("ClearingHouse random trade liquidity repeg close", () => {
     let pool: UniswapV3Pool
     let mockedNFTPriceFeed: MockContract
     let collateralDecimals: number
+    let rewardMiner: TestRewardMiner
     const initPrice = "1"
 
     beforeEach(async () => {
@@ -70,6 +73,7 @@ describe("ClearingHouse random trade liquidity repeg close", () => {
         quoteToken = fixture.quoteToken
         mockedNFTPriceFeed = fixture.mockedNFTPriceFeed
         collateralDecimals = await collateral.decimals()
+        rewardMiner = fixture.rewardMiner as TestRewardMiner
 
         await initMarket(fixture, initPrice, undefined, 0)
         mockedNFTPriceFeed.smocked.getPrice.will.return.with(async () => {
@@ -88,6 +92,29 @@ describe("ClearingHouse random trade liquidity repeg close", () => {
     })
 
     it("random check", async () => {
+        await forwardBothTimestamps(clearingHouse, 86400)
+
+        await clearingHouseConfig.setDurationRepegOverPriceSpread(0)
+
+        rewardMiner.__TestRewardMiner_init(
+            clearingHouse.address,
+            collateral.address,
+            86400,
+            [1, 5, 9, 13, 17],
+            [4, 8, 12, 16, 20],
+            [
+                parseEther('1000'),
+                parseEther('2000'),
+                parseEther('3000'),
+                parseEther('4000'),
+                parseEther('5000'),
+            ],
+        )
+        await collateral.mint(rewardMiner.address, parseEther('60000'))
+        await clearingHouse.setRewardMiner(rewardMiner.address)
+
+        await rewardMiner.startMiner((await rewardMiner.getBlockTimestamp()))
+
         // maker add liquidity
         await clearingHouse.connect(maker).addLiquidity({
             baseToken: baseToken.address,
@@ -130,7 +157,7 @@ describe("ClearingHouse random trade liquidity repeg close", () => {
                     deadline: ethers.constants.MaxUint256,
                 })
                 mockedNFTPriceFeed.smocked.getPrice.will.return.with(async () => {
-                    return parseUnits("1.2345", 18)
+                    return parseUnits("1.25", 18)
                 })
             } else {
                 rndInt = (Math.floor(Math.random() * 1000000) % 20) + 1;
@@ -140,10 +167,31 @@ describe("ClearingHouse random trade liquidity repeg close", () => {
                     deadline: ethers.constants.MaxUint256,
                 })
                 mockedNFTPriceFeed.smocked.getPrice.will.return.with(async () => {
-                    return parseUnits("0.8765", 18)
+                    return parseUnits("0.8", 18)
                 })
             }
+
+            await exchange.updateOverPriceSpreadTimestamp(baseToken.address)
+
             await clearingHouse.repeg(baseToken.address)
+
+            await forwardBothTimestamps(clearingHouse, 86400)
+
+            await rewardMiner.setBlockTimestamp((await rewardMiner.getBlockTimestamp()).add(86400).toString())
+
+            console.log(
+                (await rewardMiner.getPeriodNumber()).toString(),
+                'claimable amount',
+                formatEther((await rewardMiner.getClaimable(trader1.address))),
+                formatEther((await rewardMiner.getClaimable(trader2.address))),
+            )
+
+            await rewardMiner.connect(trader2).claim();
+            if (i % 2 == 0) {
+                await rewardMiner.connect(trader1).claim();
+            } else {
+                await rewardMiner.connect(trader2).claim();
+            }
         }
 
         await clearingHouse.connect(trader1).closePosition({
@@ -174,6 +222,9 @@ describe("ClearingHouse random trade liquidity repeg close", () => {
             )
         }
 
+        await rewardMiner.connect(trader1).claim();
+        await rewardMiner.connect(trader2).claim();
+
         let owedRealizedPnlPlatformFund = (await accountBalance.getPnlAndPendingFee(platformFund.address))[0]
         let owedRealizedPnlInsuranceFund = (await accountBalance.getPnlAndPendingFee(insuranceFund.address))[0]
         let owedRealizedPnlTrade1 = (await accountBalance.getPnlAndPendingFee(trader1.address))[0]
@@ -186,6 +237,15 @@ describe("ClearingHouse random trade liquidity repeg close", () => {
             formatEther(owedRealizedPnlTrade1),
             formatEther(owedRealizedPnlTrade2),
             formatEther(owedRealizedPnlPlatformFund.add(owedRealizedPnlInsuranceFund).add(owedRealizedPnlTrade1).add(owedRealizedPnlTrade2)),
+        )
+
+        console.log(
+            (await rewardMiner.getPeriodNumber()).toString(),
+            'claimable amount',
+            formatEther((await rewardMiner.getClaimable(trader1.address))),
+            formatEther((await rewardMiner.getClaimable(trader2.address))),
+            formatEther((await collateral.balanceOf(trader1.address))),
+            formatEther((await collateral.balanceOf(trader2.address))),
         )
     })
 

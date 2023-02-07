@@ -76,6 +76,8 @@ interface IClearingHouse {
 
     event PlatformFundChanged(address indexed platformFundArg);
 
+    event RewardMinerChanged(address indexed rewardMinerArg);
+
     /// @notice Emitted when open position with non-zero referral code
     /// @param referralCode The referral code by partners
     event ReferredPositionChanged(bytes32 indexed referralCode);
@@ -257,7 +259,7 @@ interface IClearingHouse {
     /// @param baseToken The address of baseToken
     /// @return base The amount of base token that is closed
     /// @return quote The amount of quote token that is closed
-    function quitMarket(address trader, address baseToken) external returns (uint256 base, uint256 quote);
+    // function quitMarket(address trader, address baseToken) external returns (uint256 base, uint256 quote);
 
     /// @notice Get account value of trader
     /// @dev accountValue = totalCollateralValue + totalUnrealizedPnl, in 18 decimals
@@ -292,6 +294,8 @@ interface IClearingHouse {
     /// @notice Get AccountBalance address
     /// @return accountBalance `AccountBalance` address
     function getAccountBalance() external view returns (address accountBalance);
+
+    function getRewardMiner() external view returns (address rewardMiner);
 
     /// @notice Get `InsuranceFund` address
     /// @return insuranceFund `InsuranceFund` address

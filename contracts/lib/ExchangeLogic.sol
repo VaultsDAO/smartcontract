@@ -9,6 +9,7 @@ import { IClearingHouseConfig } from "../interface/IClearingHouseConfig.sol";
 import { IOrderBook } from "../interface/IOrderBook.sol";
 import { IExchange } from "../interface/IExchange.sol";
 import { IVault } from "../interface/IVault.sol";
+import { IRewardMiner } from "../interface/IRewardMiner.sol";
 import { IIndexPrice } from "../interface/IIndexPrice.sol";
 import { FullMath } from "@uniswap/v3-core/contracts/libraries/FullMath.sol";
 import { PerpSafeCast } from "./PerpSafeCast.sol";
@@ -192,6 +193,11 @@ library ExchangeLogic {
                 oppositeAmountBound: params.oppositeAmountBound
             })
         );
+
+        address rewardMiner = IClearingHouse(chAddress).getRewardMiner();
+        if (rewardMiner != address(0)) {
+            IRewardMiner(rewardMiner).mint(trader, response.quote);
+        }
 
         _referredPositionChanged(params.referralCode);
 
