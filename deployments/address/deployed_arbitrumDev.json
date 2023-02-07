@@ -142,6 +142,17 @@
         "address": "0xF48f84206110989756F8737B3605580a1728dF03",
         "implAddress": "0x9408f7153D02f02e93E758c2CB908e0613C468C2"
     },
+    "pNFTToken": {
+        "address": "",
+        "implAddress": "",
+        "name": "PNFT Token",
+        "symbol": "PNFT",
+        "decimals": 18
+    },
+    "rewardMiner": {
+        "address": "",
+        "implAddress": ""
+    },
     "testCheck": {
         "addLiquidity": false,
         "deposit": false,

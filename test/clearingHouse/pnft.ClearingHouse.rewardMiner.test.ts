@@ -94,23 +94,101 @@ describe("ClearingHouse rewardMiner", () => {
         //     liquidity: parseEther('10000'),
         //     deadline: ethers.constants.MaxUint256,
         // })
+        const periodDuration = 43200;
+        const starts = [
+            1,
+            361,
+            721,
+            1081,
+            1441,
+            1801,
+            2161,
+            2521,
+            2881,
+            3241,
+            3601,
+        ]
+        const ends = [
+            360,
+            720,
+            1080,
+            1440,
+            1800,
+            2160,
+            2520,
+            2880,
+            3240,
+            3600,
+            3960,
+        ]
+        const totals = [
+            parseEther('25000'),
+            parseEther('22500'),
+            parseEther('20250'),
+            parseEther('18225'),
+            parseEther('16403'),
+            parseEther('14762'),
+            parseEther('13286'),
+            parseEther('11957'),
+            parseEther('10762'),
+            parseEther('9686'),
+            parseEther('3836'),
+        ]
         rewardMiner.__TestRewardMiner_init(
             admin.address,
             collateral.address,
-            1000,
-            [1, 2],
-            [1, 2],
-            [
-                parseEther('1000'),
-                parseEther('2000'),
-            ],
+            periodDuration,
+            starts,
+            ends,
+            totals,
         )
-        await collateral.mint(rewardMiner.address, parseEther('3000'))
+        await collateral.mint(rewardMiner.address, parseEther('60000000'))
 
         await rewardMiner.mint(trader1.address, parseEther('1000'))
         await rewardMiner.mint(trader2.address, parseEther('1000'))
 
         await rewardMiner.startMiner((await rewardMiner.getBlockTimestamp()))
+
+        console.log(
+            (await rewardMiner.getPeriodNumber()).toString(),
+            'claimable amount',
+            formatEther((await rewardMiner.getClaimable(trader1.address))),
+            formatEther((await rewardMiner.getClaimable(trader2.address))),
+        )
+        for (let i = 0; i < 1440; i++) {
+            await rewardMiner.mint(trader1.address, parseEther('1000'))
+            await rewardMiner.mint(trader2.address, parseEther('3000'))
+            await rewardMiner.setBlockTimestamp((await rewardMiner.getBlockTimestamp()).add(periodDuration).toString())
+            // console.log(
+            //     (await rewardMiner.getPeriodNumber()).toString(),
+            //     'claimable amount',
+            //     formatEther((await rewardMiner.getClaimable(trader1.address))),
+            //     formatEther((await rewardMiner.getClaimable(trader2.address))),
+            // )
+            console.log(i)
+        }
+        console.log(
+            (await rewardMiner.getPeriodNumber()).toString(),
+            'claimable amount',
+            formatEther((await rewardMiner.getClaimable(trader1.address))),
+            formatEther((await rewardMiner.getClaimable(trader2.address))),
+        )
+
+        await rewardMiner.connect(trader1).claim();
+        await rewardMiner.connect(trader2).claim();
+
+        console.log(
+            (await rewardMiner.getPeriodNumber()).toString(),
+            'claimable amount',
+            formatEther((await rewardMiner.getClaimable(trader1.address))),
+            formatEther((await rewardMiner.getClaimable(trader2.address))),
+
+            formatEther((await collateral.balanceOf(trader1.address))),
+            formatEther((await collateral.balanceOf(trader2.address))),
+        )
+
+        return
+
         console.log(
             (await rewardMiner.getPeriodNumber()).toString(),
             'claimable amount',

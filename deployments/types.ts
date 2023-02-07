@@ -54,8 +54,8 @@ type DeployData = {
     liquidityLogic: ContractData,
     exchangeLogic: ContractData,
     clearingHouse: ContractData,
-    pNFT: TokenData,
-    rewardMiner: TokenData,
+    pNFTToken: TokenData,
+    rewardMiner: ContractData,
     testFaucet: ContractData,
     testCheck: {
         addLiquidity: boolean,

@@ -33,7 +33,6 @@ contract RewardMiner is IRewardMiner, BlockContext, OwnerPausable {
         mapping(address => uint256) users;
         uint256 amount;
         uint256 total;
-        uint256 spend;
     }
     //
     address internal _clearingHouse;
@@ -191,29 +190,6 @@ contract RewardMiner is IRewardMiner, BlockContext, OwnerPausable {
         }
     }
 
-    function _spendClaimable(address trader) internal returns (uint256 amount) {
-        uint256 periodNumber = _getPeriodNumber();
-        uint256 lastPeriodNumber = _lastClaimPeriodNumberMap[trader];
-        if (_periodNumbers.length > 0) {
-            for (int256 i = int256(_periodNumbers.length - 1); i >= 0; i--) {
-                PeriodData storage periodData = _periodDataMap[_periodNumbers[uint256(i)]];
-                if (
-                    periodData.amount > 0 &&
-                    periodData.periodNumber < periodNumber &&
-                    periodData.periodNumber > lastPeriodNumber
-                ) {
-                    uint256 val = periodData.users[trader].mul(periodData.total).div(periodData.amount);
-                    amount = amount.add(val);
-                    periodData.spend = periodData.spend.add(val);
-                }
-                if (periodData.periodNumber <= lastPeriodNumber) {
-                    break;
-                }
-            }
-        }
-        _spend = _spend.add(amount);
-    }
-
     function startMiner(uint256 startArg) external onlyOwner {
         // RM_SZ: start zero
         require(_start == 0, "RM_SZ");
@@ -235,7 +211,9 @@ contract RewardMiner is IRewardMiner, BlockContext, OwnerPausable {
     }
 
     function _claim(address trader) internal returns (uint256 amount) {
-        amount = _spendClaimable(trader);
+        amount = _getClaimable(trader);
+        //
+        _spend = _spend.add(amount);
         // transfer reward
         IERC20Upgradeable(_pnftToken).transfer(trader, amount);
         // update last claim period
