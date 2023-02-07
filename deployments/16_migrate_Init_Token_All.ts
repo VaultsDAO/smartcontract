@@ -80,78 +80,83 @@ async function deploy() {
         'priceDOODLE'
     ];
     for (let i = 0; i < baseTokens.length; i++) {
-        var baseTokenAddress = baseTokens[i].address
-        var nftPriceFeedAddress = nftPriceFeeds[i].address
-        var price = parseEther(priceData[priceKeys[i]]);
+        // var baseTokenAddress = baseTokens[i].address
+        // var nftPriceFeedAddress = nftPriceFeeds[i].address
+        // var price = parseEther(priceData[priceKeys[i]]);
 
-        const baseToken = (await ethers.getContractAt('BaseToken', baseTokenAddress)) as BaseToken;
-        // setting pool
-        {
-            let poolAddr = await uniswapV3Factory.getPool(baseToken.address, vETH.address, uniFeeTier)
-            if (poolAddr == ethers.constants.AddressZero) {
-                await waitForTx(await uniswapV3Factory.createPool(baseToken.address, vETH.address, uniFeeTier), 'uniswapV3Factory.createPool(baseToken.address, vETH.address, uniFeeTier)')
-            }
-            poolAddr = uniswapV3Factory.getPool(baseToken.address, vETH.address, uniFeeTier)
-            const uniPool = await ethers.getContractAt('UniswapV3Pool', poolAddr);
-            if (!(await baseToken.isInWhitelist(uniPool.address))) {
-                await waitForTx(await baseToken.addWhitelist(uniPool.address), 'baseToken.addWhitelist(uniPool.address)')
-            }
-            if (!(await vETH.isInWhitelist(uniPool.address))) {
-                await waitForTx(await vETH.addWhitelist(uniPool.address), 'vETH.addWhitelist(uniPool.address)')
-            }
-        }
-        // deploy clearingHouse
-        if (!(await baseToken.isInWhitelist(clearingHouse.address))) {
-            await waitForTx(await baseToken.addWhitelist(clearingHouse.address), 'baseToken.addWhitelist(clearingHouse.address)')
-        }
-        if (!(await baseToken.totalSupply()).eq(ethers.constants.MaxUint256)) {
-            await waitForTx(await baseToken.mintMaximumTo(clearingHouse.address), 'baseToken.mintMaximumTo(clearingHouse.address)')
-        }
-        // initMarket
-        var maxTickCrossedWithinBlock: number = getMaxTickRange()
-        // baseToken
-        {
-            const poolAddr = await uniswapV3Factory.getPool(baseToken.address, vETH.address, uniFeeTier)
-            const uniPool = (await ethers.getContractAt('UniswapV3Pool', poolAddr) as UniswapV3Pool);
-            await tryWaitForTx(
-                await uniPool.initialize(encodePriceSqrt(price, "1")), 'uniPool.initialize(encodePriceSqrt(price, "1"))'
-            )
-            await tryWaitForTx(
-                await uniPool.increaseObservationCardinalityNext((2 ^ 16) - 1),
-                'uniPool.increaseObservationCardinalityNext((2 ^ 16) - 1)'
-            )
-            if (!(await marketRegistry.hasPool(baseToken.address))) {
-                const uniFeeRatio = await uniPool.fee()
-                await tryWaitForTx(
-                    await marketRegistry.addPool(baseToken.address, uniFeeRatio), 'marketRegistry.addPool(baseToken.address, uniFeeRatio)'
-                )
-            }
-            if ((await exchange.getMaxTickCrossedWithinBlock(baseToken.address)).toString() != maxTickCrossedWithinBlock.toString()) {
-                await tryWaitForTx(
-                    await exchange.setMaxTickCrossedWithinBlock(baseToken.address, maxTickCrossedWithinBlock), 'exchange.setMaxTickCrossedWithinBlock(baseToken.address, maxTickCrossedWithinBlock)'
-                )
-            }
-        }
-        // oracle price
-        {
-            var priceFeed = (await hre.ethers.getContractAt('NftPriceFeed', nftPriceFeedAddress)) as NftPriceFeed;
-            if ((await priceFeed.priceFeedAdmin()).toLowerCase() != priceAdmin.address.toLowerCase()) {
-                await waitForTx(
-                    await priceFeed.setPriceFeedAdmin(priceAdmin.address), 'priceFeed.setPriceFeedAdmin(priceAdmin.address)'
-                )
-            }
-            await waitForTx(
-                await priceFeed.connect(priceAdmin).setPrice(price), 'priceFeed.connect(priceAdmin).setPrice(parseEther(price))'
-            )
-        }
+        // const baseToken = (await ethers.getContractAt('BaseToken', baseTokenAddress)) as BaseToken;
+        // // setting pool
+        // {
+        //     let poolAddr = await uniswapV3Factory.getPool(baseToken.address, vETH.address, uniFeeTier)
+        //     if (poolAddr == ethers.constants.AddressZero) {
+        //         await waitForTx(await uniswapV3Factory.createPool(baseToken.address, vETH.address, uniFeeTier), 'uniswapV3Factory.createPool(baseToken.address, vETH.address, uniFeeTier)')
+        //     }
+        //     poolAddr = uniswapV3Factory.getPool(baseToken.address, vETH.address, uniFeeTier)
+        //     const uniPool = await ethers.getContractAt('UniswapV3Pool', poolAddr);
+        //     if (!(await baseToken.isInWhitelist(uniPool.address))) {
+        //         await waitForTx(await baseToken.addWhitelist(uniPool.address), 'baseToken.addWhitelist(uniPool.address)')
+        //     }
+        //     if (!(await vETH.isInWhitelist(uniPool.address))) {
+        //         await waitForTx(await vETH.addWhitelist(uniPool.address), 'vETH.addWhitelist(uniPool.address)')
+        //     }
+        // }
+        // // deploy clearingHouse
+        // if (!(await baseToken.isInWhitelist(clearingHouse.address))) {
+        //     await waitForTx(await baseToken.addWhitelist(clearingHouse.address), 'baseToken.addWhitelist(clearingHouse.address)')
+        // }
+        // if (!(await baseToken.totalSupply()).eq(ethers.constants.MaxUint256)) {
+        //     await waitForTx(await baseToken.mintMaximumTo(clearingHouse.address), 'baseToken.mintMaximumTo(clearingHouse.address)')
+        // }
+        // // initMarket
+        // var maxTickCrossedWithinBlock: number = getMaxTickRange()
+        // // baseToken
+        // {
+        //     const poolAddr = await uniswapV3Factory.getPool(baseToken.address, vETH.address, uniFeeTier)
+        //     const uniPool = (await ethers.getContractAt('UniswapV3Pool', poolAddr) as UniswapV3Pool);
+        //     await tryWaitForTx(
+        //         await uniPool.initialize(encodePriceSqrt(price, "1")), 'uniPool.initialize(encodePriceSqrt(price, "1"))'
+        //     )
+        //     await tryWaitForTx(
+        //         await uniPool.increaseObservationCardinalityNext((2 ^ 16) - 1),
+        //         'uniPool.increaseObservationCardinalityNext((2 ^ 16) - 1)'
+        //     )
+        //     if (!(await marketRegistry.hasPool(baseToken.address))) {
+        //         const uniFeeRatio = await uniPool.fee()
+        //         await tryWaitForTx(
+        //             await marketRegistry.addPool(baseToken.address, uniFeeRatio), 'marketRegistry.addPool(baseToken.address, uniFeeRatio)'
+        //         )
+        //     }
+        //     if ((await exchange.getMaxTickCrossedWithinBlock(baseToken.address)).toString() != maxTickCrossedWithinBlock.toString()) {
+        //         await tryWaitForTx(
+        //             await exchange.setMaxTickCrossedWithinBlock(baseToken.address, maxTickCrossedWithinBlock), 'exchange.setMaxTickCrossedWithinBlock(baseToken.address, maxTickCrossedWithinBlock)'
+        //         )
+        //     }
+        // }
+        // // oracle price
+        // {
+        //     var priceFeed = (await hre.ethers.getContractAt('NftPriceFeed', nftPriceFeedAddress)) as NftPriceFeed;
+        //     if ((await priceFeed.priceFeedAdmin()).toLowerCase() != priceAdmin.address.toLowerCase()) {
+        //         await waitForTx(
+        //             await priceFeed.setPriceFeedAdmin(priceAdmin.address), 'priceFeed.setPriceFeedAdmin(priceAdmin.address)'
+        //         )
+        //     }
+        //     await waitForTx(
+        //         await priceFeed.connect(priceAdmin).setPrice(price), 'priceFeed.connect(priceAdmin).setPrice(parseEther(price))'
+        //     )
+        // }
         // 
-        {
-            if ((await marketRegistry.getInsuranceFundFeeRatio(baseToken.address)).toString() != '1500') {
-                await waitForTx(
-                    await marketRegistry.setInsuranceFundFeeRatio(baseToken.address, '1500'), 'marketRegistry.setInsuranceFundFeeRatio(baseToken.address, 1500)'
-                )
-            }
-        }
+        // {
+        //     if ((await marketRegistry.getInsuranceFundFeeRatio(baseToken.address)).toString() != '1000') {
+        //         await waitForTx(
+        //             await marketRegistry.setInsuranceFundFeeRatio(baseToken.address, '1000'), 'marketRegistry.setInsuranceFundFeeRatio(baseToken.address, 1000)'
+        //         )
+        //     }
+        //     if ((await marketRegistry.getPlatformFundFeeRatio(baseToken.address)).toString() != '1500') {
+        //         await waitForTx(
+        //             await marketRegistry.setPlatformFundFeeRatio(baseToken.address, '1500'), 'marketRegistry.setInsuranceFundFeeRatio(baseToken.address, 1500)'
+        //         )
+        //     }
+        // }
     }
 }
 
