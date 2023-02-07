@@ -15,6 +15,9 @@ contract RewardMiner is IRewardMiner, BlockContext, OwnerPausable {
     using AddressUpgradeable for address;
     using SafeMathUpgradeable for uint256;
 
+    event Mint(address trader, uint256 amount);
+    event Spend(address trader, uint256 amount);
+
     //
     // STRUCT
     //
@@ -30,6 +33,7 @@ contract RewardMiner is IRewardMiner, BlockContext, OwnerPausable {
         mapping(address => uint256) users;
         uint256 amount;
         uint256 total;
+        uint256 spend;
     }
     //
     address internal _clearingHouse;
@@ -187,6 +191,29 @@ contract RewardMiner is IRewardMiner, BlockContext, OwnerPausable {
         }
     }
 
+    function _spendClaimable(address trader) internal returns (uint256 amount) {
+        uint256 periodNumber = _getPeriodNumber();
+        uint256 lastPeriodNumber = _lastClaimPeriodNumberMap[trader];
+        if (_periodNumbers.length > 0) {
+            for (int256 i = int256(_periodNumbers.length - 1); i >= 0; i--) {
+                PeriodData storage periodData = _periodDataMap[_periodNumbers[uint256(i)]];
+                if (
+                    periodData.amount > 0 &&
+                    periodData.periodNumber < periodNumber &&
+                    periodData.periodNumber > lastPeriodNumber
+                ) {
+                    uint256 val = periodData.users[trader].mul(periodData.total).div(periodData.amount);
+                    amount = amount.add(val);
+                    periodData.spend = periodData.spend.add(val);
+                }
+                if (periodData.periodNumber <= lastPeriodNumber) {
+                    break;
+                }
+            }
+        }
+        _spend = _spend.add(amount);
+    }
+
     function startMiner(uint256 startArg) external onlyOwner {
         // RM_SZ: start zero
         require(_start == 0, "RM_SZ");
@@ -202,17 +229,19 @@ contract RewardMiner is IRewardMiner, BlockContext, OwnerPausable {
             if (periodData.total > 0) {
                 periodData.users[trader] = periodData.users[trader].add(amount);
                 periodData.amount = periodData.amount.add(amount);
+                emit Mint(trader, amount);
             }
         }
     }
 
     function _claim(address trader) internal returns (uint256 amount) {
-        amount = _getClaimable(trader);
-        _spend = _spend.add(amount);
+        amount = _spendClaimable(trader);
         // transfer reward
         IERC20Upgradeable(_pnftToken).transfer(trader, amount);
         // update last claim period
         _lastClaimPeriodNumberMap[trader] = (_getPeriodNumber() - 1);
+
+        emit Spend(trader, amount);
     }
 
     function claim() external returns (uint256 amount) {
