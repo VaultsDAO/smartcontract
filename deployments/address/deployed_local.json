@@ -1,35 +1,35 @@
 {
     "verifiedContracts": {},
     "nftPriceFeedBAYC": {
-        "address": "0x8B65870981c8AeA33977B998AE361c87108B6830",
+        "address": "0x0652C939b02e7d34F72f5d9f7Fb166aFB831D389",
         "symbol": "BAYC-ETH"
     },
     "nftPriceFeedMAYC": {
-        "address": "0x770E78AfCd2111824ea5e62DFbc8ff675afad3A7",
+        "address": "0xBFa9E615C22E9524E9D832143d422E5eC8D2C688",
         "symbol": "MAYC-ETH"
     },
     "nftPriceFeedCRYPTOPUNKS": {
-        "address": "0x4f21fc2dE6F07B395267B70E25f06CEAa0F28E3D",
+        "address": "0x9607afeecdE0cC5670A541701bD0dBd655d77759",
         "symbol": "CRYPTOPUNKS-ETH"
     },
     "nftPriceFeedMOONBIRD": {
-        "address": "0xc7d092623d0ad259552B33535385A0d3e9e63b3F",
+        "address": "0xe94471719c6370C49128A58c8397D26F81B5d8c1",
         "symbol": "MOONBIRD-ETH"
     },
     "nftPriceFeedAZUKI": {
-        "address": "0xE4473d6c2b22C080F9C233e9Df378d26ce132E38",
+        "address": "0x759E2B07F7c81BC92dBAE41Ba80Ef55F09D09b06",
         "symbol": "AZUKI-ETH"
     },
     "nftPriceFeedCLONEX": {
-        "address": "0xAcAA0c53886697687096C25C19FFc85bF6f86bDb",
+        "address": "0xC191fB950fC26a2Ea8c3D9E66f88C65807e25851",
         "symbol": "CLONEX-ETH"
     },
     "nftPriceFeedDOODLE": {
-        "address": "0x4457fA0e679b615e714106Bb7Ac648Ffd5724427",
+        "address": "0x69a6680a8814dc142b6dD14844073fEd5219F520",
         "symbol": "DOODLE-ETH"
     },
     "wETH": {
-        "address": "0xfA8B13036108BF6007F1205aa827345Eb31a5BB0",
+        "address": "0x5B7fa8573AD9CC8Fd7fEffB3D1034e7c3a4F69d4",
         "name": "Wrapped Ether",
         "symbol": "WETH",
         "decimals": 18
@@ -38,109 +38,118 @@
         "name": "vETH",
         "symbol": "vETH",
         "decimals": 18,
-        "address": "0xdd01655Cc3ab2Db23D09065159Bb01bC4d479D9C",
-        "implAddress": "0x83b41E7a900BF911BD4702dd06ae42Bcb8544Fa4"
+        "address": "0x33105Ad46d0392aFa9C11E6Ad68EC22979EC78ef",
+        "implAddress": "0x9AEc424Cc8ab28877636fec6024f403716A627C3"
     },
     "baseToken": {
-        "implAddress": "0x232Be4eAbf27806574cAf18e41fDc7eE831a40E0"
+        "implAddress": ""
     },
     "vBAYC": {
-        "address": "0x7B98904B1CDe80E285B1040197a57ddC67BE9f90",
+        "address": "",
         "name": "vBAYC",
         "symbol": "vBAYC",
         "decimals": 18
     },
     "vMAYC": {
-        "address": "0x43e752BF1eA7BC9C946422eBA50a52F1ce7Ffbe1",
+        "address": "",
         "name": "vMAYC",
         "symbol": "vMAYC",
         "decimals": 18
     },
     "vCRYPTOPUNKS": {
-        "address": "0x71B7c8770204435c8B1FD97fEABF9fd25eFbAaF5",
+        "address": "",
         "name": "vCRYPTOPUNKS",
         "symbol": "vCRYPTOPUNKS",
         "decimals": 18
     },
     "vMOONBIRD": {
-        "address": "0x3AfE9b342b38854b2ca3dE8Cc46AF4D77dc3182F",
+        "address": "",
         "name": "vMOONBIRD",
         "symbol": "vMOONBIRD",
         "decimals": 18
     },
     "vAZUKI": {
-        "address": "0x74C65303C53A33B85D0EB4A246dE663518286806",
+        "address": "",
         "name": "vAZUKI",
         "symbol": "vAZUKI",
         "decimals": 18
     },
     "vCLONEX": {
-        "address": "0xD6E1aacc47151c6227861c9Cf862A3C688C07e55",
+        "address": "",
         "name": "vCLONEX",
         "symbol": "vCLONEX",
         "decimals": 18
     },
     "vDOODLE": {
-        "address": "0x7aE21CEf2B00576AA013Ca421423f75fC706A84a",
+        "address": "",
         "name": "vDOODLE",
         "symbol": "vDOODLE",
         "decimals": 18
     },
     "priceAdminAddress": "0x9686203be0cae320bb4Dee971BB8a530A15EF489",
-    "platformFundAddress": "0xBeA7b64C4273E247c323E6c565876AE1adfd2C42",
-    "makerFundAddress": "0x131b6b7b9a3b6993AF27f8e6A8d8D6BC166b5688",
-    "proxyAdminAddress": "0xE519072d7076901EdD0c7CCd213A2E4978f1F95F",
+    "platformFundAddress": "0x618B9BD8C290D55af7fBD5185b178071Fec8DF36",
+    "makerFundAddress": "0x9cEDf5C18B8c93E4DE45A446C9caDFF98DB1a756",
+    "proxyAdminAddress": "0x83f160477Fa23F1D070B875D4DD93e9941C52bDf",
     "uniswapV3Factory": {
-        "address": "0x6Fb710EeBA9563e2073d7025f63aAb1E1b6341fB"
+        "address": ""
     },
     "clearingHouseConfig": {
-        "address": "0xe6405BFa7Abb0C69B6948A8FbD7cf0C37E974B3C",
-        "implAddress": "0xf8D2Af0f0fF345D210860E575cE97bB26697d5eb"
+        "address": "",
+        "implAddress": ""
     },
     "marketRegistry": {
-        "address": "0xD68A95e6323D4Ad0eD1F3e37591A5e3f8348dc7A",
-        "implAddress": "0x8aFd0981780a5E4EDFB6378256E286b661E7De0D"
+        "address": "",
+        "implAddress": ""
     },
     "orderBook": {
-        "address": "0x0d16e18CDD9A86FA834a28c570d99a93431bE9E0",
-        "implAddress": "0x70E81172FaBFc04184c622c8956F3Df5292fF732"
+        "address": "",
+        "implAddress": ""
     },
     "accountBalance": {
-        "address": "0x4Fa4f2EaD4D20927a34FB56C8819805A0a1a0f1d",
-        "implAddress": "0x9d225AF75A50241e023f63b8927CF83d5945342C"
+        "address": "",
+        "implAddress": ""
     },
     "exchange": {
-        "address": "0x5B286410a13F3784ed00244dcA7684059D58bdC4",
-        "implAddress": "0xFbE1222428BDae6c1739dFDB50F20aA5f6672d3E"
+        "address": "",
+        "implAddress": ""
     },
     "insuranceFund": {
-        "address": "0x2e21050094475971D0536f70188ec6C623d8DF06",
-        "implAddress": "0xbFF0c01047966d0F72880B62fAa849729E87561C"
+        "address": "",
+        "implAddress": ""
     },
     "vault": {
-        "address": "0x4d2F0E684a5d4a0eF149F8db32C6734829E1f8ff",
-        "implAddress": "0x638811178D9a39182C936935761f10C724EB2D59"
+        "address": "",
+        "implAddress": ""
     },
     "collateralManager": {
-        "address": "0x19282a90C8a70Ad0fFCCD7C0f88675C1b6323B43",
-        "implAddress": "0x00554f648ED5EfeD30b9a3Bb42d89eff69E5F67C"
+        "address": "",
+        "implAddress": ""
     },
     "genericLogic": {
-        "address": "0xF4dEB93E78bf22962cFa6d59Ec66665320146A0C"
+        "address": ""
     },
     "liquidityLogic": {
-        "address": "0x32A2ff7C7E956FE43bdDe9BB0cE82CdaBF27f1a5"
+        "address": ""
     },
     "exchangeLogic": {
-        "address": "0xd2C0EE3f0608d35600339d5931C59220FdD623A8"
+        "address": ""
     },
     "clearingHouse": {
-        "address": "0xd7CcF9f21F42F5b582b36b653336821Ee3c86da6",
-        "implAddress": "0x9D148B3DFEE29DB24f011E787C129475ef782D36"
+        "address": "",
+        "implAddress": ""
     },
     "testFaucet": {
         "address": "",
         "implAddress": ""
+    },
+    "pNFTToken": {
+        "address": "0xeDE74d5e7AD76169e5E9c1eA67DfFcbf15be7A58",
+        "implAddress": "0xB898f1A72546efB93803905F023037cD898914d9",
+        "name": "PNFT Token",
+        "symbol": "PNFT",
+        "coreAddress": "0x688d89B7512e512CEfbF1e7b03b7b9F32026A180",
+        "treasuryAddress": "0x688d89B7512e512CEfbF1e7b03b7b9F32026A180",
+        "rewardAddress": "0x688d89B7512e512CEfbF1e7b03b7b9F32026A180"
     },
     "testCheck": {
         "addLiquidity": false,

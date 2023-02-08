@@ -142,6 +142,13 @@
         "address": "",
         "implAddress": ""
     },
+    "pNFTToken": {
+        "address": "",
+        "implAddress": "",
+        "name": "PNFT Token",
+        "symbol": "PNFT",
+        "decimals": 18
+    },
     "testCheck": {
         "addLiquidity": false,
         "deposit": false,

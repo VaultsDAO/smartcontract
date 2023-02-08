@@ -138,6 +138,13 @@
         "address": "",
         "implAddress": ""
     },
+    "pNFTToken": {
+        "address": "",
+        "implAddress": "",
+        "name": "PNFT Token",
+        "symbol": "PNFT",
+        "decimals": 18
+    },
     "testFaucet": {
         "address": "",
         "implAddress": ""

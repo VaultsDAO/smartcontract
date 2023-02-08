@@ -12,6 +12,10 @@ type TokenData = {
     aggregatorAddress: string,
     priceFeedAddress: string,
     poolAddress: string,
+    //tokenomics
+    coreAddress: string,
+    treasuryAddress: string,
+    rewardAddress: string,
 }
 
 type ContractData = {
@@ -54,7 +58,7 @@ type DeployData = {
     liquidityLogic: ContractData,
     exchangeLogic: ContractData,
     clearingHouse: ContractData,
-    pNFT: TokenData,
+    pNFTToken: TokenData,
     rewardMiner: TokenData,
     testFaucet: ContractData,
     testCheck: {
