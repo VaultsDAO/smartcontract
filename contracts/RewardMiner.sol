@@ -123,6 +123,18 @@ contract RewardMiner is IRewardMiner, BlockContext, OwnerPausable {
         _limitClaimPeriod = limitClaimPeriodArg;
     }
 
+    function getLimitClaimPeriod() external view returns (uint256 limitClaimPeriod) {
+        limitClaimPeriod = _limitClaimPeriod;
+    }
+
+    function getPeriodDuration() external view returns (uint256 periodDuration) {
+        periodDuration = _periodDuration;
+    }
+
+    function getStart() external view returns (uint256 start) {
+        start = _start;
+    }
+
     function getAllocation() external view returns (uint256 allocation) {
         allocation = _allocation;
     }
@@ -170,14 +182,6 @@ contract RewardMiner is IRewardMiner, BlockContext, OwnerPausable {
         }
         start = _start + (periodNumber - 1) * _periodDuration;
         end = start + _periodDuration;
-    }
-
-    function getStart() external view returns (uint256 start) {
-        start = _start;
-    }
-
-    function getPeriodDuration() external view returns (uint256 periodDuration) {
-        periodDuration = _periodDuration;
     }
 
     function getPeriodNumber() external view returns (uint256 periodNumber) {

@@ -76,11 +76,21 @@ async function deploy() {
     var vault = (await hre.ethers.getContractAt('Vault', deployData.vault.address)) as Vault;
     var collateralManager = (await hre.ethers.getContractAt('CollateralManager', deployData.collateralManager.address)) as CollateralManager;
     var clearingHouse = (await hre.ethers.getContractAt('ClearingHouse', deployData.clearingHouse.address)) as ClearingHouse;
-
-
     var rewardMiner = (await hre.ethers.getContractAt('RewardMiner', deployData.rewardMiner.address)) as RewardMiner;
-
     var pNFTToken = (await hre.ethers.getContractAt('MockPNFTToken', deployData.pNFTToken.address)) as MockPNFTToken;
+
+    // var address = '0x088d8a4a03266870edcbbbadda3f475f404db9b2'
+    // let [realizedPnl, unrealizedPnl] = await accountBalance.getPnlAndPendingFee(address)
+    // console.log(
+    //     'isLiquidatable',
+    //     address,
+    //     formatEther(realizedPnl),
+    //     formatEther(unrealizedPnl),
+    //     formatEther(await vault.getAccountValue(address)),
+    //     formatEther(await accountBalance.getMarginRequirementForLiquidation(address)),
+    //     formatEther(await accountBalance.getTotalPositionSize(address, deployData.vBAYC.address)),
+    //     formatEther(await accountBalance.getTotalPositionValue(address, deployData.vBAYC.address)),
+    // )
 
     // {
     //     var vBAYC = (await hre.ethers.getContractAt('BaseToken', deployData.vBAYC.address)) as BaseToken;
@@ -110,53 +120,53 @@ async function deploy() {
     //     )
     // }
 
-    // check start
-    {
-        let startTime = rewardMiner.getStart()
-    }
-    // get current period info
-    {
-        const [
-            periodNumber,
-            start,
-            end,
-            total,
-            amount,
-        ] = await rewardMiner.getCurrentPeriodInfo();
-        console.log(
-            'getCurrentPeriodInfo',
-            (periodNumber).toString(),
-            (start).toString(),
-            (end).toString(),
-            formatEther(total),
-            formatEther(amount),
-        )
-    }
-    // get current period info and trader amount
-    {
-        const [
-            periodNumber,
-            start,
-            end,
-            total,
-            amount,
-            traderAmount,
-        ] = await rewardMiner.getCurrentPeriodInfoTrader('0x088D8A4a03266870EDcbbbADdA3F475f404dB9B2');
-        console.log(
-            'getCurrentPeriodInfoTrader',
-            (periodNumber).toString(),
-            (start).toString(),
-            (end).toString(),
-            formatEther(total),
-            formatEther(amount),
-            formatEther(traderAmount),
-        )
-    }
+    // // check start
+    // {
+    //     let startTime = rewardMiner.getStart()
+    // }
+    // // get current period info
+    // {
+    //     const [
+    //         periodNumber,
+    //         start,
+    //         end,
+    //         total,
+    //         amount,
+    //     ] = await rewardMiner.getCurrentPeriodInfo();
+    //     console.log(
+    //         'getCurrentPeriodInfo',
+    //         (periodNumber).toString(),
+    //         (start).toString(),
+    //         (end).toString(),
+    //         formatEther(total),
+    //         formatEther(amount),
+    //     )
+    // }
+    // // get current period info and trader amount
+    // {
+    //     const [
+    //         periodNumber,
+    //         start,
+    //         end,
+    //         total,
+    //         amount,
+    //         traderAmount,
+    //     ] = await rewardMiner.getCurrentPeriodInfoTrader('0x088D8A4a03266870EDcbbbADdA3F475f404dB9B2');
+    //     console.log(
+    //         'getCurrentPeriodInfoTrader',
+    //         (periodNumber).toString(),
+    //         (start).toString(),
+    //         (end).toString(),
+    //         formatEther(total),
+    //         formatEther(amount),
+    //         formatEther(traderAmount),
+    //     )
+    // }
 
-    console.log(
-        'getClaimable 0x088D8A4a03266870EDcbbbADdA3F475f404dB9B2',
-        formatEther(await rewardMiner.getClaimable('0x088D8A4a03266870EDcbbbADdA3F475f404dB9B2'))
-    )
+    // console.log(
+    //     'getClaimable 0x4e623cde68aefe0a92907ee7eef03d96f76ef584',
+    //     formatEther(await rewardMiner.getClaimable('0x4e623cde68aefe0a92907ee7eef03d96f76ef584'))
+    // )
 
     // if ((await clearingHouse.getRewardMiner()).toLowerCase() != rewardMiner.address.toLowerCase()) {
     //     await waitForTx(
