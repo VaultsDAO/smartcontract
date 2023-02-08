@@ -153,8 +153,8 @@
         "rewardAddress": "0x688d89B7512e512CEfbF1e7b03b7b9F32026A180"
     },
     "rewardMiner": {
-        "address": "0x89fe13dCad17277fB90015001C09BFbDCFd1DF3e",
-        "implAddress": "0x8B3C872F1828E65b019BdaCdf3eEd7899FcD411c"
+        "address": "0x4C4DaE0793a5259f44612ef27158A6E2E5E53679",
+        "implAddress": "0x9C93dB9De7BF955A459a787619f91cfB133EC4bB"
     },
     "testCheck": {
         "addLiquidity": false,

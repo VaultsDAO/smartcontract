@@ -23,8 +23,8 @@ contract RewardMiner is IRewardMiner, BlockContext, OwnerPausable {
     using PerpMath for uint256;
     using PerpMath for int256;
 
-    event Mint(address trader, uint256 amount);
-    event Spend(address trader, uint256 amount);
+    event Mint(uint256 indexed periodNumber, address indexed trader, uint256 amount);
+    event Spend(address indexed trader, uint256 amount);
 
     //
     // STRUCT
@@ -132,7 +132,7 @@ contract RewardMiner is IRewardMiner, BlockContext, OwnerPausable {
     }
 
     function getCurrentPeriodInfo()
-        internal
+        external
         view
         returns (uint256 periodNumber, uint256 start, uint256 end, uint256 total, uint256 amount)
     {
@@ -143,7 +143,7 @@ contract RewardMiner is IRewardMiner, BlockContext, OwnerPausable {
     function getCurrentPeriodInfoTrader(
         address trader
     )
-        internal
+        external
         view
         returns (uint256 periodNumber, uint256 start, uint256 end, uint256 total, uint256 amount, uint256 traderAmount)
     {
@@ -159,7 +159,7 @@ contract RewardMiner is IRewardMiner, BlockContext, OwnerPausable {
         PeriodData storage periodData = _periodDataMap[periodNumber];
         if (periodData.periodNumber != 0) {
             total = periodData.total;
-            amount = periodData.total;
+            amount = periodData.amount;
         } else {
             for (uint256 i = 0; i < _periodConfigs.length; i++) {
                 PeriodConfig memory cfg = _periodConfigs[i];
@@ -252,7 +252,7 @@ contract RewardMiner is IRewardMiner, BlockContext, OwnerPausable {
 
                 _userAmountMap[trader] = _userAmountMap[trader].add(amount);
 
-                emit Mint(trader, amount);
+                emit Mint(periodData.periodNumber, trader, amount);
             }
         }
     }

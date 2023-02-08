@@ -28,7 +28,8 @@ async function deploy() {
     const TransparentUpgradeableProxy = await hre.ethers.getContractFactory('TransparentUpgradeableProxy');
     const RewardMiner = await hre.ethers.getContractFactory("RewardMiner");
     // 
-    const periodDuration = 43200;
+    // const periodDuration = 43200;
+    const periodDuration = 900;
     const starts = [
         1,
         361,
