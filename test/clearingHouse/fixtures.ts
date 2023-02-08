@@ -11,14 +11,12 @@ import {
     Exchange,
     InsuranceFund,
     MarketRegistry,
-    MockPNFTToken,
     OrderBook,
     RewardMiner,
     TestClearingHouse,
     TestERC20,
     TestExchange,
     TestLimitOrderBook,
-    TestRewardMiner,
     TestUniswapV3Broker,
     UniswapV3Factory,
     UniswapV3Pool,
@@ -28,6 +26,8 @@ import { ChainlinkPriceFeedV2 } from "../../typechain"
 import { MockPNFTToken } from "../../typechain/MockPNFTToken"
 import { QuoteToken } from "../../typechain/QuoteToken"
 import { TestAccountBalance } from "../../typechain/TestAccountBalance"
+import { TestPNFTToken } from "../../typechain/TestPNFTToken"
+import { TestRewardMiner } from "../../typechain/TestRewardMiner"
 import { createQuoteTokenFixture, token0Fixture, tokensFixture, uniswapV3FactoryFixture } from "../shared/fixtures"
 
 export interface ClearingHouseFixture {
@@ -53,11 +53,8 @@ export interface ClearingHouseFixture {
     baseToken2: BaseToken
     mockedNFTPriceFeed2: MockContract
     pool2: UniswapV3Pool
-<<<<<<< HEAD
     rewardMiner: RewardMiner | TestRewardMiner
-=======
-    mockPNFTToken: MockPNFTToken
->>>>>>> pnft-token
+    testPNFTToken: TestPNFTToken
 }
 
 export interface ClearingHouseWithDelegateApprovalFixture extends ClearingHouseFixture {
@@ -308,9 +305,9 @@ export function createClearingHouseFixture(
         await accountBalance.setClearingHouse(clearingHouse.address)
         await vault.setClearingHouse(clearingHouse.address)
 
-        const MockPNFTToken = await ethers.getContractFactory("MockPNFTToken")
-        const mockPNFTToken = (await MockPNFTToken.deploy()) as MockPNFTToken
-        await mockPNFTToken.initialize('PNFT', 'PNFT')
+        const TestPNFTToken = await ethers.getContractFactory("TestPNFTToken")
+        const testPNFTToken = (await TestPNFTToken.deploy()) as TestPNFTToken
+        await testPNFTToken.initialize('PNFT', 'PNFT')
 
         return {
             clearingHouse,
@@ -335,11 +332,8 @@ export function createClearingHouseFixture(
             baseToken2,
             mockedNFTPriceFeed2,
             pool2,
-<<<<<<< HEAD
             rewardMiner,
-=======
-            mockPNFTToken,
->>>>>>> pnft-token
+            testPNFTToken,
         }
     }
 }
@@ -354,9 +348,9 @@ export async function uniswapV3BrokerFixture(): Promise<UniswapV3BrokerFixture> 
 
 export async function mockPNTTokenFixture(): Promise<MockPNFTToken> {
     const MockPNFTToken = await ethers.getContractFactory("MockPNFTToken")
-    const mockPNFTToken = (await MockPNFTToken.deploy()) as MockPNFTToken
-    await mockPNFTToken.__MockPNFTToken_init('', '', 18)
-    return mockPNFTToken
+    const pnftToken = (await MockPNFTToken.deploy()) as MockPNFTToken
+    await pnftToken.__MockPNFTToken_init('', '', 18)
+    return pnftToken
 }
 
 interface MockedClearingHouseFixture {

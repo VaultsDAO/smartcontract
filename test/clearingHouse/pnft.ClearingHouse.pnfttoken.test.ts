@@ -2,22 +2,23 @@ import { expect } from "chai"
 import { parseEther } from "ethers/lib/utils"
 import { waffle } from "hardhat"
 import { MockPNFTToken } from "../../typechain/MockPNFTToken"
+import { TestPNFTToken } from "../../typechain/TestPNFTToken"
 import { ClearingHouseFixture, createClearingHouseFixture } from "./fixtures"
-describe("mockPNFTToken test", () => {
+describe("testPNFTToken test", () => {
 
     const [admin, addr1, addr2, ...addrs] = waffle.provider.getWallets()
     const loadFixture: ReturnType<typeof waffle.createFixtureLoader> = waffle.createFixtureLoader([admin])
     let fixture: ClearingHouseFixture
-    let mockPNFTToken: MockPNFTToken
+    let testPNFTToken: TestPNFTToken
 
     beforeEach(async () => {
         fixture = await loadFixture(createClearingHouseFixture())
-        mockPNFTToken = fixture.mockPNFTToken
+        testPNFTToken = fixture.testPNFTToken
 
     })
 
-    it("mockPNFTToken test", async () => {
-        let rs = await mockPNFTToken.name();
+    it("testPNFTToken test", async () => {
+        let rs = await testPNFTToken.name();
         console.log(rs.toString());
 
 
@@ -35,7 +36,7 @@ describe("mockPNFTToken test", () => {
 
 
         // create new vesting schedule
-        await mockPNFTToken.createVestingSchedule(
+        await testPNFTToken.createVestingSchedule(
             beneficiary.address,
             startTime,
             cliff,
@@ -45,72 +46,72 @@ describe("mockPNFTToken test", () => {
             unvestingAmount,
             amount,
         );
-        expect(await mockPNFTToken.getVestingSchedulesCount()).to.be.equal(1);
+        expect(await testPNFTToken.getVestingSchedulesCount()).to.be.equal(1);
         expect(
-            await mockPNFTToken.getVestingSchedulesCountByBeneficiary(
+            await testPNFTToken.getVestingSchedulesCountByBeneficiary(
                 beneficiary.address
             )
         ).to.be.equal(1);
 
         // compute vesting schedule id
         const vestingScheduleId =
-            await mockPNFTToken.computeVestingScheduleIdForAddressAndIndex(
+            await testPNFTToken.computeVestingScheduleIdForAddressAndIndex(
                 beneficiary.address,
                 0
             );
 
         // check that vested amount is 0
         expect(
-            await mockPNFTToken.computeReleasableAmount(vestingScheduleId)
+            await testPNFTToken.computeReleasableAmount(vestingScheduleId)
         ).to.be.equal(0);
 
         // set time to half the vesting period
         const halfTime = baseTime + duration / 2;
-        await mockPNFTToken.setCurrentTime(halfTime);
+        await testPNFTToken.setCurrentTime(halfTime);
 
         // check that vested amount is half the total amount to vest
         expect(
-            await mockPNFTToken
+            await testPNFTToken
                 .connect(beneficiary)
                 .computeReleasableAmount(vestingScheduleId)
         ).to.be.equal(50);
 
         // check that only beneficiary can try to release vested tokens
         await expect(
-            mockPNFTToken.connect(addr2).release(vestingScheduleId)
+            testPNFTToken.connect(addr2).release(vestingScheduleId)
         ).to.be.revertedWith(
             "PNFTToken: only beneficiary and owner can release vested tokens"
         );
 
 
         // release 50 tokens and check that a Transfer event is emitted with a value of 50
-        await mockPNFTToken.connect(beneficiary).release(vestingScheduleId);
+        await testPNFTToken.connect(beneficiary).release(vestingScheduleId);
 
-        let vestingSchedule = await mockPNFTToken.getVestingSchedule(
+        let vestingSchedule = await testPNFTToken.getVestingSchedule(
             vestingScheduleId
         );
-        let beneficiaryBalance = await mockPNFTToken.balanceOf(beneficiary.address);
+        let beneficiaryBalance = await testPNFTToken.balanceOf(beneficiary.address);
         expect(beneficiaryBalance).to.be.equal(70);
 
         // check that the released amount is 50
         expect(vestingSchedule.released).to.be.equal(50);
 
         // set current time after the end of the vesting period
-        await mockPNFTToken.setCurrentTime(baseTime + duration + 1);
+        await testPNFTToken.setCurrentTime(baseTime + duration + 1);
 
         // check that the vested amount is 50
         expect(
-            await mockPNFTToken
+            await testPNFTToken
                 .connect(beneficiary)
                 .computeReleasableAmount(vestingScheduleId)
         ).to.be.equal(50);
 
         // beneficiary release vested tokens (50)
-        await mockPNFTToken.connect(beneficiary).release(vestingScheduleId);
-        beneficiaryBalance = await mockPNFTToken.balanceOf(beneficiary.address);
+        await testPNFTToken.connect(beneficiary).release(vestingScheduleId);
+        beneficiaryBalance = await testPNFTToken.balanceOf(beneficiary.address);
         expect(beneficiaryBalance).to.be.equal(120);
 
-        vestingSchedule = await mockPNFTToken.getVestingSchedule(
+        vestingSchedule = await testPNFTToken.getVestingSchedule(
             vestingScheduleId
         );
 
@@ -119,16 +120,16 @@ describe("mockPNFTToken test", () => {
 
         // check that the vested amount is 0
         expect(
-            await mockPNFTToken
+            await testPNFTToken
                 .connect(beneficiary)
                 .computeReleasableAmount(vestingScheduleId)
         ).to.be.equal(0);
 
         // check that anyone cannot revoke a vesting
         await expect(
-            mockPNFTToken.connect(addr2).revoke(vestingScheduleId)
+            testPNFTToken.connect(addr2).revoke(vestingScheduleId)
         ).to.be.revertedWith(" Ownable: caller is not the owner");
-        await mockPNFTToken.revoke(vestingScheduleId);
+        await testPNFTToken.revoke(vestingScheduleId);
 
 
         // startTime = Math.floor(Date.now() / 1000);
@@ -139,8 +140,8 @@ describe("mockPNFTToken test", () => {
         // console.log(unvestingAmount.toString());
         // console.log(amount.toString());
         // //add Core schedule 
-        // await mockPNFTToken.createVestingSchedule(
-        //     mockPNFTToken.address,
+        // await testPNFTToken.createVestingSchedule(
+        //     testPNFTToken.address,
         //     startTime,
         //     cliff,
         //     duration,

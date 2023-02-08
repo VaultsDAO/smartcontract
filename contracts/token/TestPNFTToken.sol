@@ -8,7 +8,7 @@ import "./PNFTToken.sol";
  * @title MockPNFTToken
  * WARNING: use only for testing and debugging purpose
  */
-contract MockPNFTToken is PNFTToken {
+contract TestPNFTToken is PNFTToken {
     uint256 mockTime = 0;
 
     // constructor(string memory name, string memory symbol) PNFTToken(name, symbol) {}
