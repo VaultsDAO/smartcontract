@@ -12,6 +12,10 @@ type TokenData = {
     aggregatorAddress: string,
     priceFeedAddress: string,
     poolAddress: string,
+    //tokenomics
+    coreAddress: string,
+    treasuryAddress: string,
+    rewardAddress: string,
 }
 
 type ContractData = {
