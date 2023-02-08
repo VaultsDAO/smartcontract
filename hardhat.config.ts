@@ -70,6 +70,12 @@ const config: HardhatUserConfig = {
             gas: 8000000,
             accounts: [PRIVATE_KEY, MAKER_ADMIN_KEY, PRICE_ADMIN_KEY, PLATFROM_ADMIN_KEY, TRADER1_KEY, TRADER2_KEY, TRADER3_KEY, TRADER4_KEY, HIEUQ_KEY],
         },
+        arbitrumGoerli: {
+            url: "https://arbitrum-goerli.infura.io/v3/" + INFURA_KEY,
+            chainId: 421613,
+            gas: 8000000,
+            accounts: [PRIVATE_KEY, MAKER_ADMIN_KEY, PRICE_ADMIN_KEY, PLATFROM_ADMIN_KEY, TRADER1_KEY, TRADER2_KEY, TRADER3_KEY, TRADER4_KEY, HIEUQ_KEY],
+        },
     },
     dependencyCompiler: {
         // We have to compile from source since UniswapV3 doesn't provide artifacts in their npm package
