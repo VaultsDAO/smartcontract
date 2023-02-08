@@ -11,6 +11,23 @@ import helpers from "./helpers";
 import { formatEther, parseEther } from "ethers/lib/utils";
 const { waitForTx, tryWaitForTx } = helpers;
 
+import migrateAdmin from "./1_migrate_Admin";
+import migratePriceFeedAll from "./2_migrate_PriceFeed_All";
+import migrateTokens from "./3_migrate_Tokens";
+import migrateQuoteToken from "./4_migrate_QuoteToken";
+import migrateBaseTokenAll from "./5_migrate_BaseToken_All";
+import migrateLibrary from "./6_migrate_Library";
+import migrateUniswapV3 from "./6_migrate_UniswapV3";
+import migrateClearingHouseConfig from "./7_migrate_ClearingHouseConfig";
+import migrateMarketRegistry from "./8_migrate_MarketRegistry";
+import migrateOrderBook from "./9_migrate_OrderBook";
+import migrateAccountBalance from "./10_migrate_AccountBalance";
+import migrateExchange from "./11_migrate_Exchange";
+import migrateInsuranceFund from "./12_migrate_InsuranceFund";
+import migrateVault from "./13_migrate_Vault";
+import migrateCollateralManager from "./14_migrate_CollateralManager";
+import migrateClearingHouse from "./15_migrate_ClearingHouse";
+import migratePNFTToken from "./20_migrate_PNFTToken";
 import migrateRewardMiner from "./21_migrate_RewardMiner";
 
 
@@ -22,12 +39,22 @@ export default deploy;
 
 async function deploy() {
 
-    {
-        console.log('migrateRewardMiner -- START --')
-        await migrateRewardMiner();
-        console.log('migrateRewardMiner -- END --')
-    }
-    return
+    // {
+    //     console.log('migrateLibrary -- START --')
+    //     await migrateLibrary();
+    //     console.log('migrateLibrary -- END --')
+    // }
+    // {
+    //     console.log('migrateClearingHouse -- START --')
+    //     await migrateClearingHouse();
+    //     console.log('migrateClearingHouse -- END --')
+    // }
+    // {
+    //     console.log('migrateRewardMiner -- START --')
+    //     await migrateRewardMiner();
+    //     console.log('migrateRewardMiner -- END --')
+    // }
+    // return
 
 
     const network = hre.network.name;

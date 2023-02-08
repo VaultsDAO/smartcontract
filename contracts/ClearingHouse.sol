@@ -279,14 +279,29 @@ contract ClearingHouse is
     /// @inheritdoc IClearingHouse
     function closePosition(
         DataTypes.ClosePositionParams memory params
-    ) public override whenNotPaused nonReentrant checkDeadline(params.deadline) returns (uint256 base, uint256 quote) {
+    )
+        public
+        override
+        whenNotPaused
+        nonReentrant
+        checkDeadline(params.deadline)
+        returns (uint256 base, uint256 quote, uint256 fee)
+    {
         return ExchangeLogic.closePosition(address(this), _msgSender(), params);
     }
 
     /// @inheritdoc IClearingHouse
-    function liquidate(address trader, address baseToken) external override whenNotPaused nonReentrant {
+    function liquidate(
+        address trader,
+        address baseToken
+    ) external override whenNotPaused nonReentrant returns (uint256 base, uint256 quote, uint256 fee) {
         // positionSizeToBeLiquidated = 0 means liquidating as much as possible
-        _liquidate(trader, baseToken);
+        return _liquidate(trader, baseToken, false);
+    }
+
+    function emergencyLiquidate(address trader, address baseToken) external whenNotPaused nonReentrant onlyOwner {
+        // positionSizeToBeLiquidated = 0 means liquidating as much as possible
+        _liquidate(trader, baseToken, true);
     }
 
     // /// @inheritdoc IClearingHouse
@@ -463,8 +478,12 @@ contract ClearingHouse is
         require(IERC20Metadata(token).transfer(to, amount), "CH_TF");
     }
 
-    function _liquidate(address trader, address baseToken) internal {
-        return ExchangeLogic.liquidate(address(this), _msgSender(), trader, baseToken);
+    function _liquidate(
+        address trader,
+        address baseToken,
+        bool isForced
+    ) internal returns (uint256 base, uint256 quote, uint256 fee) {
+        return ExchangeLogic.liquidate(address(this), _msgSender(), trader, baseToken, isForced);
     }
 
     // /// @dev only cancel open orders if there are not enough free collateral with mmRatio
@@ -488,21 +507,7 @@ contract ClearingHouse is
         address trader,
         address baseToken
     ) internal returns (DataTypes.Growth memory fundingGrowthGlobal) {
-        int256 fundingPayment;
-        (fundingPayment, fundingGrowthGlobal) = IExchange(_exchange).settleFunding(trader, baseToken);
-
-        if (fundingPayment != 0) {
-            _modifyOwedRealizedPnl(trader, fundingPayment.neg256());
-            emit FundingPaymentSettled(trader, baseToken, fundingPayment);
-        }
-
-        IAccountBalance(_accountBalance).updateTwPremiumGrowthGlobal(
-            trader,
-            baseToken,
-            fundingGrowthGlobal.twLongPremiumX96,
-            fundingGrowthGlobal.twShortPremiumX96
-        );
-        return fundingGrowthGlobal;
+        return GenericLogic.settleFunding(address(this), trader, baseToken);
     }
 
     // function _registerBaseToken(address trader, address baseToken) internal {

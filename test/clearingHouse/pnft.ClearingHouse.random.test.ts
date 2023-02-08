@@ -193,6 +193,13 @@ describe("ClearingHouse random trade liquidity repeg close", () => {
             } else {
                 await rewardMiner.connect(trader2).claim();
             }
+
+            if (i % 4 == 0) {
+                await clearingHouse.connect(admin).emergencyLiquidate(trader1.address, baseToken.address);
+            }
+            if (i % 4 == 2) {
+                await clearingHouse.connect(admin).emergencyLiquidate(trader1.address, baseToken.address);
+            }
         }
 
         await clearingHouse.connect(trader1).closePosition({
@@ -230,6 +237,7 @@ describe("ClearingHouse random trade liquidity repeg close", () => {
         let owedRealizedPnlInsuranceFund = (await accountBalance.getPnlAndPendingFee(insuranceFund.address))[0]
         let owedRealizedPnlTrade1 = (await accountBalance.getPnlAndPendingFee(trader1.address))[0]
         let owedRealizedPnlTrade2 = (await accountBalance.getPnlAndPendingFee(trader2.address))[0]
+        let owedRealizedPnlAdmin = (await accountBalance.getPnlAndPendingFee(admin.address))[0]
 
         console.log(
             'owedRealizedPnl',
@@ -237,7 +245,8 @@ describe("ClearingHouse random trade liquidity repeg close", () => {
             formatEther(owedRealizedPnlInsuranceFund),
             formatEther(owedRealizedPnlTrade1),
             formatEther(owedRealizedPnlTrade2),
-            formatEther(owedRealizedPnlPlatformFund.add(owedRealizedPnlInsuranceFund).add(owedRealizedPnlTrade1).add(owedRealizedPnlTrade2)),
+            formatEther(owedRealizedPnlAdmin),
+            formatEther(owedRealizedPnlPlatformFund.add(owedRealizedPnlInsuranceFund).add(owedRealizedPnlTrade1).add(owedRealizedPnlTrade2).add(owedRealizedPnlAdmin)),
         )
 
         console.log(

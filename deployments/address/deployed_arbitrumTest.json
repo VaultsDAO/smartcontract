@@ -126,17 +126,17 @@
         "implAddress": "0xdb3576B1414372706683a406249385Ba62cE892c"
     },
     "genericLogic": {
-        "address": "0x24CadAeA1Ff8FF46Cd6fad1dEC565B87E82bee90"
+        "address": "0x4CCf58b73D5cD55C338f1F16f9B637B26d0a2467"
     },
     "liquidityLogic": {
         "address": "0x9547F0410D708B6b4283C82Cead532915bb7443b"
     },
     "exchangeLogic": {
-        "address": "0xB34AD18EE3E2cfc600B0Bc88C0E127c75B5cFf9a"
+        "address": "0x429cC426206a6d656DcDb6c8c14A091329707302"
     },
     "clearingHouse": {
         "address": "0xf55b291Acbda07E69e49e1Dfa078E6db1Ee70E42",
-        "implAddress": "0x5286B417B215b16B8760c6cFDC1009b7E97fEEB1"
+        "implAddress": "0x2AE1Aa86498c037d1ADAa1fffa3E5B120ccFAfC6"
     },
     "testFaucet": {
         "address": "0xafFABBC0bf710D1D0fdA35FAeEFBe1bB77c70EC2",

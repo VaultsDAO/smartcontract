@@ -64,6 +64,18 @@ library GenericLogic {
         uint256 sqrtPriceAfterX96
     );
 
+    //event
+    event PositionLiquidated(
+        address indexed trader,
+        address indexed baseToken,
+        int256 exchangedPositionSize,
+        int256 exchangedPositionNotional,
+        uint256 fee,
+        int256 realizedPnl,
+        uint256 sqrtPriceAfterX96,
+        address liquidator
+    );
+
     /// @notice Emitted when maker's liquidity of a order changed
     /// @param baseToken The address of virtual base token(ETH, BTC, etc...)
     /// @param quoteToken The address of virtual USD token

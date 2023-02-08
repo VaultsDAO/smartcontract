@@ -82,22 +82,6 @@ interface IClearingHouse {
     /// @param referralCode The referral code by partners
     event ReferredPositionChanged(bytes32 indexed referralCode);
 
-    /// @notice Emitted when taker position is being liquidated
-    /// @param trader The trader who has been liquidated
-    /// @param baseToken Virtual base token(ETH, BTC, etc...) address
-    /// @param positionNotional The cost of position
-    /// @param positionSize The size of position
-    /// @param liquidationFee The fee of liquidate
-    /// @param liquidator The address of liquidator
-    event PositionLiquidated(
-        address indexed trader,
-        address indexed baseToken,
-        uint256 positionNotional,
-        uint256 positionSize,
-        uint256 liquidationFee,
-        address liquidator
-    );
-
     /// @notice Emitted when maker's liquidity of a order changed
     /// @param maker The one who provide liquidity
     /// @param baseToken The address of virtual base token(ETH, BTC, etc...)
@@ -138,6 +122,18 @@ interface IClearingHouse {
         int256 openNotional,
         int256 realizedPnl,
         uint256 sqrtPriceAfterX96
+    );
+
+    //event
+    event PositionLiquidated(
+        address indexed trader,
+        address indexed baseToken,
+        int256 exchangedPositionSize,
+        int256 exchangedPositionNotional,
+        uint256 fee,
+        int256 realizedPnl,
+        uint256 sqrtPriceAfterX96,
+        address liquidator
     );
 
     /// @notice Emitted when taker close her position in closed market
@@ -233,7 +229,7 @@ interface IClearingHouse {
     /// @return quote The amount of quoteToken the taker got or spent
     function closePosition(
         DataTypes.ClosePositionParams calldata params
-    ) external returns (uint256 base, uint256 quote);
+    ) external returns (uint256 base, uint256 quote, uint256 fee);
 
     /// @notice liquidate trader's position and will liquidate the max possible position size
     /// @dev If margin ratio >= 0.5 * mmRatio,
@@ -242,7 +238,7 @@ interface IClearingHouse {
     /// @dev maxLiquidatePositionSize = positionSize * maxLiquidateRatio
     /// @param trader The address of trader
     /// @param baseToken The address of baseToken
-    function liquidate(address trader, address baseToken) external;
+    function liquidate(address trader, address baseToken) external returns (uint256 base, uint256 quote, uint256 fee);
 
     // /// @notice Cancel excess order of a maker
     // /// @dev Order id can get from `OrderBook.getOpenOrderIds`
