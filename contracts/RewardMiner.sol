@@ -244,7 +244,7 @@ contract RewardMiner is IRewardMiner, BlockContext, OwnerPausable {
 
     function mint(address trader, uint256 amount) external override {
         _requireOnlyClearingHouse();
-        if (_start > 0) {
+        if (_start > 0 && _blockTimestamp() >= _start) {
             PeriodData storage periodData = _createPeriodData();
             if (periodData.total > 0) {
                 periodData.users[trader] = periodData.users[trader].add(amount);
