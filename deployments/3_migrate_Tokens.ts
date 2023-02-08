@@ -27,7 +27,7 @@ async function deploy() {
     // 
     if (network != 'arbitrum') {
         if (deployData.wETH.address == undefined || deployData.wETH.address == '') {
-            if (network == 'local') {
+            if (network == 'local' || network == 'arbitrumGoerli') {
                 const TestWETH9 = await hre.ethers.getContractFactory("TestWETH9")
                 const wETH = (await waitForDeploy(await TestWETH9.deploy())) as TestWETH9
                 {

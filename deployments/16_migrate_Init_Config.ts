@@ -89,7 +89,7 @@ async function deploy() {
     if ((await vault.getClearingHouse()).toLowerCase() != clearingHouse.address.toLowerCase()) {
         await waitForTx(await vault.setClearingHouse(clearingHouse.address), 'vault.setClearingHouse(clearingHouse.address)')
     }
-    if (network == 'arbitrum' || network == 'local') {
+    if (network == 'arbitrum' || network == 'arbitrumGoerli' || network == 'local') {
         if ((await vault.getWETH9()).toLowerCase() != clearingHouse.address.toLowerCase()) {
             await waitForTx(await vault.setWETH9(deployData.wETH.address), 'vault.setWETH9(deployData.wETH.address)')
         }

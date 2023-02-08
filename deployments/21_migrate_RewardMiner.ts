@@ -28,8 +28,10 @@ async function deploy() {
     const TransparentUpgradeableProxy = await hre.ethers.getContractFactory('TransparentUpgradeableProxy');
     const RewardMiner = await hre.ethers.getContractFactory("RewardMiner");
     // 
-    // const periodDuration = 43200;
-    const periodDuration = 900;
+    let periodDuration = 43200; // 12h
+    if (network == 'arbitrumTest' || network == 'arbitrumDev' || network == 'local') {
+        periodDuration = 900; // 15m
+    }
     const starts = [
         1,
         361,
