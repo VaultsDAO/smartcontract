@@ -53,6 +53,18 @@ async function deploy() {
         parseEther('3986'),
     ];
 
+    if (network == 'arbitrumGoerli') {
+        initLiquidities = [
+            parseEther('1183'),// 50E for 1%
+            parseEther('2558'),
+            parseEther('1246'),
+            parseEther('3618'),
+            parseEther('2539'),
+            parseEther('4388'),
+            parseEther('3986'),
+        ];
+    }
+
     for (let i = 0; i < baseTokens.length; i++) {
         var baseTokenAddress = baseTokens[i].address
         var initLiquidity = initLiquidities[i]
