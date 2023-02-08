@@ -132,26 +132,26 @@
         "address": "0x9547F0410D708B6b4283C82Cead532915bb7443b"
     },
     "exchangeLogic": {
-        "address": "0x704C88d06e7462335be037da52cA395a1788678e"
+        "address": "0xB34AD18EE3E2cfc600B0Bc88C0E127c75B5cFf9a"
     },
     "clearingHouse": {
         "address": "0xf55b291Acbda07E69e49e1Dfa078E6db1Ee70E42",
-        "implAddress": "0x79247dAfEC5819278A4E1f37d0a8ff6ae250F49C"
+        "implAddress": "0x5286B417B215b16B8760c6cFDC1009b7E97fEEB1"
     },
     "testFaucet": {
         "address": "0xafFABBC0bf710D1D0fdA35FAeEFBe1bB77c70EC2",
         "implAddress": "0x10BF5b8a20aa8e7CAaF5828d9C2a9615E4967883"
     },
     "pNFTToken": {
-        "address": "",
-        "implAddress": "",
+        "address": "0xd8Cb9De2a35B184B3924547C4e27Df8AaC93119f",
+        "implAddress": "0x10C2195B28e19Be63BffB7a664F53b75fE5e9dBA",
         "name": "PNFT Token",
         "symbol": "PNFT",
         "decimals": 18
     },
     "rewardMiner": {
-        "address": "",
-        "implAddress": ""
+        "address": "0x89fe13dCad17277fB90015001C09BFbDCFd1DF3e",
+        "implAddress": "0x8b4620FBBd86d51A639A6cB1fb7096faAc42ce39"
     },
     "testCheck": {
         "addLiquidity": false,

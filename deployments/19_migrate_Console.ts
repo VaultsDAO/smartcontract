@@ -50,6 +50,7 @@ async function deploy() {
     const vBAYC = (await ethers.getContractAt('BaseToken', deployData.vBAYC.address)) as BaseToken;
     const vMAYC = (await ethers.getContractAt('BaseToken', deployData.vMAYC.address)) as BaseToken;
     const vDOODLE = (await ethers.getContractAt('BaseToken', deployData.vDOODLE.address)) as BaseToken;
+    const vCRYPTOPUNKS = (await ethers.getContractAt('BaseToken', deployData.vCRYPTOPUNKS.address)) as BaseToken;
 
     var priceFeedBAYC = (await hre.ethers.getContractAt('NftPriceFeed', deployData.nftPriceFeedBAYC.address)) as NftPriceFeed;
     var priceFeedMAYC = (await hre.ethers.getContractAt('NftPriceFeed', deployData.nftPriceFeedMAYC.address)) as NftPriceFeed;
@@ -59,8 +60,14 @@ async function deploy() {
     // let platformFundFeeRatio = await marketRegistry.getPlatformFundFeeRatio(vDOODLE.address)
     // console.log('getPlatformFundFeeRatio', marketRegistry.address, vDOODLE.address, platformFundFeeRatio.toString())
 
-    let [longMultiplier, shortMultiplier] = await accountBalance.getMarketMultiplier(vBAYC.address)
-    console.log('getMarketMultiplier', longMultiplier.toString(), shortMultiplier.toString())
+    // let [longMultiplier, shortMultiplier] = await accountBalance.getMarketMultiplier(vBAYC.address)
+    // console.log('getMarketMultiplier', longMultiplier.toString(), shortMultiplier.toString())
+
+    let fpAmount = await exchange.getPendingFundingPayment('0x088D8A4a03266870EDcbbbADdA3F475f404dB9B2', vCRYPTOPUNKS.address)
+    console.log(
+        'getPendingFundingPayment',
+        formatEther(fpAmount),
+    )
 
     return
 

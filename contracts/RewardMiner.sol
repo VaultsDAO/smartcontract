@@ -55,6 +55,8 @@ contract RewardMiner is IRewardMiner, BlockContext, OwnerPausable {
     uint256 internal _allocation;
     uint256 internal _spend;
     mapping(address => uint256) public _lastClaimPeriodNumberMap;
+    mapping(address => uint256) public _userAmountMap;
+    mapping(address => uint256) public _userSpendMap;
 
     //
     // EXTERNAL NON-VIEW
@@ -136,6 +138,18 @@ contract RewardMiner is IRewardMiner, BlockContext, OwnerPausable {
     {
         periodNumber = _getPeriodNumber();
         (start, end, total, amount) = _getPeriodInfo(periodNumber);
+    }
+
+    function getCurrentPeriodInfoTrader(
+        address trader
+    )
+        internal
+        view
+        returns (uint256 periodNumber, uint256 start, uint256 end, uint256 total, uint256 amount, uint256 traderAmount)
+    {
+        periodNumber = _getPeriodNumber();
+        (start, end, total, amount) = _getPeriodInfo(periodNumber);
+        traderAmount = _periodDataMap[periodNumber].users[trader];
     }
 
     function _getPeriodInfo(
@@ -235,6 +249,9 @@ contract RewardMiner is IRewardMiner, BlockContext, OwnerPausable {
             if (periodData.total > 0) {
                 periodData.users[trader] = periodData.users[trader].add(amount);
                 periodData.amount = periodData.amount.add(amount);
+
+                _userAmountMap[trader] = _userAmountMap[trader].add(amount);
+
                 emit Mint(trader, amount);
             }
         }
@@ -248,6 +265,8 @@ contract RewardMiner is IRewardMiner, BlockContext, OwnerPausable {
         IERC20Upgradeable(_pnftToken).transfer(trader, amount);
         // update last claim period
         _lastClaimPeriodNumberMap[trader] = (_getPeriodNumber() - 1);
+
+        _userSpendMap[trader] = _userSpendMap[trader].add(amount);
 
         emit Spend(trader, amount);
     }
