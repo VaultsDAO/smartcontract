@@ -138,13 +138,6 @@
         "address": "0xa621Ea45F69B71509BBAbbab57C4133F3C47Ac1e",
         "implAddress": "0xB6501A98A5090ED4b1072186F9458e7E61B117C6"
     },
-    "pNFTToken": {
-        "address": "",
-        "implAddress": "",
-        "name": "PNFT Token",
-        "symbol": "PNFT",
-        "decimals": 18
-    },
     "testFaucet": {
         "address": "0xF48f84206110989756F8737B3605580a1728dF03",
         "implAddress": "0x9408f7153D02f02e93E758c2CB908e0613C468C2"
@@ -154,7 +147,10 @@
         "implAddress": "",
         "name": "PNFT Token",
         "symbol": "PNFT",
-        "decimals": 18
+        "decimals": 18,
+        "coreAddress": "0x688d89B7512e512CEfbF1e7b03b7b9F32026A180",
+        "treasuryAddress": "0x688d89B7512e512CEfbF1e7b03b7b9F32026A180",
+        "rewardAddress": "0x688d89B7512e512CEfbF1e7b03b7b9F32026A180"
     },
     "rewardMiner": {
         "address": "",
