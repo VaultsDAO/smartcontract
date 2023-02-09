@@ -39,7 +39,7 @@ async function deploy() {
             console.log('pNFTToken is deployed', pNFTToken.address)
         }
     }
-    // if (deployData.pNFTToken.address == undefined || deployData.pNFTToken.address == '') {
+    // if (deployData.pNFTToken.address == undefined || deployData.pNFTToken.address == '') 
     {
         var pNFTToken = await hre.ethers.getContractAt('PNFTToken', deployData.pNFTToken.implAddress);
         var initializeData = pNFTToken.interface.encodeFunctionData('initialize', [
@@ -78,147 +78,141 @@ async function deploy() {
             const revokable = true;
             let unvestingAmount = parseEther("4000000");//4M
             let amount = parseEther("16000000");//16M
-            console.log(unvestingAmount.toString());
-            console.log(amount.toString());
             //add Core schedule 
-            await pNFTToken.createVestingSchedule(
-                deployData.pNFTToken.coreAddress,
-                startTime,
-                cliff,
-                duration,
-                slicePeriodSeconds,
-                revokable,
-                unvestingAmount,
-                amount,
+            await pNFTToken.createVestingSchedule({
+                beneficiary: deployData.pNFTToken.coreAddress,
+                start: startTime,
+                cliff: cliff,
+                duration: duration,
+                slicePeriodSeconds: slicePeriodSeconds,
+                revocable: revokable,
+                unvestingAmount: unvestingAmount,
+                amount: amount,
+            },
             );
-            return;
             //add treasury schedule
             duration = 2592000;//720 days in seconds (2 years)
             slicePeriodSeconds = 648000;//180days in seconds
             unvestingAmount = parseEther("4000000");//4M
             amount = parseEther("16000000");//16M
             await pNFTToken.createVestingSchedule(
-                deployData.pNFTToken.treasuryAddress,
-                startTime,
-                cliff,
-                duration,
-                slicePeriodSeconds,
-                revokable,
-                unvestingAmount,
-                amount,
+                {
+                    beneficiary: deployData.pNFTToken.treasuryAddress,
+                    start: startTime,
+                    cliff: cliff,
+                    duration: duration,
+                    slicePeriodSeconds: slicePeriodSeconds,
+                    revocable: revokable,
+                    unvestingAmount: unvestingAmount,
+                    amount: amount,
+                },
             );
             //add reward schedule
-            //#1
-            await pNFTToken.createVestingSchedule(
-                deployData.pNFTToken.rewardAddress,
-                startTime,
-                cliff,
-                648000,//180 days
-                648000,//180 days
-                revokable,
-                parseEther("9000000"),
-                parseEther("8100000"),
-            );
-            //#2
-            await pNFTToken.createVestingSchedule(
-                deployData.pNFTToken.rewardAddress,
-                startTime,
-                cliff,
-                1296000,//360 days
-                1296000,//360 days
-                revokable,
-                0,
-                parseEther("7290000"),
-            );
-            //#3
-            await pNFTToken.createVestingSchedule(
-                deployData.pNFTToken.rewardAddress,
-                startTime,
-                cliff,
-                1944000,//540 days
-                1944000,//540 days
-                revokable,
-                0,
-                parseEther("6561000"),
-            );
-            //#4
-            await pNFTToken.createVestingSchedule(
-                deployData.pNFTToken.rewardAddress,
-                startTime,
-                cliff,
-                2592000,//720 days
-                2592000,//720 days
-                revokable,
-                0,
-                parseEther("5904900"),
-            );
-            //#5
-            await pNFTToken.createVestingSchedule(
-                deployData.pNFTToken.rewardAddress,
-                startTime,
-                cliff,
-                3240000,//900 days
-                3240000,//900 days
-                revokable,
-                0,
-                parseEther("5314410"),
-            );
-            //#6
-            await pNFTToken.createVestingSchedule(
-                deployData.pNFTToken.rewardAddress,
-                startTime,
-                cliff,
-                3888000,//1080 days
-                3888000,//1080 days
-                revokable,
-                0,
-                parseEther("4782969"),
-            );
-            //#7
-            await pNFTToken.createVestingSchedule(
-                deployData.pNFTToken.rewardAddress,
-                startTime,
-                cliff,
-                4536000,//1260 days
-                4536000,//1260 days
-                revokable,
-                0,
-                parseEther("4304672"),
-            );
-            //#8
-            await pNFTToken.createVestingSchedule(
-                deployData.pNFTToken.rewardAddress,
-                startTime,
-                cliff,
-                5184000,//1440 days
-                5184000,//1440 days
-                revokable,
-                0,
-                parseEther("3874205"),
-            );
-            //#9
-            await pNFTToken.createVestingSchedule(
-                deployData.pNFTToken.rewardAddress,
-                startTime,
-                cliff,
-                5832000,//1620 days
-                5832000,//1620 days
-                revokable,
-                0,
-                parseEther("3486784"),
-            );
-            //#10
-            await pNFTToken.createVestingSchedule(
-                deployData.pNFTToken.rewardAddress,
-                startTime,
-                cliff,
-                6480000,//1800 days
-                6480000,//1800 days
-                revokable,
-                0,
-                parseEther("1381060"),
-            );
 
+            //#1
+            await pNFTToken.createVestingScheduleBatch(
+                [{
+                    beneficiary: deployData.pNFTToken.rewardAddress,
+                    start: startTime,
+                    cliff: cliff,
+                    duration: 648000,
+                    slicePeriodSeconds: 648000,
+                    revocable: revokable,
+                    unvestingAmount: parseEther("9000000"),
+                    amount: parseEther("8100000"),
+                },
+                {
+                    beneficiary: deployData.pNFTToken.rewardAddress,
+                    start: startTime,
+                    cliff: cliff,
+                    duration: 1296000,//360 days
+                    slicePeriodSeconds: 1296000,//360 days
+                    revocable: revokable,
+                    unvestingAmount: 0,
+                    amount: parseEther("7290000"),
+                },
+                {
+                    beneficiary: deployData.pNFTToken.rewardAddress,
+                    start: startTime,
+                    cliff: cliff,
+                    duration: 1944000,//540 days
+                    slicePeriodSeconds: 1944000,//540 days
+                    revocable: revokable,
+                    unvestingAmount: 0,
+                    amount: parseEther("6561000"),
+                },
+                {
+                    beneficiary: deployData.pNFTToken.rewardAddress,
+                    start: startTime,
+                    cliff: cliff,
+                    duration: 2592000,//720 days
+                    slicePeriodSeconds: 2592000,//720 days
+                    revocable: revokable,
+                    unvestingAmount: 0,
+                    amount: parseEther("5904900"),
+                },
+                {
+                    beneficiary: deployData.pNFTToken.rewardAddress,
+                    start: startTime,
+                    cliff: cliff,
+                    duration: 3240000,//900 days
+                    slicePeriodSeconds: 3240000,//900 days
+                    revocable: revokable,
+                    unvestingAmount: 0,
+                    amount: parseEther("5314410"),
+                },
+                {
+                    beneficiary: deployData.pNFTToken.rewardAddress,
+                    start: startTime,
+                    cliff: cliff,
+                    duration: 3888000,//1080 days
+                    slicePeriodSeconds: 3888000,//1080 days
+                    revocable: revokable,
+                    unvestingAmount: 0,
+                    amount: parseEther("4782969"),
+                },
+                {
+                    beneficiary: deployData.pNFTToken.rewardAddress,
+                    start: startTime,
+                    cliff: cliff,
+                    duration: 4536000,//1260 days
+                    slicePeriodSeconds: 4536000,//1260 days
+                    revocable: revokable,
+                    unvestingAmount: 0,
+                    amount: parseEther("4304672"),
+                },
+                {
+                    beneficiary: deployData.pNFTToken.rewardAddress,
+                    start: startTime,
+                    cliff: cliff,
+                    duration: 5184000,//1440 days
+                    slicePeriodSeconds: 5184000,//1440 days
+                    revocable: revokable,
+                    unvestingAmount: 0,
+                    amount: parseEther("3874205"),
+                },
+                {
+                    beneficiary: deployData.pNFTToken.rewardAddress,
+                    start: startTime,
+                    cliff: cliff,
+                    duration: 5832000,//1620 days
+                    slicePeriodSeconds: 5832000,//1620 days
+                    revocable: revokable,
+                    unvestingAmount: 0,
+                    amount: parseEther("3486784"),
+                },
+                {
+                    beneficiary: deployData.pNFTToken.rewardAddress,
+                    start: startTime,
+                    cliff: cliff,
+                    duration: 6480000,//1800 days
+                    slicePeriodSeconds: 6480000,//1800 days
+                    revocable: revokable,
+                    unvestingAmount: 0,
+                    amount: parseEther("1381060"),
+                },
+                ],
+            );
         }
     }
     {

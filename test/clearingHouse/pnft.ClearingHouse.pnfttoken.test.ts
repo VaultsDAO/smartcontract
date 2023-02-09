@@ -30,21 +30,23 @@ describe("testPNFTToken test", () => {
         let cliff = 0;
         let duration = 1000;
         let slicePeriodSeconds = 1;
-        let revokable = true;
+        let revocable = true;
         let unvestingAmount = 20;
         let amount = 100;
 
 
         // create new vesting schedule
-        await testPNFTToken.createVestingSchedule(
-            beneficiary.address,
-            startTime,
-            cliff,
-            duration,
-            slicePeriodSeconds,
-            revokable,
-            unvestingAmount,
-            amount,
+        await testPNFTToken.createVestingScheduleBatch([{
+            beneficiary: beneficiary.address,
+            start: startTime,
+            cliff: cliff,
+            duration: duration,
+            slicePeriodSeconds: slicePeriodSeconds,
+            revocable: revocable,
+            unvestingAmount: unvestingAmount,
+            amount: amount,
+        }],
+
         );
         expect(await testPNFTToken.getVestingSchedulesCount()).to.be.equal(1);
         expect(
