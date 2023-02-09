@@ -137,6 +137,17 @@ contract PNFTToken is
         return vestingSchedulesTotalAmount;
     }
 
+    function createVestingScheduleBatch(
+        address[] calldata _beneficiaries,
+        uint256[] calldata _starts,
+        uint256[] calldata _cliffs,
+        uint256[] calldata _durations,
+        uint256[] calldata _slicePeriodSecondss,
+        bool[] calldata _revocables,
+        uint256[] calldata _unvestingAmounts,
+        uint256[] calldata _amounts
+    ) public onlyOwner {}
+
     /**
      * @notice Creates a new vesting schedule for a beneficiary.
      * @param _beneficiary address of the beneficiary to whom vested tokens are transferred
