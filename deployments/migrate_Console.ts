@@ -5,7 +5,7 @@ import bn from "bignumber.js"
 import hre, { ethers } from "hardhat";
 
 import { encodePriceSqrt, formatSqrtPriceX96ToPrice } from "../test/shared/utilities";
-import { AccountBalance, BaseToken, ClearingHouse, ClearingHouseConfig, CollateralManager, Exchange, InsuranceFund, MarketRegistry, MockPNFTToken, NftPriceFeed, OrderBook, QuoteToken, RewardMiner, UniswapV3Pool, Vault } from "../typechain";
+import { AccountBalance, BaseToken, ClearingHouse, ClearingHouseConfig, CollateralManager, Exchange, InsuranceFund, MarketRegistry, MockPNFTToken, NftPriceFeed, OrderBook, QuoteToken, RewardMiner, TestFaucet, UniswapV3Pool, Vault } from "../typechain";
 import { getMaxTickRange } from "../test/helper/number";
 import helpers from "./helpers";
 import { formatEther, parseEther } from "ethers/lib/utils";
@@ -39,6 +39,11 @@ export default deploy;
 
 async function deploy() {
 
+    {
+        console.log('migrateExchange -- START --')
+        await migrateExchange();
+        console.log('migrateExchange -- END --')
+    }
     // {
     //     console.log('migrateLibrary -- START --')
     //     await migrateLibrary();
@@ -54,7 +59,7 @@ async function deploy() {
     //     await migrateRewardMiner();
     //     console.log('migrateRewardMiner -- END --')
     // }
-    // return
+    return
 
 
     const network = hre.network.name;
@@ -78,6 +83,35 @@ async function deploy() {
     var clearingHouse = (await hre.ethers.getContractAt('ClearingHouse', deployData.clearingHouse.address)) as ClearingHouse;
     var rewardMiner = (await hre.ethers.getContractAt('RewardMiner', deployData.rewardMiner.address)) as RewardMiner;
     var pNFTToken = (await hre.ethers.getContractAt('MockPNFTToken', deployData.pNFTToken.address)) as MockPNFTToken;
+    var testFaucet = (await hre.ethers.getContractAt('TestFaucet', deployData.testFaucet.address)) as TestFaucet;
+
+
+    var baseTokenAddr = deployData.vMOONBIRD.address
+
+    let markTwapX96 = await exchange.getSqrtMarkTwapX96(baseTokenAddr, 0)
+    let markTwap = new bn(formatSqrtPriceX96ToPrice(markTwapX96, 18))
+    console.log(
+        'markTwap',
+        markTwap.toString()
+    )
+
+    // var isAbleRepeg = (await clearingHouse.isAbleRepeg(baseTokenAddr))
+    // console.log(
+    //     'isAbleRepeg',
+    //     isAbleRepeg
+    // )
+    // if (isAbleRepeg) {
+    //     waitForTx(
+    //         await clearingHouse.repeg(baseTokenAddr),
+    //         'clearingHouse.repeg(' + baseTokenAddr + ')'
+    //     )
+    // }
+
+    // console.log(
+    //     await testFaucet.isFaucet('0xFC3d83536a44f13F6266C8607C5B62E62C058c0e')
+    // )
+    // return
+
 
     // var address = '0x088d8a4a03266870edcbbbadda3f475f404db9b2'
     // let [realizedPnl, unrealizedPnl] = await accountBalance.getPnlAndPendingFee(address)

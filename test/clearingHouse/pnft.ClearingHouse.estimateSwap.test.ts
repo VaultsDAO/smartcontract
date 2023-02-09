@@ -92,24 +92,63 @@ describe("ClearingHouse multiplier", () => {
     }
 
     it("estimate swap check", async () => {
-        const initPrice = "15"
-        const estimatePrice = "14.85"
+        const initPrice = "77"
+        const estimatePrice = "77"
 
         await setup(initPrice);
 
         // maker add liquidity
+        // await clearingHouse.connect(maker).addLiquidity({
+        //     baseToken: baseToken.address,
+        //     liquidity: parseEther('1000'),
+        //     deadline: ethers.constants.MaxUint256,
+        // })
+        // let res = await exchange.connect(trader1).estimateSwap({
+        //     baseToken: baseToken.address,
+        //     isBaseToQuote: true,
+        //     isExactInput: false,
+        //     oppositeAmountBound: 0,
+        //     amount: ethers.constants.MaxUint256.div(1e10),
+        //     sqrtPriceLimitX96: encodePriceSqrt(estimatePrice, '1'),
+        //     deadline: ethers.constants.MaxUint256,
+        //     referralCode: ethers.constants.HashZero,
+        // })
+        // console.log(
+        //     'quote',
+        //     formatEther(res.amountOut),
+        // )
+
         await clearingHouse.connect(maker).addLiquidity({
             baseToken: baseToken.address,
-            liquidity: parseEther('1000'),
+            liquidity: parseEther('1183'),
             deadline: ethers.constants.MaxUint256,
         })
         let res = await exchange.connect(trader1).estimateSwap({
             baseToken: baseToken.address,
             isBaseToQuote: true,
-            isExactInput: false,
+            isExactInput: true,
             oppositeAmountBound: 0,
-            amount: ethers.constants.MaxUint256.div(1e10),
-            sqrtPriceLimitX96: encodePriceSqrt(estimatePrice, '1'),
+            amount: parseEther('1.3'),
+            sqrtPriceLimitX96: 0,
+            deadline: ethers.constants.MaxUint256,
+            referralCode: ethers.constants.HashZero,
+        })
+        console.log(
+            'quote',
+            formatEther(res.amountOut),
+        )
+        await clearingHouse.connect(maker).addLiquidity({
+            baseToken: baseToken.address,
+            liquidity: parseEther('591'),
+            deadline: ethers.constants.MaxUint256,
+        })
+        res = await exchange.connect(trader1).estimateSwap({
+            baseToken: baseToken.address,
+            isBaseToQuote: true,
+            isExactInput: true,
+            oppositeAmountBound: 0,
+            amount: parseEther('1.3'),
+            sqrtPriceLimitX96: 0,
             deadline: ethers.constants.MaxUint256,
             referralCode: ethers.constants.HashZero,
         })

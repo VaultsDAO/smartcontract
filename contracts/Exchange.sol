@@ -444,12 +444,10 @@ contract Exchange is
         uint256 indexTwap = IIndexPrice(baseToken).getIndexPrice(
             IClearingHouseConfig(_clearingHouseConfig).getTwapInterval()
         );
-        console.log("markPrice %d", markPrice);
-        console.log("indexTwap %d", indexTwap);
         uint256 spread = markPrice > indexTwap ? markPrice.sub(indexTwap) : indexTwap.sub(markPrice);
         // get market info
         IMarketRegistry.MarketInfo memory marketInfo = IMarketRegistry(_marketRegistry).getMarketInfo(baseToken);
-
+        //
         return spread > PerpMath.mulRatio(indexTwap, marketInfo.unhealthyDeltaTwapRatio);
     }
 
@@ -673,25 +671,28 @@ contract Exchange is
             uint32 deltaTimestamp = timestamp.sub(_firstTradedTimestampMap[baseToken]).toUint32();
             twapInterval = twapInterval > deltaTimestamp ? deltaTimestamp : twapInterval;
         }
+        // uint256 markTwapX96;
+        // if (marketOpen) {
+        //     markTwapX96 = getSqrtMarkTwapX96(baseToken, twapInterval).formatSqrtPriceX96ToPriceX96();
+        //     indexTwap = IIndexPrice(baseToken).getIndexPrice(twapInterval);
+        // } else {
+        //     // if a market is paused/closed, we use the last known index price which is getPausedIndexPrice
+        //     //
+        //     // -----+--- twap interval ---+--- secondsAgo ---+
+        //     //                        pausedTime            now
 
-        uint256 markTwapX96;
-        if (marketOpen) {
-            markTwapX96 = getSqrtMarkTwapX96(baseToken, twapInterval).formatSqrtPriceX96ToPriceX96();
-            indexTwap = IIndexPrice(baseToken).getIndexPrice(twapInterval);
-        } else {
-            // if a market is paused/closed, we use the last known index price which is getPausedIndexPrice
-            //
-            // -----+--- twap interval ---+--- secondsAgo ---+
-            //                        pausedTime            now
+        //     // timestamp is pausedTime when the market is not open
+        //     uint32 secondsAgo = _blockTimestamp().sub(timestamp).toUint32();
+        //     markTwapX96 = UniswapV3Broker
+        //         .getSqrtMarkTwapX96From(IMarketRegistry(_marketRegistry).getPool(baseToken), secondsAgo, twapInterval)
+        //         .formatSqrtPriceX96ToPriceX96();
+        //     indexTwap = IBaseToken(baseToken).getPausedIndexPrice();
+        // }
 
-            // timestamp is pausedTime when the market is not open
-            uint32 secondsAgo = _blockTimestamp().sub(timestamp).toUint32();
-            markTwapX96 = UniswapV3Broker
-                .getSqrtMarkTwapX96From(IMarketRegistry(_marketRegistry).getPool(baseToken), secondsAgo, twapInterval)
-                .formatSqrtPriceX96ToPriceX96();
-            indexTwap = IBaseToken(baseToken).getPausedIndexPrice();
-        }
+        uint256 markTwapX96 = getSqrtMarkTwapX96(baseToken, twapInterval).formatSqrtPriceX96ToPriceX96();
+
         markTwap = markTwapX96.formatX96ToX10_18();
+        indexTwap = IIndexPrice(baseToken).getIndexPrice(twapInterval);
 
         uint256 lastSettledTimestamp = _lastSettledTimestampMap[baseToken];
         DataTypes.Growth storage lastFundingGrowthGlobal = _globalFundingGrowthX96Map[baseToken];
