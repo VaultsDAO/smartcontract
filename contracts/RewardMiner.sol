@@ -11,10 +11,11 @@ import { PerpMath } from "./lib/PerpMath.sol";
 import { OwnerPausable } from "./base/OwnerPausable.sol";
 import { IRewardMiner } from "./interface/IRewardMiner.sol";
 import { BlockContext } from "./base/BlockContext.sol";
+import { RewardMinerStorageV1 } from "./storage/RewardMinerStorage.sol";
 import "hardhat/console.sol";
 
 // never inherit any new stateful contract. never change the orders of parent stateful contracts
-contract RewardMiner is IRewardMiner, BlockContext, OwnerPausable {
+contract RewardMiner is IRewardMiner, BlockContext, OwnerPausable, RewardMinerStorageV1 {
     using AddressUpgradeable for address;
     using SafeMathUpgradeable for uint256;
     using SignedSafeMathUpgradeable for int256;
@@ -25,38 +26,6 @@ contract RewardMiner is IRewardMiner, BlockContext, OwnerPausable {
 
     event Mint(uint256 indexed periodNumber, address indexed trader, uint256 amount);
     event Spend(address indexed trader, uint256 amount);
-
-    //
-    // STRUCT
-    //
-
-    struct PeriodConfig {
-        uint256 start;
-        uint256 end;
-        uint256 total;
-    }
-
-    struct PeriodData {
-        uint256 periodNumber;
-        mapping(address => uint256) users;
-        uint256 amount;
-        uint256 total;
-    }
-    //
-    address internal _clearingHouse;
-    address internal _pnftToken;
-    uint256 internal _start;
-    uint256 internal _periodDuration;
-    uint256 internal _limitClaimPeriod;
-    PeriodConfig[] public _periodConfigs;
-    //
-    mapping(uint256 => PeriodData) public _periodDataMap;
-    uint256[] public _periodNumbers;
-    uint256 internal _allocation;
-    uint256 internal _spend;
-    mapping(address => uint256) public _lastClaimPeriodNumberMap;
-    mapping(address => uint256) public _userAmountMap;
-    mapping(address => uint256) public _userSpendMap;
 
     //
     // EXTERNAL NON-VIEW

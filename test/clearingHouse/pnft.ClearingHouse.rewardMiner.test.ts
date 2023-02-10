@@ -24,8 +24,6 @@ import {
     findLiquidityChangedEvents,
     findPnlRealizedEvents,
     q2bExactOutput,
-    removeAllOrders,
-    removeOrder,
 } from "../helper/clearingHouseHelper"
 import { initMarket } from "../helper/marketHelper"
 import { IGNORABLE_DUST, priceToTick } from "../helper/number"
