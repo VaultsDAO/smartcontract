@@ -102,16 +102,6 @@ contract ClearingHouse is
         _;
     }
 
-    function _requireMaker(address maker) internal view {
-        // only Maker
-        require(maker == _maker, "CH_OM");
-    }
-
-    function _requireNotMaker(address maker) internal view {
-        // not Maker
-        require(maker != _maker, "CH_NM");
-    }
-
     //
     // EXTERNAL NON-VIEW
     //
@@ -288,10 +278,6 @@ contract ClearingHouse is
         returns (uint256 base, uint256 quote, uint256 fee)
     {
         return ExchangeLogic.closePosition(address(this), _msgSender(), params);
-    }
-
-    function isLiquidatable(address trader) external view returns (bool) {
-        return GenericLogic.isLiquidatable(address(this), trader);
     }
 
     /// @inheritdoc IClearingHouse
@@ -545,68 +531,10 @@ contract ClearingHouse is
         return super._msgData();
     }
 
-    function _getTakerOpenNotional(address trader, address baseToken) internal view returns (int256) {
-        return IAccountBalance(_accountBalance).getTakerOpenNotional(trader, baseToken);
-    }
-
-    function _getTakerPositionSafe(address trader, address baseToken) internal view returns (int256) {
-        int256 takerPositionSize = _getTakerPosition(trader, baseToken);
-        // CH_PSZ: position size is zero
-        require(takerPositionSize != 0, "CH_PSZ");
-        return takerPositionSize;
-    }
-
-    function _getTakerPosition(address trader, address baseToken) internal view returns (int256) {
-        return IAccountBalance(_accountBalance).getTakerPositionSize(trader, baseToken);
-    }
-
-    function _getFreeCollateralByRatio(address trader, uint24 ratio) internal view returns (int256) {
-        return IVault(_vault).getFreeCollateralByRatio(trader, ratio);
-    }
-
-    function _getSqrtMarkX96(address baseToken) internal view returns (uint160) {
-        return IExchange(_exchange).getSqrtMarkTwapX96(baseToken, 0);
-    }
-
-    function _getMarginRequirementForLiquidation(address trader) internal view returns (int256) {
-        return IAccountBalance(_accountBalance).getMarginRequirementForLiquidation(trader);
-    }
-
-    function _getLiquidationPenaltyRatio() internal view returns (uint24) {
-        return IClearingHouseConfig(_clearingHouseConfig).getLiquidationPenaltyRatio();
-    }
-
-    function _getTotalAbsPositionValue(address trader) internal view returns (uint256) {
-        return IAccountBalance(_accountBalance).getTotalAbsPositionValue(trader);
-    }
-
     /// @dev liquidation condition:
     ///      accountValue < sum(abs(positionValue_by_market)) * mmRatio = totalMinimumMarginRequirement
-    function _isLiquidatable(address trader) internal view returns (bool) {
-        return getAccountValue(trader) < _getMarginRequirementForLiquidation(trader);
-    }
-
-    // function _settleBalanceAndDeregister(
-    //     address trader,
-    //     address baseToken,
-    //     int256 takerBase,
-    //     int256 takerQuote,
-    //     int256 realizedPnl,
-    //     int256 makerFee
-    // ) internal {
-    //     IAccountBalance(_accountBalance).settleBalanceAndDeregister(
-    //         trader,
-    //         baseToken,
-    //         takerBase,
-    //         takerQuote,
-    //         realizedPnl,
-    //         makerFee
-    //     );
-    // }
-
-    function _checkMarketOpen(address baseToken) internal view {
-        // CH_MNO: Market not opened
-        require(IBaseToken(baseToken).isOpen(), "CH_MNO");
+    function isLiquidatable(address trader) external view returns (bool) {
+        return GenericLogic.isLiquidatable(address(this), trader);
     }
 
     function _isContract(address contractArg, string memory errorMsg) internal view {

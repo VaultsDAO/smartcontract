@@ -11,11 +11,11 @@ import { PerpMath } from "./lib/PerpMath.sol";
 import { OwnerPausable } from "./base/OwnerPausable.sol";
 import { IRewardMiner } from "./interface/IRewardMiner.sol";
 import { BlockContext } from "./base/BlockContext.sol";
-import { RewardMinerStorageV1 } from "./storage/RewardMinerStorage.sol";
+import { RewardMinerStorage } from "./storage/RewardMinerStorage.sol";
 import "hardhat/console.sol";
 
 // never inherit any new stateful contract. never change the orders of parent stateful contracts
-contract RewardMiner is IRewardMiner, BlockContext, OwnerPausable, RewardMinerStorageV1 {
+contract RewardMiner is IRewardMiner, BlockContext, OwnerPausable, RewardMinerStorage {
     using AddressUpgradeable for address;
     using SafeMathUpgradeable for uint256;
     using SignedSafeMathUpgradeable for int256;
