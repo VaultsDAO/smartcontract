@@ -24,7 +24,7 @@ import { IAccountBalance } from "./interface/IAccountBalance.sol";
 import { IClearingHouseConfig } from "./interface/IClearingHouseConfig.sol";
 import { IIndexPrice } from "./interface/IIndexPrice.sol";
 import { IBaseToken } from "./interface/IBaseToken.sol";
-import { ExchangeStorageV1 } from "./storage/ExchangeStorage.sol";
+import { ExchangeStorageV2 } from "./storage/ExchangeStorage.sol";
 import { IExchange } from "./interface/IExchange.sol";
 import { OpenOrder } from "./lib/OpenOrder.sol";
 import { DataTypes } from "./types/DataTypes.sol";
@@ -38,7 +38,7 @@ contract Exchange is
     BlockContext,
     ClearingHouseCallee,
     UniswapV3CallbackBridge,
-    ExchangeStorageV1
+    ExchangeStorageV2
 {
     using AddressUpgradeable for address;
     using SafeMathUpgradeable for uint256;
@@ -86,8 +86,9 @@ contract Exchange is
 
     uint256 internal constant _FULLY_CLOSED_RATIO = 1e18;
     // uint24 internal constant _MAX_TICK_CROSSED_WITHIN_BLOCK_CAP = 1000; // 10%
-    uint24 internal constant _MAX_TICK_CROSSED_WITHIN_BLOCK_CAP = 1774544; // 10%
+    uint24 internal constant _MAX_TICK_CROSSED_WITHIN_BLOCK_CAP = 1774544;
     uint24 internal constant _MAX_PRICE_SPREAD_RATIO = 0.05e6; // 5% in decimal 6
+    uint256 internal constant _PRICE_LIMIT_INTERVAL = 15; // 15 sec
 
     //
     // EXTERNAL NON-VIEW
@@ -316,8 +317,13 @@ contract Exchange is
 
             emit FundingUpdated(baseToken, markTwap, indexTwap, longPositionSize, shortPositionSize);
 
-            // update tick for price limit checks
-            _lastUpdatedTickMap[baseToken] = _getTick(baseToken);
+            // update tick & timestamp for price limit check
+            // if timestamp diff < _PRICE_LIMIT_INTERVAL, including when the market is paused, they won't get updated
+            uint256 lastTickUpdatedTimestamp = _lastTickUpdatedTimestampMap[baseToken];
+            if (timestamp >= lastTickUpdatedTimestamp.add(_PRICE_LIMIT_INTERVAL)) {
+                _lastTickUpdatedTimestampMap[baseToken] = timestamp;
+                _lastUpdatedTickMap[baseToken] = _getTick(baseToken);
+            }
         }
 
         return (fundingGrowthGlobal);

@@ -111,7 +111,7 @@
     },
     "exchange": {
         "address": "0x79b2B0B20B53a8d269375B9e2C030b7Ca0C22d50",
-        "implAddress": "0x806D5d3a78d060009dA145a87f590aeEB6Def5de"
+        "implAddress": "0xa621394Be1E275a29F4b14A7791E790e9f36033f"
     },
     "insuranceFund": {
         "address": "0xA01e4abB40E4546695E1051D82939f718e03198A",

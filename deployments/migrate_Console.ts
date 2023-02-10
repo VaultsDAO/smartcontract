@@ -109,12 +109,12 @@ async function deploy() {
     //     console.log('migrateOrderBook -- END --')
     // }
     
-    // import migrateAccountBalance from "./10_migrate_AccountBalance";
-    {
-        console.log('migrateAccountBalance -- START --')
-        await migrateAccountBalance();
-        console.log('migrateAccountBalance -- END --')
-    }
+    // // import migrateAccountBalance from "./10_migrate_AccountBalance";
+    // {
+    //     console.log('migrateAccountBalance -- START --')
+    //     await migrateAccountBalance();
+    //     console.log('migrateAccountBalance -- END --')
+    // }
     
     // import migrateExchange from "./11_migrate_Exchange";
     {
@@ -130,12 +130,12 @@ async function deploy() {
     //     console.log('migrateInsuranceFund -- END --')
     // }
     
-    // import migrateVault from "./13_migrate_Vault";
-    {
-        console.log('migrateVault -- START --')
-        await migrateVault();
-        console.log('migrateVault -- END --')
-    }
+    // // import migrateVault from "./13_migrate_Vault";
+    // {
+    //     console.log('migrateVault -- START --')
+    //     await migrateVault();
+    //     console.log('migrateVault -- END --')
+    // }
     
     // // import migrateCollateralManager from "./14_migrate_CollateralManager";
     // {
