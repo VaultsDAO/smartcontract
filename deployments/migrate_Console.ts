@@ -171,11 +171,18 @@ async function deploy() {
     const network = hre.network.name;
     let fileName = process.cwd() + '/deployments/address/deployed_' + network + '.json';
     let deployData: DeployData;
-    if (!(await fs.existsSync(fileName))) {
-        throw 'deployed file is not existsed'
+    {
+        if (!(await fs.existsSync(fileName))) {
+            throw 'deployed file is not existsed'
+        }
+        let dataText = await fs.readFileSync(fileName)
+        deployData = JSON.parse(dataText.toString())
     }
-    let dataText = await fs.readFileSync(fileName)
-    deployData = JSON.parse(dataText.toString())
+    let priceData: PriceData;
+    {
+        let dataText = await fs.readFileSync(process.cwd() + '/deployments/address/prices.json')
+        priceData = JSON.parse(dataText.toString())
+    }
 
     const [admin, maker, priceAdmin, platformFund, trader1, trader2, trader3, trader4, hieuq] = await ethers.getSigners()
 
@@ -199,12 +206,14 @@ async function deploy() {
     // let e = await findPFundingPaymentSettledEvents(clearingHouse, receipt)[0];
     // console.log(e)
 
-    let info = await exchange.getGlobalFundingGrowthInfo(deployData.vBAYC.address)
-    console.log(
-        'getGlobalFundingGrowthInfo',
-        (info[1].twLongPremiumX96).toString(),
-        (info[1].twShortPremiumX96).toString(),
-    )
+    // let info = await exchange.getGlobalFundingGrowthInfo(deployData.vBAYC.address)
+    // console.log(
+    //     'getGlobalFundingGrowthInfo',
+    //     (info[1].twLongPremiumX96).toString(),
+    //     (info[1].twShortPremiumX96).toString(),
+    // )
+
+    // await clearingHouseConfig.setDurationRepegOverPriceSpread(4 * 3600);
 
     // let baseTokens = [
     //     deployData.vBAYC,
@@ -423,6 +432,57 @@ async function deploy() {
     // )
 
     // await pNFTToken.mint(rewardMiner.address, parseEther('9000000'));
+
+    // let baseTokens = [
+    //     deployData.vBAYC,
+    //     deployData.vMAYC,
+    //     deployData.vCRYPTOPUNKS,
+    //     deployData.vMOONBIRD,
+    //     deployData.vAZUKI,
+    //     deployData.vCLONEX,
+    //     deployData.vDOODLE,
+    // ];
+    // let priceKeys = [
+    //     'priceBAYC',
+    //     'priceMAYC',
+    //     'priceCRYPTOPUNKS',
+    //     'priceMOONBIRD',
+    //     'priceAZUKI',
+    //     'priceCLONEX',
+    //     'priceDOODLE'
+    // ];
+    // for (let i = 0; i < 7; i++) {
+    //     var baseTokenAddress = baseTokens[i].address
+
+    //     console.log(
+    //         '--------------------------------------',
+    //         baseTokenAddress,
+    //         '--------------------------------------',
+    //     )
+
+    //     const baseToken = (await ethers.getContractAt('BaseToken', baseTokenAddress)) as BaseToken;
+
+    //     {
+    //         var maxTickCrossedWithinBlock: number = 200
+    //         if ((await exchange.getMaxTickCrossedWithinBlock(baseToken.address)).toString() != maxTickCrossedWithinBlock.toString()) {
+    //             await tryWaitForTx(
+    //                 await exchange.setMaxTickCrossedWithinBlock(baseToken.address, maxTickCrossedWithinBlock), 'exchange.setMaxTickCrossedWithinBlock(baseToken.address, maxTickCrossedWithinBlock)'
+    //             )
+    //         }
+    //         {
+    //             if ((await marketRegistry.getInsuranceFundFeeRatio(baseToken.address)).toString() != '1000') {
+    //                 await waitForTx(
+    //                     await marketRegistry.setInsuranceFundFeeRatio(baseToken.address, '1000'), 'marketRegistry.setInsuranceFundFeeRatio(baseToken.address, 1000)'
+    //                 )
+    //             }
+    //             if ((await marketRegistry.getPlatformFundFeeRatio(baseToken.address)).toString() != '1500') {
+    //                 await waitForTx(
+    //                     await marketRegistry.setPlatformFundFeeRatio(baseToken.address, '1500'), 'marketRegistry.setInsuranceFundFeeRatio(baseToken.address, 1500)'
+    //                 )
+    //             }
+    //         }
+    //     }
+    // }
 
 }
 
