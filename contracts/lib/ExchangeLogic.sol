@@ -137,7 +137,7 @@ library ExchangeLogic {
             0
         );
 
-        if (params.isLiquidated && response.pnlToBeRealized != 0) {
+        if (!params.isLiquidated && response.pnlToBeRealized != 0) {
             // if realized pnl is not zero, that means trader is reducing or closing position
             // trader cannot reduce/close position if the remaining account value is less than
             // accountValue * LiquidationPenaltyRatio, which
@@ -159,8 +159,12 @@ library ExchangeLogic {
         }
 
         // if not closing a position, check margin ratio after swap
-        if (!params.isClose || !params.isLiquidated) {
-            GenericLogic.requireEnoughFreeCollateral(chAddress, params.trader);
+        if (params.isClose) {
+            GenericLogic.requireEnoughFreeCollateralForClose(chAddress, params.trader);
+        } else {
+            if (!params.isLiquidated) {
+                GenericLogic.requireEnoughFreeCollateral(chAddress, params.trader);
+            }
         }
 
         if (!params.isLiquidated) {

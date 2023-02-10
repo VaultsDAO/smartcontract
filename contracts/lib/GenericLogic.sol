@@ -172,6 +172,19 @@ library GenericLogic {
         );
     }
 
+    function requireEnoughFreeCollateralForClose(address chAddress, address trader) public view {
+        if (trader == IClearingHouse(chAddress).getMaker()) return;
+        // CH_NEFCM: not enough free collateral by mmRatio
+        require(
+            getFreeCollateralByRatio(
+                chAddress,
+                trader,
+                IClearingHouseConfig(IClearingHouse(chAddress).getClearingHouseConfig()).getMmRatio()
+            ) >= 0,
+            "CH_NEFCM"
+        );
+    }
+
     function getTakerOpenNotional(address chAddress, address trader, address baseToken) public view returns (int256) {
         return IAccountBalance(IClearingHouse(chAddress).getAccountBalance()).getTakerOpenNotional(trader, baseToken);
     }
