@@ -116,12 +116,12 @@ async function deploy() {
     //     console.log('migrateAccountBalance -- END --')
     // }
     
-    // import migrateExchange from "./11_migrate_Exchange";
-    {
-        console.log('migrateExchange -- START --')
-        await migrateExchange();
-        console.log('migrateExchange -- END --')
-    }
+    // // import migrateExchange from "./11_migrate_Exchange";
+    // {
+    //     console.log('migrateExchange -- START --')
+    //     await migrateExchange();
+    //     console.log('migrateExchange -- END --')
+    // }
     
     // // import migrateInsuranceFund from "./12_migrate_InsuranceFund";
     // {
@@ -165,7 +165,7 @@ async function deploy() {
     //     console.log('migrateRewardMiner -- END --')
     // }
     
-    return
+    // return
 
 
     const network = hre.network.name;

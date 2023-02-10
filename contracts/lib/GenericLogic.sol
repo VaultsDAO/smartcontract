@@ -32,6 +32,9 @@ library GenericLogic {
     using PerpMath for uint128;
     using PerpMath for int256;
     using SettlementTokenMath for int256;
+
+    uint256 internal constant _FULLY_CLOSED_RATIO = 1e18;
+
     //internal struct
     struct InternalCheckSlippageParams {
         bool isBaseToQuote;
@@ -73,7 +76,8 @@ library GenericLogic {
         uint256 fee,
         int256 realizedPnl,
         uint256 sqrtPriceAfterX96,
-        address liquidator
+        address liquidator,
+        uint256 liquidatorFee
     );
 
     /// @notice Emitted when maker's liquidity of a order changed
@@ -453,5 +457,66 @@ library GenericLogic {
                 newShortPositionSizeRate
             );
         }
+    }
+
+    struct InternalRealizePnlParams {
+        address trader;
+        address baseToken;
+        int256 takerPositionSize;
+        int256 takerOpenNotional;
+        int256 base;
+        int256 quote;
+    }
+
+    function getPnlToBeRealized(InternalRealizePnlParams memory params) external pure returns (int256) {
+        // closedRatio is based on the position size
+        uint256 closedRatio = FullMath.mulDiv(params.base.abs(), _FULLY_CLOSED_RATIO, params.takerPositionSize.abs());
+
+        int256 pnlToBeRealized;
+        // if closedRatio <= 1, it's reducing or closing a position; else, it's opening a larger reverse position
+        if (closedRatio <= _FULLY_CLOSED_RATIO) {
+            // https://docs.google.com/spreadsheets/d/1QwN_UZOiASv3dPBP7bNVdLR_GTaZGUrHW3-29ttMbLs/edit#gid=148137350
+            // taker:
+            // step 1: long 20 base
+            // openNotionalFraction = 252.53
+            // openNotional = -252.53
+            // step 2: short 10 base (reduce half of the position)
+            // quote = 137.5
+            // closeRatio = 10/20 = 0.5
+            // reducedOpenNotional = openNotional * closedRatio = -252.53 * 0.5 = -126.265
+            // realizedPnl = quote + reducedOpenNotional = 137.5 + -126.265 = 11.235
+            // openNotionalFraction = openNotionalFraction - quote + realizedPnl
+            //                      = 252.53 - 137.5 + 11.235 = 126.265
+            // openNotional = -openNotionalFraction = 126.265
+
+            // overflow inspection:
+            // max closedRatio = 1e18; range of oldOpenNotional = (-2 ^ 255, 2 ^ 255)
+            // only overflow when oldOpenNotional < -2 ^ 255 / 1e18 or oldOpenNotional > 2 ^ 255 / 1e18
+            int256 reducedOpenNotional = params.takerOpenNotional.mulDiv(closedRatio.toInt256(), _FULLY_CLOSED_RATIO);
+            pnlToBeRealized = params.quote.add(reducedOpenNotional);
+        } else {
+            // https://docs.google.com/spreadsheets/d/1QwN_UZOiASv3dPBP7bNVdLR_GTaZGUrHW3-29ttMbLs/edit#gid=668982944
+            // taker:
+            // step 1: long 20 base
+            // openNotionalFraction = 252.53
+            // openNotional = -252.53
+            // step 2: short 30 base (open a larger reverse position)
+            // quote = 337.5
+            // closeRatio = 30/20 = 1.5
+            // closedPositionNotional = quote / closeRatio = 337.5 / 1.5 = 225
+            // remainsPositionNotional = quote - closedPositionNotional = 337.5 - 225 = 112.5
+            // realizedPnl = closedPositionNotional + openNotional = -252.53 + 225 = -27.53
+            // openNotionalFraction = openNotionalFraction - quote + realizedPnl
+            //                      = 252.53 - 337.5 + -27.53 = -112.5
+            // openNotional = -openNotionalFraction = remainsPositionNotional = 112.5
+
+            // overflow inspection:
+            // max & min tick = 887272, -887272; max liquidity = 2 ^ 128
+            // max quote = 2^128 * (sqrt(1.0001^887272) - sqrt(1.0001^-887272)) = 6.276865796e57 < 2^255 / 1e18
+            int256 closedPositionNotional = params.quote.mulDiv(int256(_FULLY_CLOSED_RATIO), closedRatio);
+            pnlToBeRealized = params.takerOpenNotional.add(closedPositionNotional);
+        }
+
+        return pnlToBeRealized;
     }
 }

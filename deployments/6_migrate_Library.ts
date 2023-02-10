@@ -31,7 +31,7 @@ async function deploy() {
         {
             deployData.genericLogic.address = genericLogic.address;
             await fs.writeFileSync(fileName, JSON.stringify(deployData, null, 4))
-            console.log('LiquidityLogic is deployed', genericLogic.address)
+            console.log('GenericLogic is deployed', genericLogic.address)
         }
     }
     var genericLogic = await hre.ethers.getContractAt('GenericLogic', deployData.genericLogic.address);

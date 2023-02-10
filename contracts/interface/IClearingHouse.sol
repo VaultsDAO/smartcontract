@@ -133,7 +133,8 @@ interface IClearingHouse {
         uint256 fee,
         int256 realizedPnl,
         uint256 sqrtPriceAfterX96,
-        address liquidator
+        address liquidator,
+        uint256 liquidatorFee
     );
 
     /// @notice Emitted when taker close her position in closed market
@@ -238,7 +239,11 @@ interface IClearingHouse {
     /// @dev maxLiquidatePositionSize = positionSize * maxLiquidateRatio
     /// @param trader The address of trader
     /// @param baseToken The address of baseToken
-    function liquidate(address trader, address baseToken) external returns (uint256 base, uint256 quote, uint256 fee);
+    function liquidate(
+        address trader,
+        address baseToken,
+        int256 positionSize
+    ) external returns (uint256 base, uint256 quote, uint256 fee);
 
     // /// @notice Cancel excess order of a maker
     // /// @dev Order id can get from `OrderBook.getOpenOrderIds`

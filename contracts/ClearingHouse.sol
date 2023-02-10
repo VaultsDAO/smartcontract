@@ -290,18 +290,27 @@ contract ClearingHouse is
         return ExchangeLogic.closePosition(address(this), _msgSender(), params);
     }
 
+    function isLiquidatable(address trader) external view returns (bool) {
+        return GenericLogic.isLiquidatable(address(this), trader);
+    }
+
     /// @inheritdoc IClearingHouse
     function liquidate(
         address trader,
-        address baseToken
+        address baseToken,
+        int256 positionSize
     ) external override whenNotPaused nonReentrant returns (uint256 base, uint256 quote, uint256 fee) {
         // positionSizeToBeLiquidated = 0 means liquidating as much as possible
-        return _liquidate(trader, baseToken, false);
+        return _liquidate(trader, baseToken, positionSize, false);
     }
 
-    function emergencyLiquidate(address trader, address baseToken) external whenNotPaused nonReentrant onlyOwner {
+    function emergencyLiquidate(
+        address trader,
+        address baseToken,
+        int256 positionSize
+    ) external whenNotPaused nonReentrant onlyOwner returns (uint256 base, uint256 quote, uint256 fee) {
         // positionSizeToBeLiquidated = 0 means liquidating as much as possible
-        _liquidate(trader, baseToken, true);
+        return _liquidate(trader, baseToken, positionSize, true);
     }
 
     // /// @inheritdoc IClearingHouse
@@ -481,9 +490,21 @@ contract ClearingHouse is
     function _liquidate(
         address trader,
         address baseToken,
+        int256 positionSize,
         bool isForced
     ) internal returns (uint256 base, uint256 quote, uint256 fee) {
-        return ExchangeLogic.liquidate(address(this), _msgSender(), trader, baseToken, isForced);
+        return
+            ExchangeLogic.liquidate(
+                ExchangeLogic.InternalLiquidateParams({
+                    chAddress: address(this),
+                    marketRegistry: _marketRegistry,
+                    liquidator: _msgSender(),
+                    trader: trader,
+                    baseToken: baseToken,
+                    positionSizeToBeLiquidated: positionSize,
+                    isForced: isForced
+                })
+            );
     }
 
     // /// @dev only cancel open orders if there are not enough free collateral with mmRatio
@@ -508,60 +529,6 @@ contract ClearingHouse is
         address baseToken
     ) internal returns (DataTypes.Growth memory fundingGrowthGlobal) {
         return GenericLogic.settleFunding(address(this), trader, baseToken);
-    }
-
-    // function _registerBaseToken(address trader, address baseToken) internal {
-    //     IAccountBalance(_accountBalance).registerBaseToken(trader, baseToken);
-    // }
-
-    function _modifyOwedRealizedPnl(address trader, int256 amount) internal {
-        IAccountBalance(_accountBalance).modifyOwedRealizedPnl(trader, amount);
-    }
-
-    // function _emitPositionChanged(
-    //     address trader,
-    //     address baseToken,
-    //     int256 exchangedPositionSize,
-    //     int256 exchangedPositionNotional,
-    //     uint256 fee,
-    //     int256 openNotional,
-    //     int256 realizedPnl,
-    //     uint256 sqrtPriceAfterX96
-    // ) internal {
-    //     emit PositionChanged(
-    //         trader,
-    //         baseToken,
-    //         exchangedPositionSize,
-    //         exchangedPositionNotional,
-    //         fee,
-    //         openNotional,
-    //         realizedPnl,
-    //         sqrtPriceAfterX96
-    //     );
-    // }
-
-    // function _emitLiquidityChanged(
-    //     address maker,
-    //     address baseToken,
-    //     address quoteToken,
-    //     int24 lowerTick,
-    //     int24 upperTick,
-    //     int256 base,
-    //     int256 quote,
-    //     int128 liquidity,
-    //     uint256 quoteFee
-    // ) internal {
-    //     emit LiquidityChanged(maker, baseToken, quoteToken, lowerTick, upperTick, base, quote, liquidity, quoteFee);
-    // }
-
-    // function _referredPositionChanged(bytes32 referralCode) internal {
-    //     if (referralCode != 0) {
-    //         emit ReferredPositionChanged(referralCode);
-    //     }
-    // }
-
-    function _settleBadDebt(address trader) internal {
-        IVault(_vault).settleBadDebt(trader);
     }
 
     //

@@ -204,11 +204,19 @@ export function findPositionChangedEvents(
     return receipt.logs.filter(log => log.topics[0] === topic).map(log => fixture.clearingHouse.interface.parseLog(log))
 }
 
-export function findPFundingPaymentSettledEvents(
+export function findFundingPaymentSettledEvents(
     clearingHouse: ClearingHouse,
     receipt: TransactionReceipt,
 ): LogDescription[] {
     const topic = clearingHouse.interface.getEventTopic("FundingPaymentSettled")
+    return receipt.logs.filter(log => log.topics[0] === topic).map(log => clearingHouse.interface.parseLog(log))
+}
+
+export function findPositionLiquidatedEvents(
+    clearingHouse: ClearingHouse,
+    receipt: TransactionReceipt,
+): LogDescription[] {
+    const topic = clearingHouse.interface.getEventTopic("PositionLiquidated")
     return receipt.logs.filter(log => log.topics[0] === topic).map(log => clearingHouse.interface.parseLog(log))
 }
 
