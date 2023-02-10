@@ -28,6 +28,18 @@ contract PNFTToken is
     ReentrancyGuard
 {
     using SafeMath for uint256;
+
+    struct VestingScheduleParams {
+        address beneficiary;
+        uint256 start;
+        uint256 cliff;
+        uint256 duration;
+        uint256 slicePeriodSeconds;
+        bool revocable;
+        uint256 unvestingAmount;
+        uint256 amount;
+    }
+
     struct VestingSchedule {
         bool initialized;
         // beneficiary of tokens after they are released
@@ -137,51 +149,40 @@ contract PNFTToken is
         return vestingSchedulesTotalAmount;
     }
 
+    function createVestingScheduleBatch(VestingScheduleParams[] calldata params) public onlyOwner {
+        for (uint256 i = 0; i < params.length; i++) {
+            createVestingSchedule(params[i]);
+        }
+    }
+
     /**
      * @notice Creates a new vesting schedule for a beneficiary.
-     * @param _beneficiary address of the beneficiary to whom vested tokens are transferred
-     * @param _start start time of the vesting period
-     * @param _cliff duration in seconds of the cliff in which tokens will begin to vest
-     * @param _duration duration in seconds of the period in which the tokens will vest
-     * @param _slicePeriodSeconds duration of a slice period for the vesting in seconds
-     * @param _revocable whether the vesting is revocable or not
-     * @param _unvestingAmount amount will be released immedietly no need to vest.
-     * @param _amount total amount of tokens to be released at the end of the vesting (excluded unvesting amount)
      */
-    function createVestingSchedule(
-        address _beneficiary,
-        uint256 _start,
-        uint256 _cliff,
-        uint256 _duration,
-        uint256 _slicePeriodSeconds,
-        bool _revocable,
-        uint256 _unvestingAmount,
-        uint256 _amount
-    ) public onlyOwner {
-        require(_duration > 0, "PNFTToken: duration must be > 0");
-        require(_amount > 0, "PNFTToken: amount must be > 0");
-        require(_slicePeriodSeconds >= 1, "PNFTToken: slicePeriodSeconds must be >= 1");
-        bytes32 vestingScheduleId = this.computeNextVestingScheduleIdForHolder(_beneficiary);
-        uint256 cliff = _start.add(_cliff);
+    function createVestingSchedule(VestingScheduleParams calldata params) public onlyOwner {
+        require(params.duration > 0, "PNFTToken: duration must be > 0");
+        require(params.amount > 0, "PNFTToken: amount must be > 0");
+        require(params.slicePeriodSeconds >= 1, "PNFTToken: slicePeriodSeconds must be >= 1");
+        bytes32 vestingScheduleId = this.computeNextVestingScheduleIdForHolder(params.beneficiary);
+        uint256 cliff = params.start.add(params.cliff);
         vestingSchedules[vestingScheduleId] = VestingSchedule(
             true,
-            _beneficiary,
+            params.beneficiary,
             cliff,
-            _start,
-            _duration,
-            _slicePeriodSeconds,
-            _revocable,
-            _amount,
+            params.start,
+            params.duration,
+            params.slicePeriodSeconds,
+            params.revocable,
+            params.amount,
             0,
             false
         );
-        vestingSchedulesTotalAmount = vestingSchedulesTotalAmount.add(_amount);
+        vestingSchedulesTotalAmount = vestingSchedulesTotalAmount.add(params.amount);
         vestingSchedulesIds.push(vestingScheduleId);
-        uint256 currentVestingCount = holdersVestingCount[_beneficiary];
-        holdersVestingCount[_beneficiary] = currentVestingCount.add(1);
-        if (_unvestingAmount > 0) {
-            address payable beneficiaryPayable = payable(_beneficiary);
-            _mint(beneficiaryPayable, _unvestingAmount);
+        uint256 currentVestingCount = holdersVestingCount[params.beneficiary];
+        holdersVestingCount[params.beneficiary] = currentVestingCount.add(1);
+        if (params.unvestingAmount > 0) {
+            address payable beneficiaryPayable = payable(params.beneficiary);
+            _mint(beneficiaryPayable, params.unvestingAmount);
         }
     }
 
