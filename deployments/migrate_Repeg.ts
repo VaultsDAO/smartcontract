@@ -64,9 +64,30 @@ async function deploy() {
         )
         if (isAbleRepeg) {
             await waitForTx(
-                await clearingHouse.repeg(baseTokenAddr),
+                await clearingHouse.connect(platformFund).repeg(baseTokenAddr),
                 'clearingHouse.repeg(' + baseTokenAddr + ')'
             )
+        } else {
+            let isOverPriceSpread = await exchange.isOverPriceSpread(baseTokenAddr)
+            console.log(
+                baseTokenAddr,
+                'isOverPriceSpread',
+                isOverPriceSpread
+            )
+            if (isOverPriceSpread) {
+                let overPriceSpreadTimestamp = await exchange.getOverPriceSpreadTimestamp(baseTokenAddr)
+                console.log(
+                    baseTokenAddr,
+                    'overPriceSpreadTimestamp',
+                    overPriceSpreadTimestamp.toString()
+                )
+                if (overPriceSpreadTimestamp.eq(0)) {
+                    await waitForTx(
+                        await exchange.connect(platformFund).updateOverPriceSpreadTimestamp(baseTokenAddr),
+                        'exchange.updateOverPriceSpreadTimestamp(' + baseTokenAddr + ')'
+                    )
+                }
+            }
         }
     }
 }
