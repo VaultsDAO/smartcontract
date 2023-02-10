@@ -154,7 +154,7 @@ interface IAccountBalance {
     /// @param trader The address of trader
     /// @dev Total debt value will relate to `Vault.getFreeCollateral()`
     /// @return totalDebtValue The debt value of trader
-    function getTotalDebtValue(address trader) external view returns (uint256 totalDebtValue);
+    // function getTotalDebtValue(address trader) external view returns (uint256 totalDebtValue);
 
     /// @notice Get margin requirement to check whether trader will be able to liquidate
     /// @dev This is different from `Vault._getTotalMarginRequirement()`, which is for freeCollateral calculation

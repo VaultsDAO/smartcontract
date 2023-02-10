@@ -240,29 +240,29 @@ contract AccountBalance is IAccountBalance, BlockContext, ClearingHouseCallee, A
     }
 
     /// @inheritdoc IAccountBalance
-    function getTotalDebtValue(address trader) external view override returns (uint256) {
-        int256 totalQuoteBalance;
-        int256 totalBaseDebtValue;
-        uint256 tokenLen = _baseTokensMap[trader].length;
-        for (uint256 i = 0; i < tokenLen; i++) {
-            address baseToken = _baseTokensMap[trader][i];
-            int256 baseBalance = getBase(trader, baseToken);
-            int256 baseDebtValue;
-            // baseDebt = baseBalance when it's negative
-            if (baseBalance < 0) {
-                // baseDebtValue = baseDebt * indexPrice
-                baseDebtValue = baseBalance.mulDiv(_getReferencePrice(baseToken).toInt256(), 1e18);
-            }
-            totalBaseDebtValue = totalBaseDebtValue.add(baseDebtValue);
+    // function getTotalDebtValue(address trader) external view override returns (uint256) {
+    //     int256 totalQuoteBalance;
+    //     int256 totalBaseDebtValue;
+    //     uint256 tokenLen = _baseTokensMap[trader].length;
+    //     for (uint256 i = 0; i < tokenLen; i++) {
+    //         address baseToken = _baseTokensMap[trader][i];
+    //         int256 baseBalance = getBase(trader, baseToken);
+    //         int256 baseDebtValue;
+    //         // baseDebt = baseBalance when it's negative
+    //         if (baseBalance < 0) {
+    //             // baseDebtValue = baseDebt * indexPrice
+    //             baseDebtValue = baseBalance.mulDiv(_getReferencePrice(baseToken).toInt256(), 1e18);
+    //         }
+    //         totalBaseDebtValue = totalBaseDebtValue.add(baseDebtValue);
 
-            // we can't calculate totalQuoteDebtValue until we have totalQuoteBalance
-            totalQuoteBalance = totalQuoteBalance.add(getQuote(trader, baseToken));
-        }
-        int256 totalQuoteDebtValue = totalQuoteBalance >= 0 ? 0 : totalQuoteBalance;
+    //         // we can't calculate totalQuoteDebtValue until we have totalQuoteBalance
+    //         totalQuoteBalance = totalQuoteBalance.add(getQuote(trader, baseToken));
+    //     }
+    //     int256 totalQuoteDebtValue = totalQuoteBalance >= 0 ? 0 : totalQuoteBalance;
 
-        // both values are negative due to the above condition checks
-        return totalQuoteDebtValue.add(totalBaseDebtValue).abs();
-    }
+    //     // both values are negative due to the above condition checks
+    //     return totalQuoteDebtValue.add(totalBaseDebtValue).abs();
+    // }
 
     /// @inheritdoc IAccountBalance
     function getPnlAndPendingFee(address trader) external view override returns (int256, int256, uint256) {

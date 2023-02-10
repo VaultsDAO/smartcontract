@@ -752,6 +752,8 @@ contract Exchange is
                     fundingGrowthGlobal.twShortPremiumX96 = lastFundingGrowthGlobal.twShortPremiumX96.add(
                         deltaTwPremiumX96.mulMultiplier(params.shortMultiplier)
                     );
+                } else {
+                    fundingGrowthGlobal = lastFundingGrowthGlobal;
                 }
             } else {
                 fundingGrowthGlobal = lastFundingGrowthGlobal;

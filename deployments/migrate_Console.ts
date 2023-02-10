@@ -29,6 +29,8 @@ import migrateCollateralManager from "./14_migrate_CollateralManager";
 import migrateClearingHouse from "./15_migrate_ClearingHouse";
 import migratePNFTToken from "./20_migrate_PNFTToken";
 import migrateRewardMiner from "./21_migrate_RewardMiner";
+import { findPFundingPaymentSettledEvents } from "../test/helper/clearingHouseHelper";
+import { providers } from "ethers";
 
 
 async function main() {
@@ -39,26 +41,130 @@ export default deploy;
 
 async function deploy() {
 
-    {
-        console.log('migrateExchange -- START --')
-        await migrateExchange();
-        console.log('migrateExchange -- END --')
-    }
+    // {
+    //     console.log('migrateAdmin -- START --')
+    //     await migrateAdmin();
+    //     console.log('migrateAdmin -- END --')
+    // }
+    
+    // {
+    //     console.log('migratePriceFeedAll -- START --')
+    //     await migratePriceFeedAll();
+    //     console.log('migratePriceFeedAll -- END --')
+    // }
+    
+    // // import migrateTokens from "./3_migrate_Tokens";
+    // {
+    //     console.log('migrateTokens -- START --')
+    //     await migrateTokens();
+    //     console.log('migrateTokens -- END --')
+    // }
+    
+    // // import migrateQuoteToken from "./4_migrate_QuoteToken";
+    // {
+    //     console.log('migrateQuoteToken -- START --')
+    //     await migrateQuoteToken();
+    //     console.log('migrateQuoteToken -- END --')
+    // }
+    
+    // // import migrateBaseTokenAll from "./5_migrate_BaseToken_All";
+    // {
+    //     console.log('migrateBaseTokenAll -- START --')
+    //     await migrateBaseTokenAll();
+    //     console.log('migrateBaseTokenAll -- END --')
+    // }
+    
+    // // import migrateLibrary from "./6_migrate_Library";
     // {
     //     console.log('migrateLibrary -- START --')
     //     await migrateLibrary();
     //     console.log('migrateLibrary -- END --')
     // }
+    
+    // // import migrateUniswapV3 from "./6_migrate_UniswapV3";
+    // {
+    //     console.log('migrateUniswapV3 -- START --')
+    //     await migrateUniswapV3();
+    //     console.log('migrateUniswapV3 -- END --')
+    // }
+    
+    // // import migrateClearingHouseConfig from "./7_migrate_ClearingHouseConfig";
+    // {
+    //     console.log('migrateClearingHouseConfig -- START --')
+    //     await migrateClearingHouseConfig();
+    //     console.log('migrateClearingHouseConfig -- END --')
+    // }
+    
+    // // import migrateMarketRegistry from "./8_migrate_MarketRegistry";
+    // {
+    //     console.log('migrateMarketRegistry -- START --')
+    //     await migrateMarketRegistry();
+    //     console.log('migrateMarketRegistry -- END --')
+    // }
+    
+    // // import migrateOrderBook from "./9_migrate_OrderBook";
+    // {
+    //     console.log('migrateOrderBook -- START --')
+    //     await migrateOrderBook();
+    //     console.log('migrateOrderBook -- END --')
+    // }
+    
+    // import migrateAccountBalance from "./10_migrate_AccountBalance";
+    {
+        console.log('migrateAccountBalance -- START --')
+        await migrateAccountBalance();
+        console.log('migrateAccountBalance -- END --')
+    }
+    
+    // import migrateExchange from "./11_migrate_Exchange";
+    {
+        console.log('migrateExchange -- START --')
+        await migrateExchange();
+        console.log('migrateExchange -- END --')
+    }
+    
+    // // import migrateInsuranceFund from "./12_migrate_InsuranceFund";
+    // {
+    //     console.log('migrateInsuranceFund -- START --')
+    //     await migrateInsuranceFund();
+    //     console.log('migrateInsuranceFund -- END --')
+    // }
+    
+    // import migrateVault from "./13_migrate_Vault";
+    {
+        console.log('migrateVault -- START --')
+        await migrateVault();
+        console.log('migrateVault -- END --')
+    }
+    
+    // // import migrateCollateralManager from "./14_migrate_CollateralManager";
+    // {
+    //     console.log('migrateCollateralManager -- START --')
+    //     await migrateCollateralManager();
+    //     console.log('migrateCollateralManager -- END --')
+    // }
+    
+    // // import migrateClearingHouse from "./15_migrate_ClearingHouse";
     // {
     //     console.log('migrateClearingHouse -- START --')
     //     await migrateClearingHouse();
     //     console.log('migrateClearingHouse -- END --')
     // }
+    
+    // // import migratePNFTToken from "./20_migrate_PNFTToken";
+    // {
+    //     console.log('migratePNFTToken -- START --')
+    //     await migratePNFTToken();
+    //     console.log('migratePNFTToken -- END --')
+    // }
+    
+    // // import migrateRewardMiner from "./21_migrate_RewardMiner";
     // {
     //     console.log('migrateRewardMiner -- START --')
     //     await migrateRewardMiner();
     //     console.log('migrateRewardMiner -- END --')
     // }
+    
     return
 
 
@@ -70,6 +176,8 @@ async function deploy() {
     }
     let dataText = await fs.readFileSync(fileName)
     deployData = JSON.parse(dataText.toString())
+
+    const [admin, maker, priceAdmin, platformFund, trader1, trader2, trader3, trader4, hieuq] = await ethers.getSigners()
 
     // deploy UniV3 factory
     var clearingHouseConfig = (await hre.ethers.getContractAt('ClearingHouseConfig', deployData.clearingHouseConfig.address)) as ClearingHouseConfig;
@@ -85,15 +193,117 @@ async function deploy() {
     var pNFTToken = (await hre.ethers.getContractAt('MockPNFTToken', deployData.pNFTToken.address)) as MockPNFTToken;
     var testFaucet = (await hre.ethers.getContractAt('TestFaucet', deployData.testFaucet.address)) as TestFaucet;
 
+    // let receipt = await hre.ethers.getDefaultProvider(network).getTransactionReceipt('0x827f23b9c3182e11505df08c6d1c269adde9b16c44ffd78419c282127bae3a85')
+    // console.log(receipt)
+    // return
+    // let e = await findPFundingPaymentSettledEvents(clearingHouse, receipt)[0];
+    // console.log(e)
 
-    var baseTokenAddr = deployData.vMOONBIRD.address
-
-    let markTwapX96 = await exchange.getSqrtMarkTwapX96(baseTokenAddr, 0)
-    let markTwap = new bn(formatSqrtPriceX96ToPrice(markTwapX96, 18))
+    let info = await exchange.getGlobalFundingGrowthInfo(deployData.vBAYC.address)
     console.log(
-        'markTwap',
-        markTwap.toString()
+        'getGlobalFundingGrowthInfo',
+        (info[1].twLongPremiumX96).toString(),
+        (info[1].twShortPremiumX96).toString(),
     )
+
+    // let baseTokens = [
+    //     deployData.vBAYC,
+    //     deployData.vMAYC,
+    //     deployData.vCRYPTOPUNKS,
+    //     deployData.vMOONBIRD,
+    //     deployData.vAZUKI,
+    //     deployData.vCLONEX,
+    //     deployData.vDOODLE,
+    // ];
+    // for (let i = 0; i < 7; i++) {
+    //     let baseTokenAddr = baseTokens[i].address
+    //     var isAbleRepeg = (await clearingHouse.isAbleRepeg(baseTokenAddr))
+    //     console.log(
+    //         'isAbleRepeg',
+    //         isAbleRepeg
+    //     )
+    //     if (isAbleRepeg) {
+    //         await waitForTx(
+    //             await clearingHouse.repeg(baseTokenAddr),
+    //             'clearingHouse.repeg(' + baseTokenAddr + ')'
+    //         )
+    //     }
+    // }
+    // return
+
+    // await waitForTx(
+    //     await clearingHouse.emergencyLiquidate('0x810f19553276621e2e2ec0c76a6f6aa42864f9fe', deployData.vDOODLE.address),
+    //     'clearingHouse.emergencyLiquidate'
+    // )
+
+
+    // var baseTokenAddr = deployData.vBAYC.address
+    // {
+    //     await waitForTx(
+    //         await clearingHouse.connect(hieuq).openPosition({
+    //             baseToken: baseTokenAddr,
+    //             isBaseToQuote: true,
+    //             isExactInput: false,
+    //             oppositeAmountBound: 0,
+    //             amount: parseEther("4.5"),
+    //             sqrtPriceLimitX96: 0,
+    //             deadline: ethers.constants.MaxUint256,
+    //             referralCode: ethers.constants.HashZero,
+    //         }),
+    //         'clearingHouse.connect(trader).openPosition'
+    //     )
+    // }
+
+    // var baseTokenAddr = deployData.vMAYC.address
+    // {
+    //     await waitForTx(
+    //         await clearingHouse.connect(hieuq).openPosition({
+    //             baseToken: baseTokenAddr,
+    //             isBaseToQuote: false,
+    //             isExactInput: true,
+    //             oppositeAmountBound: 0,
+    //             amount: parseEther("4.5"),
+    //             sqrtPriceLimitX96: 0,
+    //             deadline: ethers.constants.MaxUint256,
+    //             referralCode: ethers.constants.HashZero,
+    //         }),
+    //         'clearingHouse.connect(trader).openPosition'
+    //     )
+    // }
+
+    // return IAccountBalance(_accountBalance).getMarginRequirementForLiquidation(trader)
+
+    // let markTwapX96 = await exchange.getSqrtMarkTwapX96(baseTokenAddr, 0)
+    // let markTwap = new bn(formatSqrtPriceX96ToPrice(markTwapX96, 18))
+    // console.log(
+    //     'markTwap',
+    //     markTwap.toString()
+    // )
+
+
+    // var address = '0x088d8a4a03266870edcbbbadda3f475f404db9b2'
+    // // let v = await accountBalance.getMarginRequirementForLiquidation(address)
+    // // console.log(
+    // //     'getMarginRequirementForLiquidation',
+    // //     formatEther(v),
+    // // )
+    // console.log(
+    //     'getTotalAbsPositionValue',
+    //     formatEther(await accountBalance.getTotalAbsPositionValue(address)),
+    // )
+
+
+    // let [realizedPnl, unrealizedPnl] = await accountBalance.getPnlAndPendingFee(address)
+    // let freeCollateral = (await vault.getFreeCollateral(address))
+    // let balance = (await vault.getBalance(address))
+    // console.log(
+    //     'isLiquidatable',
+    //     address,
+    //     formatEther(balance),
+    //     formatEther(realizedPnl),
+    //     formatEther(freeCollateral),
+    //     formatEther(new bn(freeCollateral.toString()).minus(new bn(formatEther(realizedPnl)).toFixed(0)).toString()),
+    // )
 
     // var isAbleRepeg = (await clearingHouse.isAbleRepeg(baseTokenAddr))
     // console.log(

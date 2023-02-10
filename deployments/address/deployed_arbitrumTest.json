@@ -107,11 +107,11 @@
     },
     "accountBalance": {
         "address": "0x47C516F9cF7a0141af67F9204643a54dfD022abd",
-        "implAddress": "0x1B8189af60a147359E528ea5dBfe38e85021180d"
+        "implAddress": "0x918033038F16c7826d0FD8371ac817b91Cc54572"
     },
     "exchange": {
         "address": "0x79b2B0B20B53a8d269375B9e2C030b7Ca0C22d50",
-        "implAddress": "0xdD17298Fe0Ea8705DfD243612E214701D0F94984"
+        "implAddress": "0x806D5d3a78d060009dA145a87f590aeEB6Def5de"
     },
     "insuranceFund": {
         "address": "0xA01e4abB40E4546695E1051D82939f718e03198A",
@@ -119,7 +119,7 @@
     },
     "vault": {
         "address": "0x217AF33FA96dB0261bB9b570456203F81956e050",
-        "implAddress": "0xFE365A806dFEFbb097fc654fD776099390B4164c"
+        "implAddress": "0x438329ec113Cc7a66B9c1F3791eB172Ef6A546c0"
     },
     "collateralManager": {
         "address": "0xc31509cCeec35b29f9b35C3f3bD73f9753723e64",

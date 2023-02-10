@@ -100,86 +100,86 @@ export async function closePosition(
     })
 }
 
-export function addOrder(
-    fixture: ClearingHouseFixture,
-    wallet: Wallet,
-    base: BigNumberish,
-    quote: BigNumberish,
-    lowerTick: BigNumberish,
-    upperTick: BigNumberish,
-    useTakerBalance: boolean = false,
-    baseToken: string = fixture.baseToken.address,
-): Promise<ContractTransaction> {
-    return fixture.clearingHouse.connect(wallet).addLiquidity({
-        baseToken,
-        base: parseEther(base.toString()),
-        quote: parseEther(quote.toString()),
-        lowerTick,
-        upperTick,
-        minBase: 0,
-        minQuote: 0,
-        useTakerBalance,
-        deadline: ethers.constants.MaxUint256,
-    })
-}
+// export function addOrder(
+//     fixture: ClearingHouseFixture,
+//     wallet: Wallet,
+//     base: BigNumberish,
+//     quote: BigNumberish,
+//     lowerTick: BigNumberish,
+//     upperTick: BigNumberish,
+//     useTakerBalance: boolean = false,
+//     baseToken: string = fixture.baseToken.address,
+// ): Promise<ContractTransaction> {
+//     return fixture.clearingHouse.connect(wallet).addLiquidity({
+//         baseToken,
+//         base: parseEther(base.toString()),
+//         quote: parseEther(quote.toString()),
+//         lowerTick,
+//         upperTick,
+//         minBase: 0,
+//         minQuote: 0,
+//         useTakerBalance,
+//         deadline: ethers.constants.MaxUint256,
+//     })
+// }
 
-export async function removeOrder(
-    fixture: ClearingHouseFixture,
-    wallet: Wallet,
-    liquidity: BigNumberish,
-    lowerTick: BigNumberish,
-    upperTick: BigNumberish,
-    baseToken: string = fixture.baseToken.address,
-): Promise<ContractTransaction | undefined> {
-    const order = await fixture.orderBook.getOpenOrder(wallet.address, baseToken, lowerTick, upperTick)
-    if (order.liquidity.isZero()) {
-        return
-    }
-    return fixture.clearingHouse.connect(wallet).removeLiquidity({
-        baseToken,
-        liquidity,
-        lowerTick,
-        upperTick,
-        minBase: 0,
-        minQuote: 0,
-        deadline: ethers.constants.MaxUint256,
-    })
-}
+// export async function removeOrder(
+//     fixture: ClearingHouseFixture,
+//     wallet: Wallet,
+//     liquidity: BigNumberish,
+//     lowerTick: BigNumberish,
+//     upperTick: BigNumberish,
+//     baseToken: string = fixture.baseToken.address,
+// ): Promise<ContractTransaction | undefined> {
+//     const order = await fixture.orderBook.getOpenOrder(wallet.address, baseToken, lowerTick, upperTick)
+//     if (order.liquidity.isZero()) {
+//         return
+//     }
+//     return fixture.clearingHouse.connect(wallet).removeLiquidity({
+//         baseToken,
+//         liquidity,
+//         lowerTick,
+//         upperTick,
+//         minBase: 0,
+//         minQuote: 0,
+//         deadline: ethers.constants.MaxUint256,
+//     })
+// }
 
-export async function getOrderIds(
-    fixture: ClearingHouseFixture,
-    wallet: Wallet,
-    baseToken: string = fixture.baseToken.address,
-): Promise<string[]> {
-    const orderBook: OrderBook = fixture.orderBook
-    return await orderBook.getOpenOrderIds(wallet.address, baseToken)
-}
+// export async function getOrderIds(
+//     fixture: ClearingHouseFixture,
+//     wallet: Wallet,
+//     baseToken: string = fixture.baseToken.address,
+// ): Promise<string[]> {
+//     const orderBook: OrderBook = fixture.orderBook
+//     return await orderBook.getOpenOrderIds(wallet.address, baseToken)
+// }
 
-export async function removeAllOrders(
-    fixture: ClearingHouseFixture,
-    wallet: Wallet,
-    baseToken: string = fixture.baseToken.address,
-): Promise<ContractTransaction[]> {
-    const orderIds = await getOrderIds(fixture, wallet, baseToken)
-    const clearingHouse: ClearingHouse = fixture.clearingHouse
-    const orderBook: OrderBook = fixture.orderBook
-    const txs = []
-    for (const orderId of orderIds) {
-        const { lowerTick, upperTick, liquidity } = await orderBook.getOpenOrderById(orderId)
-        txs.push(
-            await clearingHouse.connect(wallet).removeLiquidity({
-                baseToken: baseToken,
-                lowerTick,
-                upperTick,
-                liquidity,
-                minBase: 0,
-                minQuote: 0,
-                deadline: ethers.constants.MaxUint256,
-            }),
-        )
-    }
-    return txs
-}
+// export async function removeAllOrders(
+//     fixture: ClearingHouseFixture,
+//     wallet: Wallet,
+//     baseToken: string = fixture.baseToken.address,
+// ): Promise<ContractTransaction[]> {
+//     const orderIds = await getOrderIds(fixture, wallet, baseToken)
+//     const clearingHouse: ClearingHouse = fixture.clearingHouse
+//     const orderBook: OrderBook = fixture.orderBook
+//     const txs = []
+//     for (const orderId of orderIds) {
+//         const { lowerTick, upperTick, liquidity } = await orderBook.getOpenOrderById(orderId)
+//         txs.push(
+//             await clearingHouse.connect(wallet).removeLiquidity({
+//                 baseToken: baseToken,
+//                 lowerTick,
+//                 upperTick,
+//                 liquidity,
+//                 minBase: 0,
+//                 minQuote: 0,
+//                 deadline: ethers.constants.MaxUint256,
+//             }),
+//         )
+//     }
+//     return txs
+// }
 
 export function findPnlRealizedEvents(fixture: ClearingHouseFixture, receipt: TransactionReceipt): LogDescription[] {
     const pnlRealizedTopic = fixture.accountBalance.interface.getEventTopic("PnlRealized")
@@ -203,6 +203,15 @@ export function findPositionChangedEvents(
     const topic = fixture.clearingHouse.interface.getEventTopic("PositionChanged")
     return receipt.logs.filter(log => log.topics[0] === topic).map(log => fixture.clearingHouse.interface.parseLog(log))
 }
+
+export function findPFundingPaymentSettledEvents(
+    clearingHouse: ClearingHouse,
+    receipt: TransactionReceipt,
+): LogDescription[] {
+    const topic = clearingHouse.interface.getEventTopic("FundingPaymentSettled")
+    return receipt.logs.filter(log => log.topics[0] === topic).map(log => clearingHouse.interface.parseLog(log))
+}
+
 
 export async function syncIndexToMarketPrice(aggregator: MockContract, pool: UniswapV3Pool) {
     const slot0 = await pool.slot0()

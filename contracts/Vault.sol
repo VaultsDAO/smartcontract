@@ -683,7 +683,7 @@ contract Vault is IVault, ReentrancyGuardUpgradeable, OwnerPausable, BaseRelayRe
 
     function _withdrawEther(address to, uint256 amount) internal {
         _requireNotMaker(to);
-        
+
         // SLOAD for gas saving
         address WETH9 = _WETH9;
 
@@ -983,7 +983,8 @@ contract Vault is IVault, ReentrancyGuardUpgradeable, OwnerPausable, BaseRelayRe
         address trader,
         uint24 ratio
     ) internal view returns (uint256 totalMarginRequirementX10_18) {
-        uint256 totalDebtValueX10_18 = IAccountBalance(_accountBalance).getTotalDebtValue(trader);
+        // uint256 totalDebtValueX10_18 = IAccountBalance(_accountBalance).getTotalDebtValue(trader);
+        uint256 totalDebtValueX10_18 = IAccountBalance(_accountBalance).getTotalAbsPositionValue(trader);
         return totalDebtValueX10_18.mulRatio(ratio);
     }
 
