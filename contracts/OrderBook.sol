@@ -403,10 +403,6 @@ contract OrderBook is
             }
         }
 
-        console.logInt(swapState.tick);
-        console.logInt(swapState.sqrtPriceX96);
-        console.log("amountIn %d", amountIn);
-        console.log("amountOut %d", amountOut);
         return ReplaySwapResponse({ tick: swapState.tick, fee: fee, amountIn: amountIn, amountOut: amountOut });
     }
 }
