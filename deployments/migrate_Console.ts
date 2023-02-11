@@ -5,7 +5,7 @@ import bn from "bignumber.js"
 import hre, { ethers } from "hardhat";
 
 import { encodePriceSqrt, formatSqrtPriceX96ToPrice } from "../test/shared/utilities";
-import { AccountBalance, BaseToken, ClearingHouse, ClearingHouseConfig, CollateralManager, Exchange, InsuranceFund, MarketRegistry, MockPNFTToken, NftPriceFeed, OrderBook, QuoteToken, RewardMiner, TestFaucet, UniswapV3Pool, Vault } from "../typechain";
+import { AccountBalance, BaseToken, ClearingHouse, ClearingHouseConfig, CollateralManager, Exchange, InsuranceFund, MarketRegistry, MockPNFTToken, NftPriceFeed, OrderBook, QuoteToken, RewardMiner, TestERC20, TestFaucet, UniswapV3Pool, Vault } from "../typechain";
 import { getMaxTickRange } from "../test/helper/number";
 import helpers from "./helpers";
 import { formatEther, parseEther } from "ethers/lib/utils";
@@ -199,6 +199,15 @@ async function deploy() {
     var rewardMiner = (await hre.ethers.getContractAt('RewardMiner', deployData.rewardMiner.address)) as RewardMiner;
     var pNFTToken = (await hre.ethers.getContractAt('MockPNFTToken', deployData.pNFTToken.address)) as MockPNFTToken;
     var testFaucet = (await hre.ethers.getContractAt('TestFaucet', deployData.testFaucet.address)) as TestFaucet;
+
+    // var wETH = (await hre.ethers.getContractAt('TestERC20', deployData.wETH.address)) as TestERC20;
+    // await waitForTx(
+    //     await wETH.mint(deployData.testFaucet.address, parseEther('10000')),
+    //     'wETH.mint(deployData.testFaucet.address, parseEther(10000))'
+    // )
+
+
+    // 0xafFABBC0bf710D1D0fdA35FAeEFBe1bB77c70EC2
 
     // let receipt = await hre.ethers.getDefaultProvider(network).getTransactionReceipt('0x827f23b9c3182e11505df08c6d1c269adde9b16c44ffd78419c282127bae3a85')
     // console.log(receipt)

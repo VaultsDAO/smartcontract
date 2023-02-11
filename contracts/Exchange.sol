@@ -259,6 +259,7 @@ contract Exchange is
             insuranceFundFeeRatio,
             1e6
         );
+
         return
             SwapResponse({
                 base: response.base.abs(),
@@ -479,7 +480,7 @@ contract Exchange is
         address baseToken,
         bool isOldPositionShort,
         uint256 positionSize
-    ) internal returns (bool) {
+    ) internal view returns (bool) {
         // to simulate closing position, isOldPositionShort -> quote to exact base/long; else, exact base to quote/short
         return
             _isOverPriceLimitWithTick(
@@ -646,7 +647,7 @@ contract Exchange is
     /// @return markTwap only for settleFunding()
     /// @return indexTwap only for settleFunding()
 
-    struct InternalFundingGrowthGlobalAndTwapsParams {
+    struct InternalFundingGrowthGlobalAndTwapsVars {
         uint256 longPositionSize;
         uint256 shortPositionSize;
         uint256 longMultiplier;
@@ -711,12 +712,13 @@ contract Exchange is
             //     PerpMath.mulDiv(deltaTwPremiumX96, PerpFixedPoint96._IQ96, getSqrtMarkTwapX96(baseToken, 0))
             // );
 
-            InternalFundingGrowthGlobalAndTwapsParams memory params;
+            InternalFundingGrowthGlobalAndTwapsVars memory vars;
 
-            (params.longPositionSize, params.shortPositionSize) = IAccountBalance(_accountBalance)
-                .getMarketPositionSize(baseToken);
-            if (params.longPositionSize > 0 && params.shortPositionSize > 0) {
-                (params.longMultiplier, params.shortMultiplier) = IAccountBalance(_accountBalance).getMarketMultiplier(
+            (vars.longPositionSize, vars.shortPositionSize) = IAccountBalance(_accountBalance).getMarketPositionSize(
+                baseToken
+            );
+            if (vars.longPositionSize > 0 && vars.shortPositionSize > 0 && markTwap != indexTwap) {
+                (vars.longMultiplier, vars.shortMultiplier) = IAccountBalance(_accountBalance).getMarketMultiplier(
                     baseToken
                 );
                 int256 deltaTwapX96 = _getDeltaTwapX96AfterOptimal(
@@ -728,26 +730,26 @@ contract Exchange is
                 if (deltaTwapX96 > 0) {
                     // LONG pay
                     fundingGrowthGlobal.twLongPremiumX96 = lastFundingGrowthGlobal.twLongPremiumX96.add(
-                        deltaTwPremiumX96.mulMultiplier(params.longMultiplier)
+                        deltaTwPremiumX96.mulMultiplier(vars.longMultiplier)
                     );
                     // SHORT receive
-                    int256 deltaShortTwPremiumX96 = deltaTwPremiumX96.mul(params.longPositionSize.toInt256()).div(
-                        params.shortPositionSize.toInt256()
+                    int256 deltaShortTwPremiumX96 = deltaTwPremiumX96.mul(vars.longPositionSize.toInt256()).div(
+                        vars.shortPositionSize.toInt256()
                     );
                     fundingGrowthGlobal.twShortPremiumX96 = lastFundingGrowthGlobal.twShortPremiumX96.add(
-                        deltaShortTwPremiumX96.mulMultiplier(params.shortMultiplier)
+                        deltaShortTwPremiumX96.mulMultiplier(vars.shortMultiplier)
                     );
                 } else if (deltaTwapX96 < 0) {
                     // LONG receive
-                    int256 deltaLongTwPremiumX96 = deltaTwPremiumX96.mul(params.shortPositionSize.toInt256()).div(
-                        params.longPositionSize.toInt256()
+                    int256 deltaLongTwPremiumX96 = deltaTwPremiumX96.mul(vars.shortPositionSize.toInt256()).div(
+                        vars.longPositionSize.toInt256()
                     );
                     fundingGrowthGlobal.twLongPremiumX96 = lastFundingGrowthGlobal.twLongPremiumX96.add(
-                        deltaLongTwPremiumX96.mulMultiplier(params.longMultiplier)
+                        deltaLongTwPremiumX96.mulMultiplier(vars.longMultiplier)
                     );
                     // SHORT pay
                     fundingGrowthGlobal.twShortPremiumX96 = lastFundingGrowthGlobal.twShortPremiumX96.add(
-                        deltaTwPremiumX96.mulMultiplier(params.shortMultiplier)
+                        deltaTwPremiumX96.mulMultiplier(vars.shortMultiplier)
                     );
                 } else {
                     fundingGrowthGlobal = lastFundingGrowthGlobal;
@@ -757,18 +759,6 @@ contract Exchange is
             }
         }
         return (fundingGrowthGlobal, markTwap, indexTwap);
-    }
-
-    function _getDeltaTwapX96AfterOptimal(
-        address baseToken,
-        int256 deltaTwapX96,
-        uint256 indexTwapX96
-    ) internal view returns (int256) {
-        IMarketRegistry.MarketInfo memory marketInfo = IMarketRegistry(_marketRegistry).getMarketInfo(baseToken);
-        if ((deltaTwapX96.abs().mul(1e6)) <= (indexTwapX96.mul(marketInfo.optimalDeltaTwapRatio))) {
-            return deltaTwapX96 = PerpMath.mulDiv(deltaTwapX96, marketInfo.optimalFundingRatio, 1e6); // 25%;
-        }
-        return deltaTwapX96;
     }
 
     /// @dev get a price limit for replaySwap s.t. it can stop when reaching the limit to save gas
@@ -786,6 +776,18 @@ contract Exchange is
         tickBoundary = tickBoundary < TickMath.MIN_TICK ? TickMath.MIN_TICK : tickBoundary;
 
         return TickMath.getSqrtRatioAtTick(tickBoundary);
+    }
+
+    function _getDeltaTwapX96AfterOptimal(
+        address baseToken,
+        int256 deltaTwapX96,
+        uint256 indexTwapX96
+    ) internal view returns (int256) {
+        IMarketRegistry.MarketInfo memory marketInfo = IMarketRegistry(_marketRegistry).getMarketInfo(baseToken);
+        if ((deltaTwapX96.abs().mul(1e6)) <= (indexTwapX96.mul(marketInfo.optimalDeltaTwapRatio))) {
+            return deltaTwapX96 = PerpMath.mulDiv(deltaTwapX96, marketInfo.optimalFundingRatio, 1e6); // 25%;
+        }
+        return deltaTwapX96;
     }
 
     function _getDeltaTwapX96(uint256 markTwapX96, uint256 indexTwapX96) internal view returns (int256 deltaTwapX96) {
