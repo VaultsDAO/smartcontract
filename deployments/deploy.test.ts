@@ -21,8 +21,6 @@ import {
     findLiquidityChangedEvents,
     findPnlRealizedEvents,
     q2bExactOutput,
-    removeAllOrders,
-    removeOrder,
 } from "../test/helper/clearingHouseHelper"
 import { initMarket } from "../test/helper/marketHelper"
 import { getMaxTickRange, IGNORABLE_DUST } from "../test/helper/number"
@@ -35,7 +33,7 @@ import helpers from "./helpers";
 const { waitForDeploy, waitForTx, verifyContract } = helpers;
 
 describe("Deployment check", () => {
-    const [admin, maker, trader1, trader2, liquidator, priceAdmin, platformFund] = waffle.provider.getWallets()
+    const [admin, priceAdmin, platformFund, maker, trader1, trader2, liquidator] = waffle.provider.getWallets()
     beforeEach(async () => {
     })
 
@@ -101,7 +99,17 @@ describe("Deployment check", () => {
             const TestWETH9 = await ethers.getContractFactory("TestWETH9")
             const wETH = (await waitForDeploy(await TestWETH9.deploy())) as TestWETH9
             {
-                deployData.wETH.address = wETH.address;
+                deployData.wETH.implAddress = wETH.address;
+            }
+            var transparentUpgradeableProxy = await waitForDeploy(
+                await TransparentUpgradeableProxy.deploy(
+                    deployData.wETH.implAddress,
+                    proxyAdmin.address,
+                    [],
+                )
+            );
+            {
+                deployData.wETH.address = transparentUpgradeableProxy.address;
             }
         }
         let QuoteToken = await ethers.getContractFactory("QuoteToken");

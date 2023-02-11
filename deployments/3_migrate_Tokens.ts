@@ -23,11 +23,11 @@ async function deploy() {
     let dataText = await fs.readFileSync(fileName)
     deployData = JSON.parse(dataText.toString())
     // 
-    const TestERC20 = await hre.ethers.getContractFactory("TestERC20")
-    // 
-    if (network != 'arbitrum') {
+    if (network != 'arbitrum' && network != 'arbitrumGoerli') {
+        const TestERC20 = await hre.ethers.getContractFactory("TestERC20")
+
         if (deployData.wETH.address == undefined || deployData.wETH.address == '') {
-            if (network == 'local' || network == 'arbitrumGoerli') {
+            if (network == 'local') {
                 const TestWETH9 = await hre.ethers.getContractFactory("TestWETH9")
                 const wETH = (await waitForDeploy(await TestWETH9.deploy())) as TestWETH9
                 {
