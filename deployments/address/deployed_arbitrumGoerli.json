@@ -1,31 +1,31 @@
 {
     "verifiedContracts": {},
     "nftPriceFeedBAYC": {
-        "address": "",
+        "address": "0x31FAe571D0CCdd13a4bf82DE08cd1a4f909E94fE",
         "symbol": "BAYC-ETH"
     },
     "nftPriceFeedMAYC": {
-        "address": "",
+        "address": "0x6F0690580Ed78C9e9D804eC39d7d22b4cBEabddD",
         "symbol": "MAYC-ETH"
     },
     "nftPriceFeedCRYPTOPUNKS": {
-        "address": "",
+        "address": "0x5FE471ca71971d96cd954cFA1d69710E48778e80",
         "symbol": "CRYPTOPUNKS-ETH"
     },
     "nftPriceFeedMOONBIRD": {
-        "address": "",
+        "address": "0x0056188B36310d5531Fcf50Cfed855B1F4506EBC",
         "symbol": "MOONBIRD-ETH"
     },
     "nftPriceFeedAZUKI": {
-        "address": "",
+        "address": "0x25493a14Bb290F6320092Cb9db83f271Ddae7073",
         "symbol": "AZUKI-ETH"
     },
     "nftPriceFeedCLONEX": {
-        "address": "",
+        "address": "0x98759d2E5d2B46580d05aABfc85F28251F29EA0c",
         "symbol": "CLONEX-ETH"
     },
     "nftPriceFeedDOODLE": {
-        "address": "",
+        "address": "0x0dB5b7aa185A5F4B27F5B0d080E816e791BF3eC2",
         "symbol": "DOODLE-ETH"
     },
     "wETH": {
@@ -38,50 +38,50 @@
         "name": "vETH",
         "symbol": "vETH",
         "decimals": 18,
-        "address": "",
-        "implAddress": ""
+        "address": "0xf2A15eF3F5E00F8B47cdc9f86C46e69166Ad78Ae",
+        "implAddress": "0xC77A11a096334bF5b346E922abC66732C9b7c3C6"
     },
     "baseToken": {
-        "implAddress": ""
+        "implAddress": "0x7138d2e889520edE028Ea9133242301099c14EC4"
     },
     "vBAYC": {
-        "address": "",
+        "address": "0x7Af8864718ab2391C1E03668D44AF2E9dBEb1a61",
         "name": "vBAYC",
         "symbol": "vBAYC",
         "decimals": 18
     },
     "vMAYC": {
-        "address": "",
+        "address": "0x18f941471c298f19349d1Cfe7910cD73021C1FEb",
         "name": "vMAYC",
         "symbol": "vMAYC",
         "decimals": 18
     },
     "vCRYPTOPUNKS": {
-        "address": "",
+        "address": "0x841b156a6b5997A3c86D6eab0d430A27756De7D7",
         "name": "vCRYPTOPUNKS",
         "symbol": "vCRYPTOPUNKS",
         "decimals": 18
     },
     "vMOONBIRD": {
-        "address": "",
+        "address": "0xc81589f5F98b39276FAcb1B76626A104CD82693c",
         "name": "vMOONBIRD",
         "symbol": "vMOONBIRD",
         "decimals": 18
     },
     "vAZUKI": {
-        "address": "",
+        "address": "0x061DDf8e0704398EB92b8103Dc2df945ad45FD48",
         "name": "vAZUKI",
         "symbol": "vAZUKI",
         "decimals": 18
     },
     "vCLONEX": {
-        "address": "",
+        "address": "0x1BbBe185E4DEeE1da03fd7282439323D884552d9",
         "name": "vCLONEX",
         "symbol": "vCLONEX",
         "decimals": 18
     },
     "vDOODLE": {
-        "address": "",
+        "address": "0xcfda1C6A4dCB4B487a20e3E00c98cA9Ca7494DeE",
         "name": "vDOODLE",
         "symbol": "vDOODLE",
         "decimals": 18
@@ -89,68 +89,72 @@
     "priceAdminAddress": "0x9686203be0cae320bb4Dee971BB8a530A15EF489",
     "platformFundAddress": "0x618B9BD8C290D55af7fBD5185b178071Fec8DF36",
     "makerFundAddress": "0x9cEDf5C18B8c93E4DE45A446C9caDFF98DB1a756",
-    "proxyAdminAddress": "",
+    "proxyAdminAddress": "0x30EFF988Fd8dcEb9F38735A5883e2dBA1413d4A8",
     "uniswapV3Factory": {
-        "address": ""
+        "address": "0x4893376342d5D7b3e31d4184c08b265e5aB2A3f6"
     },
     "clearingHouseConfig": {
-        "address": "",
-        "implAddress": ""
+        "address": "0xf09dA90C5BE6Aa124C8AC54444CbFb2E36f6d162",
+        "implAddress": "0x2b449d82787506a5C6c0F2e09Ce25Aab02be66D3"
     },
     "marketRegistry": {
-        "address": "",
-        "implAddress": ""
+        "address": "0x524Fc468F6432aa216Fc9f9009826ca19a32Cf75",
+        "implAddress": "0xa01d19A01C13d2455638B98c7DCd1bAeCDbeE95c"
     },
     "orderBook": {
-        "address": "",
-        "implAddress": ""
+        "address": "0x3dd9586BD0EeccA75f1Bd24B5E489715864ac489",
+        "implAddress": "0xAd749a89d087Cb8A8a6B869bC0e5DDcB31CDAd50"
     },
     "accountBalance": {
-        "address": "",
-        "implAddress": ""
+        "address": "0xB7216EdDC3A6e2a560CA81Cb2f242C424CE3d0B2",
+        "implAddress": "0x977ffBe644a215b8EDc0722Ff3e9DCE1f32bF438"
     },
     "exchange": {
-        "address": "",
-        "implAddress": ""
+        "address": "0x11810deA012E77521cf994C82B8Cf05Eb786DB1A",
+        "implAddress": "0x2707f6c07a32167531A7C71252F263bf82213c47"
     },
     "insuranceFund": {
-        "address": "",
-        "implAddress": ""
+        "address": "0xFbCdd83BF266a49e35b860d29C9B92Aca155a441",
+        "implAddress": "0x2B199012fc98d0C6C6d772168298bAe257F616F8"
     },
     "vault": {
-        "address": "",
-        "implAddress": ""
+        "address": "0xEb4a7EcA1EDBc0910ad524d71c5505Bd213871A9",
+        "implAddress": "0xA145ef1f341DD1BE36B076e8333141c087cFBA87"
     },
     "collateralManager": {
-        "address": "",
-        "implAddress": ""
+        "address": "0xCF724F774Cd2C9112e4E2271aF6D68293aC3f411",
+        "implAddress": "0xA0BCD8f7E083a41B7D077C734F47524EC30caC30"
     },
     "genericLogic": {
-        "address": ""
+        "address": "0x96fD8017C5994de3864a0DAE36Cf7Da1b6C5A0B5"
     },
     "liquidityLogic": {
-        "address": ""
+        "address": "0x86951cfB3fd19083C3ab13E9F8e5681178Bc4Ba0"
     },
     "exchangeLogic": {
-        "address": ""
+        "address": "0x37992Aede62BEd2bdfF2aCFD7E54759Ea4B6F229"
     },
     "clearingHouse": {
-        "address": "",
-        "implAddress": ""
-    },
-    "testFaucet": {
-        "address": "",
-        "implAddress": ""
+        "address": "0x98081433437D574C3E399EfBD028fBDF3A174E89",
+        "implAddress": "0xC601c163B4CC4702890beC5418e73d04D31FAfA0"
     },
     "pNFTToken": {
-        "address": "",
-        "implAddress": "",
+        "address": "0x674001749A44B9D6d931D1826233795e7Cf4eb2b",
+        "implAddress": "0x78482D01f57cCcC1984dD6B896EE7F6543Aa9F93",
         "name": "PNFT Token",
         "symbol": "PNFT",
         "decimals": 18,
         "coreAddress": "0x688d89B7512e512CEfbF1e7b03b7b9F32026A180",
         "treasuryAddress": "0x688d89B7512e512CEfbF1e7b03b7b9F32026A180",
         "rewardAddress": "0x688d89B7512e512CEfbF1e7b03b7b9F32026A180"
+    },
+    "rewardMiner": {
+        "address": "0x4681b4443bB8Dd10E2F8c96dD4377b7cB6a58B7f",
+        "implAddress": "0x9156ADEA316D2B0ec49f98eaca64DcA42c51E7F9"
+    },
+    "testFaucet": {
+        "address": "",
+        "implAddress": ""
     },
     "testCheck": {
         "addLiquidity": false,

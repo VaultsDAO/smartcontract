@@ -93,6 +93,15 @@
     "uniswapV3Factory": {
         "address": ""
     },
+    "genericLogic": {
+        "address": ""
+    },
+    "liquidityLogic": {
+        "address": ""
+    },
+    "exchangeLogic": {
+        "address": ""
+    },
     "clearingHouseConfig": {
         "address": "",
         "implAddress": ""
@@ -125,20 +134,7 @@
         "address": "",
         "implAddress": ""
     },
-    "genericLogic": {
-        "address": ""
-    },
-    "liquidityLogic": {
-        "address": ""
-    },
-    "exchangeLogic": {
-        "address": ""
-    },
     "clearingHouse": {
-        "address": "",
-        "implAddress": ""
-    },
-    "testFaucet": {
         "address": "",
         "implAddress": ""
     },
@@ -151,6 +147,14 @@
         "coreAddress": "0x688d89B7512e512CEfbF1e7b03b7b9F32026A180",
         "treasuryAddress": "0x688d89B7512e512CEfbF1e7b03b7b9F32026A180",
         "rewardAddress": "0x688d89B7512e512CEfbF1e7b03b7b9F32026A180"
+    },
+    "rewardMiner": {
+        "address": "",
+        "implAddress": ""
+    },
+    "testFaucet": {
+        "address": "",
+        "implAddress": ""
     },
     "testCheck": {
         "addLiquidity": false,
