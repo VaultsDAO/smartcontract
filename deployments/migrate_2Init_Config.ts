@@ -122,12 +122,7 @@ async function deploy() {
             await clearingHouseConfig.setImRatio('200000'), 'await clearingHouseConfig.setImRatio(200000)'
         )
     }
-    var durationRepegOverPriceSpread = '0';
-    if (network == 'arbitrum') {
-        durationRepegOverPriceSpread = '28800'
-    } else {
-        durationRepegOverPriceSpread = '900'
-    }
+    var durationRepegOverPriceSpread = '28800';
     if ((await clearingHouseConfig.getDurationRepegOverPriceSpread()).toString() != durationRepegOverPriceSpread) {
         await waitForTx(
             await clearingHouseConfig.setDurationRepegOverPriceSpread(durationRepegOverPriceSpread), 'await clearingHouseConfig.setDurationRepegOverPriceSpread(' + durationRepegOverPriceSpread + ')'
