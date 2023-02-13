@@ -9,3 +9,4 @@ npx hardhat run deployments/migrate_5InitVToken.ts --network arbitrumGoerli --no
 npx hardhat run deployments/migrate_6AddLiquidity.ts --network arbitrumGoerli --no-compile
 npx hardhat run deployments/migrate_8Trade.ts --network arbitrumGoerli --no-compile
 npx hardhat run deployments/migrate_9StartMiner.ts --network arbitrumGoerli --no-compile
+npx hardhat run deployments/migrate_Repeg.ts --network arbitrumGoerli --no-compile
