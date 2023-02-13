@@ -93,6 +93,15 @@
     "uniswapV3Factory": {
         "address": "0x4893376342d5D7b3e31d4184c08b265e5aB2A3f6"
     },
+    "genericLogic": {
+        "address": "0x3CC82167aBc11d8b8cE51A412A9718Df3dCCe21E"
+    },
+    "liquidityLogic": {
+        "address": "0xBC86d7397f2a124D2424EC5D8f888D5F6933485F"
+    },
+    "exchangeLogic": {
+        "address": "0x3a95f78283E55366E1FE4085d5FB6EF3337f0E89"
+    },
     "clearingHouseConfig": {
         "address": "0xf09dA90C5BE6Aa124C8AC54444CbFb2E36f6d162",
         "implAddress": "0x2b449d82787506a5C6c0F2e09Ce25Aab02be66D3"
@@ -125,18 +134,9 @@
         "address": "0xCF724F774Cd2C9112e4E2271aF6D68293aC3f411",
         "implAddress": "0xA0BCD8f7E083a41B7D077C734F47524EC30caC30"
     },
-    "genericLogic": {
-        "address": "0x96fD8017C5994de3864a0DAE36Cf7Da1b6C5A0B5"
-    },
-    "liquidityLogic": {
-        "address": "0x86951cfB3fd19083C3ab13E9F8e5681178Bc4Ba0"
-    },
-    "exchangeLogic": {
-        "address": "0x37992Aede62BEd2bdfF2aCFD7E54759Ea4B6F229"
-    },
     "clearingHouse": {
         "address": "0x98081433437D574C3E399EfBD028fBDF3A174E89",
-        "implAddress": "0xC601c163B4CC4702890beC5418e73d04D31FAfA0"
+        "implAddress": "0x292C1553124Bdc49e50536D5128fB336C85e9543"
     },
     "pNFTToken": {
         "address": "0x674001749A44B9D6d931D1826233795e7Cf4eb2b",

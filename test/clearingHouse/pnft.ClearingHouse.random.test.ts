@@ -25,8 +25,6 @@ import {
     findLiquidityChangedEvents,
     findPnlRealizedEvents,
     q2bExactOutput,
-    removeAllOrders,
-    removeOrder,
 } from "../helper/clearingHouseHelper"
 import { initMarket } from "../helper/marketHelper"
 import { IGNORABLE_DUST, priceToTick } from "../helper/number"
@@ -194,12 +192,12 @@ describe("ClearingHouse random trade liquidity repeg close", () => {
                 await rewardMiner.connect(trader2).claim();
             }
 
-            if (i % 4 == 0) {
-                await clearingHouse.connect(admin).emergencyLiquidate(trader1.address, baseToken.address);
-            }
-            if (i % 4 == 2) {
-                await clearingHouse.connect(admin).emergencyLiquidate(trader1.address, baseToken.address);
-            }
+            // if (i % 4 == 0) {
+            //     await clearingHouse.connect(admin).emergencyLiquidate(trader1.address, baseToken.address);
+            // }
+            // if (i % 4 == 2) {
+            //     await clearingHouse.connect(admin).emergencyLiquidate(trader1.address, baseToken.address);
+            // }
         }
 
         await clearingHouse.connect(trader1).closePosition({

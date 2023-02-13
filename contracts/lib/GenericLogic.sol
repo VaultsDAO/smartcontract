@@ -419,6 +419,7 @@ library GenericLogic {
         uint256 newMarkPrice,
         uint256 deltaQuote
     ) internal {
+        uint256 newDeltaBase;
         if (deltaQuote > 0) {
             bool isBaseToQuote = oldDeltaBase > 0 ? true : false;
             IOrderBook.ReplaySwapResponse memory estimate = IExchange(IClearingHouse(chAddress).getExchange())
@@ -434,29 +435,31 @@ library GenericLogic {
                         referralCode: ""
                     })
                 );
-            uint256 newDeltaBase = isBaseToQuote ? estimate.amountIn : estimate.amountOut;
-
-            (uint256 newLongPositionSizeRate, uint256 newShortPositionSizeRate) = GenericLogic
-                .getNewPositionSizeForMultiplierRate(
-                    oldLongPositionSize,
-                    oldShortPositionSize,
-                    oldMarkPrice,
-                    newMarkPrice,
-                    newDeltaBase
-                );
-
-            // console.log("oldDeltaBase %d", oldDeltaBase.abs());
-            // console.log("deltaQuote %d", deltaQuote);
-            // console.log("newDeltaBase %d", newDeltaBase);
-            // console.log("newLongPositionSize %d", newLongPositionSizeRate);
-            // console.log("newShortPositionSize %d", newShortPositionSizeRate);
-
-            IAccountBalance(IClearingHouse(chAddress).getAccountBalance()).modifyMarketMultiplier(
-                baseToken,
-                newLongPositionSizeRate,
-                newShortPositionSizeRate
-            );
+            newDeltaBase = isBaseToQuote ? estimate.amountIn : estimate.amountOut;
+        } else {
+            newDeltaBase = oldLongPositionSize.toInt256().sub(oldShortPositionSize.toInt256()).abs();
         }
+
+        (uint256 newLongPositionSizeRate, uint256 newShortPositionSizeRate) = GenericLogic
+            .getNewPositionSizeForMultiplierRate(
+                oldLongPositionSize,
+                oldShortPositionSize,
+                oldMarkPrice,
+                newMarkPrice,
+                newDeltaBase
+            );
+
+        // console.log("oldDeltaBase %d", oldDeltaBase.abs());
+        // console.log("deltaQuote %d", deltaQuote);
+        // console.log("newDeltaBase %d", newDeltaBase);
+        // console.log("newLongPositionSize %d", newLongPositionSizeRate);
+        // console.log("newShortPositionSize %d", newShortPositionSizeRate);
+
+        IAccountBalance(IClearingHouse(chAddress).getAccountBalance()).modifyMarketMultiplier(
+            baseToken,
+            newLongPositionSizeRate,
+            newShortPositionSizeRate
+        );
     }
 
     struct InternalRealizePnlParams {
