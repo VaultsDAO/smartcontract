@@ -78,7 +78,7 @@ async function deploy() {
         tickAmount = deltaAmount.div(7).div(2).div(8)
     }
 
-    if (tickAmount.lt(parseEther('0.45'))) {
+    if (tickAmount.gt(parseEther('0.45'))) {
         tickAmount = parseEther('0.45')
     }
 
