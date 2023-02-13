@@ -165,7 +165,7 @@ async function deploy() {
     //     console.log('migrateRewardMiner -- END --')
     // }
 
-    return
+    // return
 
 
     const network = hre.network.name;
@@ -225,10 +225,11 @@ async function deploy() {
     //     'pNFTToken.mint(rewardMiner.address, parseEther(60000000))'
     // )
 
-    // console.log(
-    //     'rewardMiner.getPeriodDuration',
-    //     (await rewardMiner.getPeriodDuration()).toString()
-    // )
+    console.log(
+        'rewardMiner.getPeriodDuration',
+        (await rewardMiner.getPeriodDuration()).toString(),
+        (await rewardMiner.getStart()).toString(),
+    )
 
     // var wETH = (await hre.ethers.getContractAt('TestERC20', deployData.wETH.address)) as TestERC20;
     // await waitForTx(
