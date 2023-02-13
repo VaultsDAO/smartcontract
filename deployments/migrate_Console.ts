@@ -95,12 +95,12 @@ async function deploy() {
     //     console.log('migrateClearingHouseConfig -- END --')
     // }
 
-    // import migrateMarketRegistry from "./8_migrate_MarketRegistry";
-    {
-        console.log('migrateMarketRegistry -- START --')
-        await migrateMarketRegistry();
-        console.log('migrateMarketRegistry -- END --')
-    }
+    // // import migrateMarketRegistry from "./8_migrate_MarketRegistry";
+    // {
+    //     console.log('migrateMarketRegistry -- START --')
+    //     await migrateMarketRegistry();
+    //     console.log('migrateMarketRegistry -- END --')
+    // }
 
     // // import migrateOrderBook from "./9_migrate_OrderBook";
     // {
