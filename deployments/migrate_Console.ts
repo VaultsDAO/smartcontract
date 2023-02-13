@@ -200,6 +200,17 @@ async function deploy() {
     var pNFTToken = (await hre.ethers.getContractAt('MockPNFTToken', deployData.pNFTToken.address)) as MockPNFTToken;
     var testFaucet = (await hre.ethers.getContractAt('TestFaucet', deployData.testFaucet.address)) as TestFaucet;
 
+
+    // await waitForTx(
+    //     await pNFTToken.mint(rewardMiner.address, parseEther('60000000')),
+    //     'pNFTToken.mint(rewardMiner.address, parseEther(60000000))'
+    // )
+
+    // console.log(
+    //     'rewardMiner.getPeriodDuration',
+    //     (await rewardMiner.getPeriodDuration()).toString()
+    // )
+
     // var wETH = (await hre.ethers.getContractAt('TestERC20', deployData.wETH.address)) as TestERC20;
     // await waitForTx(
     //     await wETH.mint(deployData.testFaucet.address, parseEther('10000')),
