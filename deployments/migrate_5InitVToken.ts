@@ -141,21 +141,21 @@ async function deploy() {
             }
         }
         {
-            var maxTickCrossedWithinBlock: number = 200
+            var maxTickCrossedWithinBlock: number = 100
             if ((await exchange.getMaxTickCrossedWithinBlock(baseToken.address)).toString() != maxTickCrossedWithinBlock.toString()) {
                 await tryWaitForTx(
                     await exchange.setMaxTickCrossedWithinBlock(baseToken.address, maxTickCrossedWithinBlock), 'exchange.setMaxTickCrossedWithinBlock(baseToken.address, maxTickCrossedWithinBlock)'
                 )
             }
             {
-                if ((await marketRegistry.getInsuranceFundFeeRatio(baseToken.address)).toString() != '1000') {
+                if ((await marketRegistry.getInsuranceFundFeeRatio(baseToken.address)).toString() != '500') {
                     await waitForTx(
-                        await marketRegistry.setInsuranceFundFeeRatio(baseToken.address, '1000'), 'marketRegistry.setInsuranceFundFeeRatio(baseToken.address, 1000)'
+                        await marketRegistry.setInsuranceFundFeeRatio(baseToken.address, '500'), 'marketRegistry.setInsuranceFundFeeRatio(baseToken.address, 500)'
                     )
                 }
-                if ((await marketRegistry.getPlatformFundFeeRatio(baseToken.address)).toString() != '1500') {
+                if ((await marketRegistry.getPlatformFundFeeRatio(baseToken.address)).toString() != '2000') {
                     await waitForTx(
-                        await marketRegistry.setPlatformFundFeeRatio(baseToken.address, '1500'), 'marketRegistry.setInsuranceFundFeeRatio(baseToken.address, 1500)'
+                        await marketRegistry.setPlatformFundFeeRatio(baseToken.address, '2000'), 'marketRegistry.setInsuranceFundFeeRatio(baseToken.address, 2000)'
                     )
                 }
             }

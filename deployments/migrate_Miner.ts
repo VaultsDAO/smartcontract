@@ -78,7 +78,7 @@ async function deploy() {
             '------------------------',
         )
 
-        if ((await exchange.getInsuranceFundFeeRatio(baseToken.address, true)).eq(1000) && (await exchange.getInsuranceFundFeeRatio(baseToken.address, false)).eq(1000)) {
+        if ((await exchange.getInsuranceFundFeeRatio(baseToken.address, true)).eq(500) && (await exchange.getInsuranceFundFeeRatio(baseToken.address, false)).eq(500)) {
             let markTwapX96 = await exchange.getSqrtMarkTwapX96(baseToken.address, 0)
             let markTwap = new bn(formatSqrtPriceX96ToPrice(markTwapX96, 18))
             let indexPrice = new bn(formatEther((await baseToken.getIndexPrice(0))))
