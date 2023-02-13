@@ -17,7 +17,7 @@ import { RepegFundStorage } from "./storage/RepegFundStorage.sol";
 import "hardhat/console.sol";
 
 // never inherit any new stateful contract. never change the orders of parent stateful contracts
-contract RewardMiner is IRepegFund, BlockContext, OwnerPausable, RepegFundStorage {
+contract RepegFund is IRepegFund, BlockContext, OwnerPausable, RepegFundStorage {
     using AddressUpgradeable for address;
     using SafeMathUpgradeable for uint256;
     using SignedSafeMathUpgradeable for int256;
@@ -32,20 +32,20 @@ contract RewardMiner is IRepegFund, BlockContext, OwnerPausable, RepegFundStorag
 
     function _requireOnlyAccountBalance() internal view {
         // only AccountBalance
-        require(_msgSender() == _accountBalance, "RM_OAB");
+        require(_msgSender() == _accountBalance, "RF_OAB");
     }
 
     function _requireOnlyClearingHouse() internal view {
         // only AccountBalance
-        require(_msgSender() == _clearingHouse, "RM_OCH");
+        require(_msgSender() == _clearingHouse, "RF_OCH");
     }
 
     /// @dev this function is public for testing
     // solhint-disable-next-line func-order
     function initialize(address accountBalanceArg, address clearingHouseArg) public initializer {
         // AccountBalance address is not contract
-        _isContract(accountBalanceArg, "RM_ABNC");
-        _isContract(clearingHouseArg, "RM_CHNC");
+        _isContract(accountBalanceArg, "RF_ABNC");
+        _isContract(clearingHouseArg, "RF_CHNC");
 
         __OwnerPausable_init();
 
@@ -58,18 +58,25 @@ contract RewardMiner is IRepegFund, BlockContext, OwnerPausable, RepegFundStorag
     }
 
     function setAccountBalance(address accountBalanceArg) external {
-        _isContract(accountBalanceArg, "RM_CHNC");
+        _isContract(accountBalanceArg, "RF_CHNC");
         _accountBalance = accountBalanceArg;
     }
 
     function setClearingHouse(address clearingHouseArg) external {
-        _isContract(clearingHouseArg, "RM_CHNC");
+        _isContract(clearingHouseArg, "RF_CHNC");
         _clearingHouse = clearingHouseArg;
     }
 
     //
     function getAccumulatedFund() external view override returns (int256) {
         return _accumulatedFund;
+    }
+
+    function getNeedRealizedPnlFund() external view override returns (int256 fund) {
+        if (_distributedFund < 0) {
+            (int256 owedRealizedPnl, , ) = IAccountBalance(_accountBalance).getPnlAndPendingFee(address(this));
+            fund = _distributedFund.neg256().sub(owedRealizedPnl);
+        }
     }
 
     function getDistributeFund() external view override returns (int256) {
@@ -86,20 +93,17 @@ contract RewardMiner is IRepegFund, BlockContext, OwnerPausable, RepegFundStorag
         _distributedFund = _distributedFund.add(fund);
         // RF_LF: limit fund
         require(_distributedFund <= _accumulatedFund, "RF_LF");
-        // if (_distributedFund < 0) {
-        //     (int256 owedRealizedPnl, , ) = IAccountBalance(_accountBalance).getPnlAndPendingFee(address(this));
-        //     // RF_IP: invalid pnl
-        //     require(_distributedFund == owedRealizedPnl, "RF_IP");
-        // }
     }
 
     // external function
 
     function addFund(uint256 fund) external override {
+        _requireOnlyClearingHouse();
         _addFund(fund);
     }
 
     function distributeFund(int256 fund) external override {
+        _requireOnlyClearingHouse();
         _distributeFund(fund);
     }
 }

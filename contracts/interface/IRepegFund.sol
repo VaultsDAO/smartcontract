@@ -7,6 +7,8 @@ interface IRepegFund {
 
     function getDistributeFund() external view returns (int256);
 
+    function getNeedRealizedPnlFund() external view returns (int256);
+
     function addFund(uint256 fund) external;
 
     function distributeFund(int256 fund) external;
