@@ -199,6 +199,25 @@ async function deploy() {
     var rewardMiner = (await hre.ethers.getContractAt('RewardMiner', deployData.rewardMiner.address)) as RewardMiner;
     var pNFTToken = (await hre.ethers.getContractAt('MockPNFTToken', deployData.pNFTToken.address)) as MockPNFTToken;
     var testFaucet = (await hre.ethers.getContractAt('TestFaucet', deployData.testFaucet.address)) as TestFaucet;
+    var wETH = (await hre.ethers.getContractAt('TestERC20', deployData.wETH.address)) as TestERC20;
+
+
+    let addr = '0x1a8a3373bf1aeb5e1a21015e71541ff4be09ee41'
+    let balance = await vault.getBalanceByToken(addr, wETH.address)
+    let pnlAndFee = (await accountBalance.getPnlAndPendingFee(addr))
+    let fundingFee = (await exchange.getAllPendingFundingPayment(addr))
+    console.log(
+        'clearingHouse.isLiquidatable',
+        addr,
+        formatEther(balance),
+        formatEther(pnlAndFee[0]),
+        formatEther(pnlAndFee[1]),
+        formatEther(pnlAndFee[2]),
+        formatEther(fundingFee),
+        formatEther((await vault.getAccountValue(addr))),
+        formatEther((await accountBalance.getMarginRequirementForLiquidation(addr))),
+        (await clearingHouse.isLiquidatable(addr)),
+    )
 
 
     // await waitForTx(

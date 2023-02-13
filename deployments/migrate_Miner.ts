@@ -72,77 +72,66 @@ async function deploy() {
         var baseTokenAddress = baseTokens[i].address
         const baseToken = (await ethers.getContractAt('BaseToken', baseTokenAddress)) as BaseToken;
 
-        let markTwapX96 = await exchange.getSqrtMarkTwapX96(baseToken.address, 0)
-        let markTwap = new bn(formatSqrtPriceX96ToPrice(markTwapX96, 18))
-        let indexPrice = new bn(formatEther((await baseToken.getIndexPrice(0))))
+        console.log(
+            '------------------------',
+            baseToken.address,
+            '------------------------',
+        )
 
-        if (!(await accountBalance.getTotalPositionSize(miner.address, baseToken.address)).eq(0)) {
+        if ((await exchange.getInsuranceFundFeeRatio(baseToken.address, true)).eq(1000) && (await exchange.getInsuranceFundFeeRatio(baseToken.address, false)).eq(1000)) {
+            let markTwapX96 = await exchange.getSqrtMarkTwapX96(baseToken.address, 0)
+            let markTwap = new bn(formatSqrtPriceX96ToPrice(markTwapX96, 18))
+            let indexPrice = new bn(formatEther((await baseToken.getIndexPrice(0))))
+
+            if (!(await accountBalance.getTotalPositionSize(miner.address, baseToken.address)).eq(0)) {
+                await waitForTx(
+                    await clearingHouse.connect(miner).closePosition({
+                        baseToken: baseToken.address,
+                        sqrtPriceLimitX96: parseEther("0"),
+                        oppositeAmountBound: parseEther("0"),
+                        deadline: ethers.constants.MaxUint256,
+                        referralCode: ethers.constants.HashZero,
+                    }),
+                    'clearingHouse.connect(trader).closePosition'
+                )
+            }
+
+            var isBaseToQuote = true
+            if (markTwap.gt(indexPrice)) {
+                isBaseToQuote = true
+            } else {
+                isBaseToQuote = false
+            }
+
+            await depositForTrader(miner)
+
+            let rndAmount = ((Math.floor(Math.random() * 1000000) % 6) + 5) * 0.025
+
             await waitForTx(
-                await clearingHouse.connect(miner).closePosition({
+                await clearingHouse.connect(miner).openPosition({
                     baseToken: baseToken.address,
-                    sqrtPriceLimitX96: parseEther("0"),
-                    oppositeAmountBound: parseEther("0"),
+                    isBaseToQuote: isBaseToQuote,
+                    isExactInput: !isBaseToQuote,
+                    oppositeAmountBound: 0,
+                    amount: parseEther(rndAmount.toString()),
+                    sqrtPriceLimitX96: 0,
                     deadline: ethers.constants.MaxUint256,
                     referralCode: ethers.constants.HashZero,
                 }),
-                'clearingHouse.connect(trader).closePosition'
+                'clearingHouse.connect(trader).openPosition isBaseToQuote = ' + isBaseToQuote + ' ' + rndAmount.toString(),
             )
-        }
-
-        console.log(
-            'before trade',
-            baseToken.address,
-            markTwap.toString(),
-            indexPrice.toString(),
-        )
-
-        let rndAmount = ((Math.floor(Math.random() * 1000000) % 6) + 5) * 0.025
-        var isBaseToQuote = true
-
-        if (markTwap.gt(indexPrice)) {
-            isBaseToQuote = true
-        } else {
-            isBaseToQuote = false
-        }
-        if ((await exchange.getInsuranceFundFeeRatio(baseToken.address, isBaseToQuote)).gt(1000)) {
-            isBaseToQuote = !isBaseToQuote
-        }
-
-        await depositForTrader(miner)
-        await waitForTx(
-            await clearingHouse.connect(miner).openPosition({
-                baseToken: baseToken.address,
-                isBaseToQuote: isBaseToQuote,
-                isExactInput: !isBaseToQuote,
-                oppositeAmountBound: 0,
-                amount: parseEther(rndAmount.toString()),
-                sqrtPriceLimitX96: 0,
-                deadline: ethers.constants.MaxUint256,
-                referralCode: ethers.constants.HashZero,
-            }),
-            'clearingHouse.connect(trader).openPosition isBaseToQuote = ' + isBaseToQuote,
-        )
-
-        markTwapX96 = await exchange.getSqrtMarkTwapX96(baseToken.address, 0)
-        markTwap = new bn(formatSqrtPriceX96ToPrice(markTwapX96, 18))
-        indexPrice = new bn(formatEther((await baseToken.getIndexPrice(0))))
-        console.log(
-            'after trade',
-            baseToken.address,
-            markTwap.toString(),
-            indexPrice.toString(),
-        )
-        if (!(await accountBalance.getTotalPositionSize(miner.address, baseToken.address)).eq(0)) {
-            await waitForTx(
-                await clearingHouse.connect(miner).closePosition({
-                    baseToken: baseToken.address,
-                    sqrtPriceLimitX96: parseEther("0"),
-                    oppositeAmountBound: parseEther("0"),
-                    deadline: ethers.constants.MaxUint256,
-                    referralCode: ethers.constants.HashZero,
-                }),
-                'clearingHouse.connect(trader).closePosition'
-            )
+            if (!(await accountBalance.getTotalPositionSize(miner.address, baseToken.address)).eq(0)) {
+                await waitForTx(
+                    await clearingHouse.connect(miner).closePosition({
+                        baseToken: baseToken.address,
+                        sqrtPriceLimitX96: parseEther("0"),
+                        oppositeAmountBound: parseEther("0"),
+                        deadline: ethers.constants.MaxUint256,
+                        referralCode: ethers.constants.HashZero,
+                    }),
+                    'clearingHouse.connect(trader).closePosition'
+                )
+            }
         }
     }
 }
