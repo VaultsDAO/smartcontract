@@ -309,4 +309,6 @@ interface IClearingHouse {
     function getMaker() external view returns (address maker);
 
     function getPlatformFund() external view returns (address platformFund);
+
+    function getRepegFund() external view returns (address repegFund);
 }

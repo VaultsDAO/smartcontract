@@ -26,6 +26,9 @@ abstract contract ClearingHouseStorage {
 
     address internal _delegateApproval;
 
-    address[10] private __gap1;
+    // sub 1 when use
+    address internal _repegFund;
+    address[9] private __gap1;
+    // sub 1 when use
     uint256[10] private __gap2;
 }
