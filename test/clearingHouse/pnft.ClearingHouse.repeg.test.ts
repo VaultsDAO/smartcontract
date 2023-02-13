@@ -24,8 +24,6 @@ import {
     findLiquidityChangedEvents,
     findPnlRealizedEvents,
     q2bExactOutput,
-    removeAllOrders,
-    removeOrder,
 } from "../helper/clearingHouseHelper"
 import { initMarket } from "../helper/marketHelper"
 import { IGNORABLE_DUST, priceToTick } from "../helper/number"
@@ -85,6 +83,8 @@ describe("ClearingHouse multiplier", () => {
 
         await collateral.mint(liquidator.address, parseUnits("1000", collateralDecimals))
         await deposit(liquidator, vault, 1000, collateral)
+
+        await clearingHouseConfig.setDurationRepegOverPriceSpread(0)
     })
 
     it("repeg up", async () => {
