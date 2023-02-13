@@ -5,7 +5,7 @@ import hre, { ethers } from "hardhat";
 import bn from "bignumber.js"
 
 import { encodePriceSqrt, formatSqrtPriceX96ToPrice } from "../test/shared/utilities";
-import { AccountBalance, BaseToken, Exchange, MarketRegistry, NftPriceFeed, OrderBook, QuoteToken, TestERC20, UniswapV3Pool, Vault } from "../typechain";
+import { AccountBalance, BaseToken, Exchange, MarketRegistry, NftPriceFeed, OrderBook, QuoteToken, RewardMiner, TestERC20, UniswapV3Pool, Vault } from "../typechain";
 import { getMaxTickRange } from "../test/helper/number";
 import helpers from "./helpers";
 import { formatEther, formatUnits, parseEther } from "ethers/lib/utils";
@@ -44,19 +44,42 @@ async function deploy() {
     var vault = (await hre.ethers.getContractAt('Vault', deployData.vault.address)) as Vault;
     var collateralManager = await hre.ethers.getContractAt('CollateralManager', deployData.collateralManager.address);
     var clearingHouse = await hre.ethers.getContractAt('ClearingHouse', deployData.clearingHouse.address);
+    var clearingHouse = await hre.ethers.getContractAt('ClearingHouse', deployData.clearingHouse.address);
+
+    var rewardMiner = (await hre.ethers.getContractAt('RewardMiner', deployData.rewardMiner.address)) as RewardMiner;
 
     var wETH = (await hre.ethers.getContractAt('TestERC20', deployData.wETH.address)) as TestERC20;
 
     var depositForTrader = async function name(trader: SignerWithAddress) {
-        let balance = await vault.getBalanceByToken(trader.address, wETH.address)
-        let owedRealizedPnl = (await accountBalance.getPnlAndPendingFee(trader.address))[0]
-        balance = balance.add(owedRealizedPnl)
-        if (balance.lt(parseEther('1.5'))) {
-            await waitForTx(
-                await vault.connect(trader).depositEther({ value: parseEther('2').sub(balance) }),
-                'vault.depositEther(' + wETH.address + ', ' + formatEther(parseEther('2').sub(balance)) + ')'
-            )
+        {
+            let platformFundBalance = await vault.getFreeCollateralByToken(platformFund.address, wETH.address)
+            if (platformFundBalance.gt(parseEther('1'))) {
+                await waitForTx(
+                    await vault.connect(platformFund).withdrawEther(platformFundBalance),
+                    'vault.connect(platformFund).withdrawEther(' + formatEther(platformFundBalance) + ')'
+                )
+            }
+            platformFundBalance = await ethers.provider.getBalance(platformFund.address)
+            if (platformFundBalance.gt(parseEther('0.1'))) {
+                await waitForTx(
+                    await vault.connect(platformFund).depositEtherFor(trader.address, { value: platformFundBalance.sub(parseEther('0.1')) }),
+                    'vault.connect(platformFund).depositEtherFor(' + trader.address + ')'
+                )
+            }
         }
+    }
+
+    await depositForTrader(miner)
+
+    let tickAmount = parseEther('0.02');
+    let minerData = await rewardMiner.getCurrentPeriodInfoTrader(miner.address)
+    if (minerData.traderAmount.lt(minerData.amount.div(2))) {
+        let deltaAmount = minerData.amount.div(2).sub(minerData.traderAmount)
+        tickAmount = deltaAmount.div(7).div(2).div(8)
+    }
+
+    if (tickAmount.lt(parseEther('0.95'))) {
+        tickAmount = parseEther('0.95')
     }
 
     let baseTokens = [
@@ -103,9 +126,7 @@ async function deploy() {
                 isBaseToQuote = false
             }
 
-            await depositForTrader(miner)
-
-            let rndAmount = ((Math.floor(Math.random() * 1000000) % 6) + 5) * 0.16
+            let rndAmount = tickAmount.mul(((Math.floor(Math.random() * 1000000) % 6) + 5))
 
             await waitForTx(
                 await clearingHouse.connect(miner).openPosition({
@@ -113,25 +134,23 @@ async function deploy() {
                     isBaseToQuote: isBaseToQuote,
                     isExactInput: !isBaseToQuote,
                     oppositeAmountBound: 0,
-                    amount: parseEther(rndAmount.toString()),
+                    amount: rndAmount,
                     sqrtPriceLimitX96: 0,
                     deadline: ethers.constants.MaxUint256,
                     referralCode: ethers.constants.HashZero,
                 }),
                 'clearingHouse.connect(trader).openPosition isBaseToQuote = ' + isBaseToQuote + ' ' + rndAmount.toString(),
             )
-            if (!(await accountBalance.getTotalPositionSize(miner.address, baseToken.address)).eq(0)) {
-                await waitForTx(
-                    await clearingHouse.connect(miner).closePosition({
-                        baseToken: baseToken.address,
-                        sqrtPriceLimitX96: parseEther("0"),
-                        oppositeAmountBound: parseEther("0"),
-                        deadline: ethers.constants.MaxUint256,
-                        referralCode: ethers.constants.HashZero,
-                    }),
-                    'clearingHouse.connect(trader).closePosition'
-                )
-            }
+            await waitForTx(
+                await clearingHouse.connect(miner).closePosition({
+                    baseToken: baseToken.address,
+                    sqrtPriceLimitX96: parseEther("0"),
+                    oppositeAmountBound: parseEther("0"),
+                    deadline: ethers.constants.MaxUint256,
+                    referralCode: ethers.constants.HashZero,
+                }),
+                'clearingHouse.connect(trader).closePosition'
+            )
         }
     }
 }
