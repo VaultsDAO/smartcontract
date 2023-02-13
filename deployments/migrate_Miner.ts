@@ -105,7 +105,7 @@ async function deploy() {
 
             await depositForTrader(miner)
 
-            let rndAmount = ((Math.floor(Math.random() * 1000000) % 6) + 5) * 0.1
+            let rndAmount = ((Math.floor(Math.random() * 1000000) % 6) + 5) * 0.16
 
             await waitForTx(
                 await clearingHouse.connect(miner).openPosition({
