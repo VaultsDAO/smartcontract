@@ -49,7 +49,9 @@ async function deploy() {
 
     var depositForTrader = async function name(trader: SignerWithAddress) {
         let balance = await vault.getBalanceByToken(trader.address, wETH.address)
-        if (balance.lt(parseEther('2'))) {
+        let owedRealizedPnl = (await accountBalance.getPnlAndPendingFee(trader.address))[0]
+        balance = balance.add(owedRealizedPnl)
+        if (balance.lt(parseEther('1.5'))) {
             await waitForTx(
                 await vault.connect(trader).depositEther({ value: parseEther('2').sub(balance) }),
                 'vault.depositEther(' + wETH.address + ', ' + formatEther(parseEther('2').sub(balance)) + ')'
