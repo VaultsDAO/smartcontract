@@ -95,12 +95,12 @@ async function deploy() {
     //     console.log('migrateClearingHouseConfig -- END --')
     // }
 
-    // // import migrateMarketRegistry from "./8_migrate_MarketRegistry";
-    // {
-    //     console.log('migrateMarketRegistry -- START --')
-    //     await migrateMarketRegistry();
-    //     console.log('migrateMarketRegistry -- END --')
-    // }
+    // import migrateMarketRegistry from "./8_migrate_MarketRegistry";
+    {
+        console.log('migrateMarketRegistry -- START --')
+        await migrateMarketRegistry();
+        console.log('migrateMarketRegistry -- END --')
+    }
 
     // // import migrateOrderBook from "./9_migrate_OrderBook";
     // {
@@ -165,7 +165,7 @@ async function deploy() {
     //     console.log('migrateRewardMiner -- END --')
     // }
 
-    // return
+    return
 
 
     const network = hre.network.name;
@@ -202,22 +202,22 @@ async function deploy() {
     var wETH = (await hre.ethers.getContractAt('TestERC20', deployData.wETH.address)) as TestERC20;
 
 
-    let addr = '0x1a8a3373bf1aeb5e1a21015e71541ff4be09ee41'
-    let balance = await vault.getBalanceByToken(addr, wETH.address)
-    let pnlAndFee = (await accountBalance.getPnlAndPendingFee(addr))
-    let fundingFee = (await exchange.getAllPendingFundingPayment(addr))
-    console.log(
-        'clearingHouse.isLiquidatable',
-        addr,
-        formatEther(balance),
-        formatEther(pnlAndFee[0]),
-        formatEther(pnlAndFee[1]),
-        formatEther(pnlAndFee[2]),
-        formatEther(fundingFee),
-        formatEther((await vault.getAccountValue(addr))),
-        formatEther((await accountBalance.getMarginRequirementForLiquidation(addr))),
-        (await clearingHouse.isLiquidatable(addr)),
-    )
+    // let addr = '0x1a8a3373bf1aeb5e1a21015e71541ff4be09ee41'
+    // let balance = await vault.getBalanceByToken(addr, wETH.address)
+    // let pnlAndFee = (await accountBalance.getPnlAndPendingFee(addr))
+    // let fundingFee = (await exchange.getAllPendingFundingPayment(addr))
+    // console.log(
+    //     'clearingHouse.isLiquidatable',
+    //     addr,
+    //     formatEther(balance),
+    //     formatEther(pnlAndFee[0]),
+    //     formatEther(pnlAndFee[1]),
+    //     formatEther(pnlAndFee[2]),
+    //     formatEther(fundingFee),
+    //     formatEther((await vault.getAccountValue(addr))),
+    //     formatEther((await accountBalance.getMarginRequirementForLiquidation(addr))),
+    //     (await clearingHouse.isLiquidatable(addr)),
+    // )
 
 
     // await waitForTx(

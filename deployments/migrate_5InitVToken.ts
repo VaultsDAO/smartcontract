@@ -147,17 +147,20 @@ async function deploy() {
                     await exchange.setMaxTickCrossedWithinBlock(baseToken.address, maxTickCrossedWithinBlock), 'exchange.setMaxTickCrossedWithinBlock(baseToken.address, maxTickCrossedWithinBlock)'
                 )
             }
-            {
-                if ((await marketRegistry.getInsuranceFundFeeRatio(baseToken.address)).toString() != '500') {
-                    await waitForTx(
-                        await marketRegistry.setInsuranceFundFeeRatio(baseToken.address, '500'), 'marketRegistry.setInsuranceFundFeeRatio(baseToken.address, 500)'
-                    )
-                }
-                if ((await marketRegistry.getPlatformFundFeeRatio(baseToken.address)).toString() != '2000') {
-                    await waitForTx(
-                        await marketRegistry.setPlatformFundFeeRatio(baseToken.address, '2000'), 'marketRegistry.setInsuranceFundFeeRatio(baseToken.address, 2000)'
-                    )
-                }
+            if ((await marketRegistry.getInsuranceFundFeeRatio(baseToken.address)).toString() != '500') {
+                await waitForTx(
+                    await marketRegistry.setInsuranceFundFeeRatio(baseToken.address, '500'), 'marketRegistry.setInsuranceFundFeeRatio(baseToken.address, 500)'
+                )
+            }
+            if ((await marketRegistry.getPlatformFundFeeRatio(baseToken.address)).toString() != '2000') {
+                await waitForTx(
+                    await marketRegistry.setPlatformFundFeeRatio(baseToken.address, '2000'), 'marketRegistry.setInsuranceFundFeeRatio(baseToken.address, 2000)'
+                )
+            }
+            if ((await marketRegistry.getOptimalDeltaTwapRatio(baseToken.address)).toString() != '30000') {
+                await waitForTx(
+                    await marketRegistry.setOptimalDeltaTwapRatio(baseToken.address, '30000'), 'marketRegistry.setOptimalDeltaTwapRatio(baseToken.address, 30000)'
+                )
             }
         }
     }

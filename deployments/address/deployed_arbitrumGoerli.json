@@ -99,7 +99,7 @@
     },
     "marketRegistry": {
         "address": "0x524Fc468F6432aa216Fc9f9009826ca19a32Cf75",
-        "implAddress": "0xa01d19A01C13d2455638B98c7DCd1bAeCDbeE95c"
+        "implAddress": "0xa173E2Db9B99253846CCa550d0d133A8ccd8213b"
     },
     "orderBook": {
         "address": "0x3dd9586BD0EeccA75f1Bd24B5E489715864ac489",

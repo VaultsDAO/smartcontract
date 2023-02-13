@@ -86,7 +86,7 @@ contract MarketRegistry is IMarketRegistry, ClearingHouseCallee, MarketRegistryS
         _uniswapFeeRatioMap[baseToken] = feeRatio;
         _insuranceFundFeeRatioMap[baseToken] = 500; // 0.05%
         _platformFundFeeRatioMap[baseToken] = 2000; // 0.2%
-        _optimalDeltaTwapRatioMap[baseToken] = 25000; // 2.5%
+        _optimalDeltaTwapRatioMap[baseToken] = 30000; // 3%
         _unhealthyDeltaTwapRatioMap[baseToken] = 50000; // 5%
         _optimalFundingRatioMap[baseToken] = 250000; // 25%
 
@@ -157,6 +157,10 @@ contract MarketRegistry is IMarketRegistry, ClearingHouseCallee, MarketRegistryS
 
     function getOptimalFundingRatio(address baseToken) external view override checkPool(baseToken) returns (uint24) {
         return _optimalFundingRatioMap[baseToken];
+    }
+
+    function setOptimalDeltaTwapRatio(address baseToken, uint24 optimalDeltaTwapRatio) external checkPool(baseToken) {
+        _optimalDeltaTwapRatioMap[baseToken] = optimalDeltaTwapRatio;
     }
 
     /// @inheritdoc IMarketRegistry
