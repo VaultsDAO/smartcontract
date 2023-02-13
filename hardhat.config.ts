@@ -22,7 +22,7 @@ const TRADER1_KEY = process.env.TRADER1_KEY ?? '';
 const TRADER2_KEY = process.env.TRADER2_KEY ?? '';
 const TRADER3_KEY = process.env.TRADER3_KEY ?? '';
 const TRADER4_KEY = process.env.TRADER4_KEY ?? '';
-const HIEUQ_KEY = process.env.HIEUQ_KEY ?? '';
+const MINER_KEY = process.env.MINER_KEY ?? '';
 
 
 const config: HardhatUserConfig = {
@@ -62,19 +62,19 @@ const config: HardhatUserConfig = {
             url: "https://arbitrum-goerli.infura.io/v3/" + INFURA_KEY,
             chainId: 421613,
             gas: 8000000,
-            accounts: [PRIVATE_KEY, MAKER_ADMIN_KEY, PRICE_ADMIN_KEY, PLATFROM_ADMIN_KEY, TRADER1_KEY, TRADER2_KEY, TRADER3_KEY, TRADER4_KEY, HIEUQ_KEY],
+            accounts: [PRIVATE_KEY, MAKER_ADMIN_KEY, PRICE_ADMIN_KEY, PLATFROM_ADMIN_KEY, TRADER1_KEY, TRADER2_KEY, TRADER3_KEY, TRADER4_KEY, MINER_KEY],
         },
         arbitrumTest: {
             url: "https://arbitrum-goerli.infura.io/v3/" + INFURA_KEY,
             chainId: 421613,
             gas: 8000000,
-            accounts: [PRIVATE_KEY, MAKER_ADMIN_KEY, PRICE_ADMIN_KEY, PLATFROM_ADMIN_KEY, TRADER1_KEY, TRADER2_KEY, TRADER3_KEY, TRADER4_KEY, HIEUQ_KEY],
+            accounts: [PRIVATE_KEY, MAKER_ADMIN_KEY, PRICE_ADMIN_KEY, PLATFROM_ADMIN_KEY, TRADER1_KEY, TRADER2_KEY, TRADER3_KEY, TRADER4_KEY, MINER_KEY],
         },
         arbitrumGoerli: {
             url: "https://arbitrum-goerli.infura.io/v3/" + INFURA_KEY,
             chainId: 421613,
             gas: 8000000,
-            accounts: [PRIVATE_KEY, MAKER_ADMIN_KEY, PRICE_ADMIN_KEY, PLATFROM_ADMIN_KEY, TRADER1_KEY, TRADER2_KEY, TRADER3_KEY, TRADER4_KEY, HIEUQ_KEY],
+            accounts: [PRIVATE_KEY, MAKER_ADMIN_KEY, PRICE_ADMIN_KEY, PLATFROM_ADMIN_KEY, TRADER1_KEY, TRADER2_KEY, TRADER3_KEY, TRADER4_KEY, MINER_KEY],
         },
     },
     dependencyCompiler: {

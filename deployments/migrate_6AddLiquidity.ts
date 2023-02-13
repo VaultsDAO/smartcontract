@@ -43,27 +43,37 @@ async function deploy() {
         deployData.vDOODLE,
     ];
     // 50 ETH -> 1%
-    let initLiquidities = [
-        parseEther('1183').mul(2),// 100E for 1%
-        parseEther('2558'),
-        parseEther('1246'),
-        parseEther('3618'),
-        parseEther('2539'),
-        parseEther('4388'),
-        parseEther('3986'),
-    ];
+    // let initLiquidities = [
+    //     parseEther('1183').mul(2),// 100E for 1%
+    //     parseEther('2558'),
+    //     parseEther('1246'),
+    //     parseEther('3618'),
+    //     parseEther('2539'),
+    //     parseEther('4388'),
+    //     parseEther('3986'),
+    // ];
 
-    if (network == 'arbitrumGoerli') {
-        initLiquidities = [
-            parseEther('1183').div(1),// 50E for 1%
-            parseEther('2558').div(2),// 25E for 1%
-            parseEther('1246').div(2),// 25E for 1%
-            parseEther('3618').div(2),// 25E for 1%
-            parseEther('2539').div(2),// 25E for 1%
-            parseEther('4388').div(2),// 25E for 1%
-            parseEther('3986').div(2),// 25E for 1%
-        ];
-    }
+    // if (network == 'arbitrumGoerli') {
+    //     initLiquidities = [
+    //         parseEther('1183').div(1),// 50E for 1%
+    //         parseEther('2558').div(2),// 25E for 1%
+    //         parseEther('1246').div(2),// 25E for 1%
+    //         parseEther('3618').div(2),// 25E for 1%
+    //         parseEther('2539').div(2),// 25E for 1%
+    //         parseEther('4388').div(2),// 25E for 1%
+    //         parseEther('3986').div(2),// 25E for 1%
+    //     ];
+    // }
+
+    let initLiquidities = [
+        parseEther('345.85'),
+        parseEther('406.09'),
+        parseEther('201.35'),
+        parseEther('634.12'),
+        parseEther('409.05'),
+        parseEther('738.58'),
+        parseEther('705.00'),
+    ];
 
     for (let i = 0; i < baseTokens.length; i++) {
         var baseTokenAddress = baseTokens[i].address
