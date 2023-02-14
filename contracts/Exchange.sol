@@ -29,6 +29,7 @@ import { IExchange } from "./interface/IExchange.sol";
 import { OpenOrder } from "./lib/OpenOrder.sol";
 import { DataTypes } from "./types/DataTypes.sol";
 import { GenericLogic } from "./lib/GenericLogic.sol";
+import { ExchangeLogic } from "./lib/ExchangeLogic.sol";
 import "hardhat/console.sol";
 
 // never inherit any new stateful contract. never change the orders of parent stateful contracts
@@ -60,15 +61,6 @@ contract Exchange is
         bool isExactInput;
         uint256 amount;
         uint160 sqrtPriceLimitX96;
-    }
-
-    struct InternalSwapResponse {
-        int256 base;
-        int256 quote;
-        int256 exchangedPositionSize;
-        int256 exchangedPositionNotional;
-        uint256 fee;
-        int24 tick;
     }
 
     //
@@ -143,7 +135,7 @@ contract Exchange is
 
     function internalSwap(SwapParams memory params) external override returns (SwapResponse memory) {
         _requireOnlyClearingHouse();
-        InternalSwapResponse memory response = _swap(params);
+        ExchangeLogic.InternalSwapResponse memory response = _swap(params);
         return
             SwapResponse({
                 base: response.base.abs(),
@@ -214,7 +206,7 @@ contract Exchange is
             params.trader,
             params.baseToken
         );
-        InternalSwapResponse memory response = _swap(params);
+        ExchangeLogic.InternalSwapResponse memory response = _swap(params);
 
         // if (!params.isClose) {
         // over price limit after swap
@@ -523,100 +515,105 @@ contract Exchange is
     }
 
     /// @dev customized fee: https://www.notion.so/perp/Customise-fee-tier-on-B2QFee-1b7244e1db63416c8651e8fa04128cdb
-    function _swap(SwapParams memory params) internal returns (InternalSwapResponse memory) {
-        IMarketRegistry.MarketInfo memory marketInfo = IMarketRegistry(_marketRegistry).getMarketInfo(params.baseToken);
-
-        (uint256 scaledAmountForUniswapV3PoolSwap, int256 signedScaledAmountForReplaySwap) = SwapMath
-            .calcScaledAmountForSwaps(
-                params.isBaseToQuote,
-                params.isExactInput,
-                params.amount,
-                marketInfo.uniswapFeeRatio
-            );
-
-        // simulate the swap to calculate the fees charged in exchange
-        IOrderBook.ReplaySwapResponse memory replayResponse = IOrderBook(_orderBook).replaySwap(
-            IOrderBook.ReplaySwapParams({
-                baseToken: params.baseToken,
-                isBaseToQuote: params.isBaseToQuote,
-                shouldUpdateState: true,
-                amount: signedScaledAmountForReplaySwap,
-                sqrtPriceLimitX96: params.sqrtPriceLimitX96,
-                uniswapFeeRatio: marketInfo.uniswapFeeRatio
-            })
-        );
-        UniswapV3Broker.SwapResponse memory response = UniswapV3Broker.swap(
-            UniswapV3Broker.SwapParams(
-                marketInfo.pool,
-                _clearingHouse,
-                params.isBaseToQuote,
-                params.isExactInput,
-                // mint extra base token before swap
-                scaledAmountForUniswapV3PoolSwap,
-                params.sqrtPriceLimitX96,
-                abi.encode(
-                    SwapCallbackData({
-                        trader: params.trader,
-                        baseToken: params.baseToken,
-                        pool: marketInfo.pool,
-                        fee: replayResponse.fee,
-                        uniswapFeeRatio: marketInfo.uniswapFeeRatio
-                    })
-                )
-            )
-        );
-
-        // as we charge fees in ClearingHouse instead of in Uniswap pools,
-        // we need to scale up base or quote amounts to get the exact exchanged position size and notional
-        int256 exchangedPositionSize;
-        int256 exchangedPositionNotional;
-        if (params.isBaseToQuote) {
-            // short: exchangedPositionSize <= 0 && exchangedPositionNotional >= 0
-            exchangedPositionSize = SwapMath
-                .calcAmountScaledByFeeRatio(response.base, marketInfo.uniswapFeeRatio, false)
-                .neg256();
-            // due to base to quote fee, exchangedPositionNotional contains the fee
-            // s.t. we can take the fee away from exchangedPositionNotional
-            exchangedPositionNotional = response.quote.toInt256();
-        } else {
-            // long: exchangedPositionSize >= 0 && exchangedPositionNotional <= 0
-            exchangedPositionSize = response.base.toInt256();
-
-            // scaledAmountForUniswapV3PoolSwap is the amount of quote token to swap (input),
-            // response.quote is the actual amount of quote token swapped (output).
-            // as long as liquidity is enough, they would be equal.
-            // otherwise, response.quote < scaledAmountForUniswapV3PoolSwap
-            // which also means response.quote < exact input amount.
-            if (params.isExactInput && response.quote == scaledAmountForUniswapV3PoolSwap) {
-                // NOTE: replayResponse.fee might have an extra charge of 1 wei, for instance:
-                // Q2B exact input amount 1000000000000000000000 with fee ratio 1%,
-                // replayResponse.fee is actually 10000000000000000001 (1000 * 1% + 1 wei),
-                // and quote = exchangedPositionNotional - replayResponse.fee = -1000000000000000000001
-                // which is not matched with exact input 1000000000000000000000
-                // we modify exchangedPositionNotional here to make sure
-                // quote = exchangedPositionNotional - replayResponse.fee = exact input
-                exchangedPositionNotional = params.amount.sub(replayResponse.fee).toInt256().neg256();
-            } else {
-                exchangedPositionNotional = SwapMath
-                    .calcAmountScaledByFeeRatio(response.quote, marketInfo.uniswapFeeRatio, false)
-                    .neg256();
-            }
-        }
-
-        // update the timestamp of the first tx in this market
+    function _swap(SwapParams memory params) internal returns (ExchangeLogic.InternalSwapResponse memory) {
+        ExchangeLogic.InternalSwapResponse memory res = ExchangeLogic.swap(_clearingHouse, params);
         if (_firstTradedTimestampMap[params.baseToken] == 0) {
             _firstTradedTimestampMap[params.baseToken] = _blockTimestamp();
         }
+        return res;
+        // IMarketRegistry.MarketInfo memory marketInfo = IMarketRegistry(_marketRegistry).getMarketInfo(params.baseToken);
 
-        return
-            InternalSwapResponse({
-                base: exchangedPositionSize,
-                quote: exchangedPositionNotional.sub(replayResponse.fee.toInt256()),
-                exchangedPositionSize: exchangedPositionSize,
-                exchangedPositionNotional: exchangedPositionNotional,
-                fee: replayResponse.fee,
-                tick: replayResponse.tick
-            });
+        // (uint256 scaledAmountForUniswapV3PoolSwap, int256 signedScaledAmountForReplaySwap) = SwapMath
+        //     .calcScaledAmountForSwaps(
+        //         params.isBaseToQuote,
+        //         params.isExactInput,
+        //         params.amount,
+        //         marketInfo.uniswapFeeRatio
+        //     );
+
+        // // simulate the swap to calculate the fees charged in exchange
+        // IOrderBook.ReplaySwapResponse memory replayResponse = IOrderBook(_orderBook).replaySwap(
+        //     IOrderBook.ReplaySwapParams({
+        //         baseToken: params.baseToken,
+        //         isBaseToQuote: params.isBaseToQuote,
+        //         shouldUpdateState: true,
+        //         amount: signedScaledAmountForReplaySwap,
+        //         sqrtPriceLimitX96: params.sqrtPriceLimitX96,
+        //         uniswapFeeRatio: marketInfo.uniswapFeeRatio
+        //     })
+        // );
+        // UniswapV3Broker.SwapResponse memory response = UniswapV3Broker.swap(
+        //     UniswapV3Broker.SwapParams(
+        //         marketInfo.pool,
+        //         _clearingHouse,
+        //         params.isBaseToQuote,
+        //         params.isExactInput,
+        //         // mint extra base token before swap
+        //         scaledAmountForUniswapV3PoolSwap,
+        //         params.sqrtPriceLimitX96,
+        //         abi.encode(
+        //             SwapCallbackData({
+        //                 trader: params.trader,
+        //                 baseToken: params.baseToken,
+        //                 pool: marketInfo.pool,
+        //                 fee: replayResponse.fee,
+        //                 uniswapFeeRatio: marketInfo.uniswapFeeRatio
+        //             })
+        //         )
+        //     )
+        // );
+
+        // // as we charge fees in ClearingHouse instead of in Uniswap pools,
+        // // we need to scale up base or quote amounts to get the exact exchanged position size and notional
+        // int256 exchangedPositionSize;
+        // int256 exchangedPositionNotional;
+        // if (params.isBaseToQuote) {
+        //     // short: exchangedPositionSize <= 0 && exchangedPositionNotional >= 0
+        //     exchangedPositionSize = SwapMath
+        //         .calcAmountScaledByFeeRatio(response.base, marketInfo.uniswapFeeRatio, false)
+        //         .neg256();
+        //     // due to base to quote fee, exchangedPositionNotional contains the fee
+        //     // s.t. we can take the fee away from exchangedPositionNotional
+        //     exchangedPositionNotional = response.quote.toInt256();
+        // } else {
+        //     // long: exchangedPositionSize >= 0 && exchangedPositionNotional <= 0
+        //     exchangedPositionSize = response.base.toInt256();
+
+        //     // scaledAmountForUniswapV3PoolSwap is the amount of quote token to swap (input),
+        //     // response.quote is the actual amount of quote token swapped (output).
+        //     // as long as liquidity is enough, they would be equal.
+        //     // otherwise, response.quote < scaledAmountForUniswapV3PoolSwap
+        //     // which also means response.quote < exact input amount.
+        //     if (params.isExactInput && response.quote == scaledAmountForUniswapV3PoolSwap) {
+        //         // NOTE: replayResponse.fee might have an extra charge of 1 wei, for instance:
+        //         // Q2B exact input amount 1000000000000000000000 with fee ratio 1%,
+        //         // replayResponse.fee is actually 10000000000000000001 (1000 * 1% + 1 wei),
+        //         // and quote = exchangedPositionNotional - replayResponse.fee = -1000000000000000000001
+        //         // which is not matched with exact input 1000000000000000000000
+        //         // we modify exchangedPositionNotional here to make sure
+        //         // quote = exchangedPositionNotional - replayResponse.fee = exact input
+        //         exchangedPositionNotional = params.amount.sub(replayResponse.fee).toInt256().neg256();
+        //     } else {
+        //         exchangedPositionNotional = SwapMath
+        //             .calcAmountScaledByFeeRatio(response.quote, marketInfo.uniswapFeeRatio, false)
+        //             .neg256();
+        //     }
+        // }
+
+        // // update the timestamp of the first tx in this market
+        // if (_firstTradedTimestampMap[params.baseToken] == 0) {
+        //     _firstTradedTimestampMap[params.baseToken] = _blockTimestamp();
+        // }
+
+        // return
+        //     InternalSwapResponse({
+        //         base: exchangedPositionSize,
+        //         quote: exchangedPositionNotional.sub(replayResponse.fee.toInt256()),
+        //         exchangedPositionSize: exchangedPositionSize,
+        //         exchangedPositionNotional: exchangedPositionNotional,
+        //         fee: replayResponse.fee,
+        //         tick: replayResponse.tick
+        //     });
     }
 
     //

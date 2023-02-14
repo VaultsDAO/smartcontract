@@ -313,4 +313,6 @@ interface IClearingHouse {
     function getPlatformFund() external view returns (address platformFund);
 
     function getRepegFund() external view returns (address repegFund);
+
+    function getMarketRegistry() external view returns (address marketRegistry);
 }

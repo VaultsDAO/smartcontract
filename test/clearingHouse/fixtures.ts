@@ -157,6 +157,7 @@ export function createClearingHouseFixture(
             const exchangeFactory = await ethers.getContractFactory("TestExchange", {
                 libraries: {
                     GenericLogic: genericLogic.address,
+                    ExchangeLogic: exchangeLogic.address,
                 },
             })
             exchange = (await exchangeFactory.deploy()) as TestExchange
@@ -167,6 +168,7 @@ export function createClearingHouseFixture(
             const exchangeFactory = await ethers.getContractFactory("Exchange", {
                 libraries: {
                     GenericLogic: genericLogic.address,
+                    ExchangeLogic: exchangeLogic.address,
                 },
             })
             exchange = (await exchangeFactory.deploy()) as Exchange

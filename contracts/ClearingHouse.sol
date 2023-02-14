@@ -469,6 +469,10 @@ contract ClearingHouse is
         return _repegFund;
     }
 
+    function getMarketRegistry() external view override returns (address) {
+        return _marketRegistry;
+    }
+
     /// @inheritdoc IClearingHouse
     function getAccountValue(address trader) public view override returns (int256) {
         return IVault(_vault).getAccountValue(trader).parseSettlementToken(_settlementTokenDecimals);
