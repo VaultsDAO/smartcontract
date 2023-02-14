@@ -161,7 +161,6 @@ export function createClearingHouseFixture(
                 libraries: {
                     GenericLogic: genericLogic.address,
                     ExchangeLogic: exchangeLogic.address,
-                    FundingLogic: fundingLogic.address,
                 },
             })
             exchange = (await exchangeFactory.deploy()) as TestExchange
@@ -173,7 +172,6 @@ export function createClearingHouseFixture(
                 libraries: {
                     GenericLogic: genericLogic.address,
                     ExchangeLogic: exchangeLogic.address,
-                    FundingLogic: fundingLogic.address,
                 },
             })
             exchange = (await exchangeFactory.deploy()) as Exchange
