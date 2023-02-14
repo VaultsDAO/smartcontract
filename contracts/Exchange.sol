@@ -820,7 +820,7 @@ contract Exchange is
             IClearingHouseConfig(_clearingHouseConfig).getTwapInterval()
         );
         spreadRatio = (markPrice > indexTwap ? markPrice.sub(indexTwap) : indexTwap.sub(markPrice)).mul(1e6).div(
-            markPrice
+            indexTwap
         );
         lastOverPriceSpreadTimestamp = _lastOverPriceSpreadTimestampMap[baseToken];
         repegTimestamp =
