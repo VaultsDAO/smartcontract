@@ -311,4 +311,6 @@ interface IClearingHouse {
     function getMaker() external view returns (address maker);
 
     function getPlatformFund() external view returns (address platformFund);
+
+    function getMarketRegistry() external view returns (address marketRegistry);
 }
