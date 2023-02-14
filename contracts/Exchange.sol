@@ -908,6 +908,22 @@ contract Exchange is
         return _lastOverPriceSpreadTimestampMap[baseToken];
     }
 
+    function getOverPriceSpreadInfo(
+        address baseToken
+    ) external view returns (uint256 spreadRatio, uint256 lastOverPriceSpreadTimestamp, uint256 repegTimestamp) {
+        uint256 markPrice = getSqrtMarkTwapX96(baseToken, 0).formatSqrtPriceX96ToPriceX96().formatX96ToX10_18();
+        uint256 indexTwap = IIndexPrice(baseToken).getIndexPrice(
+            IClearingHouseConfig(_clearingHouseConfig).getTwapInterval()
+        );
+        spreadRatio = (markPrice > indexTwap ? markPrice.sub(indexTwap) : indexTwap.sub(markPrice)).mul(1e6).div(
+            markPrice
+        );
+        lastOverPriceSpreadTimestamp = _lastOverPriceSpreadTimestampMap[baseToken];
+        repegTimestamp =
+            lastOverPriceSpreadTimestamp +
+            IClearingHouseConfig(_clearingHouseConfig).getDurationRepegOverPriceSpread();
+    }
+
     function estimateSwap(
         DataTypes.OpenPositionParams memory params
     ) external view override returns (IOrderBook.ReplaySwapResponse memory response) {

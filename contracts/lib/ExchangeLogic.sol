@@ -36,6 +36,8 @@ library ExchangeLogic {
     using PerpMath for int256;
     using SettlementTokenMath for int256;
 
+    uint256 internal constant _DUST_AMOUNT = 1e10; // 15 sec
+
     //internal struct
     /// @param sqrtPriceLimitX96 tx will fill until it reaches this price but WON'T REVERT
     struct InternalOpenPositionParams {
@@ -66,6 +68,13 @@ library ExchangeLogic {
                 amount: params.amount,
                 sqrtPriceLimitX96: params.sqrtPriceLimitX96
             })
+        );
+
+        // EL_DA: DUST Amount
+        require(
+            response.exchangedPositionSize.abs() >= _DUST_AMOUNT ||
+                response.exchangedPositionNotional.abs() >= _DUST_AMOUNT,
+            "EL_DA"
         );
 
         address insuranceFund = IClearingHouse(chAddress).getInsuranceFund();

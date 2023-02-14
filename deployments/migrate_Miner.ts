@@ -75,8 +75,8 @@ async function deploy() {
 
     let tickAmount = parseEther('0.01');
     let minerData = await rewardMiner.getCurrentPeriodInfoTrader(miner.address)
-    if (minerData.traderAmount.lt(minerData.amount.div(2))) {
-        let deltaAmount = minerData.amount.div(2).sub(minerData.traderAmount)
+    if (minerData.traderAmount.lt(minerData.amount.div(3))) {
+        let deltaAmount = minerData.amount.div(3).sub(minerData.traderAmount)
         tickAmount = deltaAmount.div(7).div(2).div(8)
         tickAmount = tickAmount.div(1e15).mul(1e15)
     }

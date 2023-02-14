@@ -219,17 +219,22 @@ async function deploy() {
     //     (await clearingHouse.isLiquidatable(addr)),
     // )
 
+    // await waitForTx(
+    //     await vault.connect(hieuq).withdrawEther(parseEther('10')),
+    //     'vault.connect(hieuq).withdrawEther(parseEther(10))'
+    // )
+
 
     // await waitForTx(
     //     await pNFTToken.mint(rewardMiner.address, parseEther('60000000')),
     //     'pNFTToken.mint(rewardMiner.address, parseEther(60000000))'
     // )
 
-    console.log(
-        'rewardMiner.getPeriodDuration',
-        (await rewardMiner.getPeriodDuration()).toString(),
-        (await rewardMiner.getStart()).toString(),
-    )
+    // console.log(
+    //     'rewardMiner.getPeriodDuration',
+    //     (await rewardMiner.getPeriodDuration()).toString(),
+    //     (await rewardMiner.getStart()).toString(),
+    // )
 
     // var wETH = (await hre.ethers.getContractAt('TestERC20', deployData.wETH.address)) as TestERC20;
     // await waitForTx(
