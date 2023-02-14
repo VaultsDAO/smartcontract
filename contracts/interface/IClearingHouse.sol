@@ -78,6 +78,8 @@ interface IClearingHouse {
 
     event RewardMinerChanged(address indexed rewardMinerArg);
 
+    event RepegFundChanged(address indexed repegFundArg);
+
     /// @notice Emitted when open position with non-zero referral code
     /// @param referralCode The referral code by partners
     event ReferredPositionChanged(bytes32 indexed referralCode);

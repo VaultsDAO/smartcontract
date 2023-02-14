@@ -186,6 +186,12 @@ contract ClearingHouse is
         emit RewardMinerChanged(rewardMinerArg);
     }
 
+    function setRepegFund(address repegFundArg) external onlyOwner {
+        require(repegFundArg.isContract(), "CH_RFNC");
+        _repegFund = repegFundArg;
+        emit RepegFundChanged(repegFundArg);
+    }
+
     /// @inheritdoc IClearingHouse
     function addLiquidity(
         DataTypes.AddLiquidityParams memory params
