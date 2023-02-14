@@ -53,6 +53,7 @@ async function deploy() {
     var depositForTrader = async function name(trader: SignerWithAddress) {
         {
             let platformFundBalance = await vault.getFreeCollateralByToken(platformFund.address, wETH.address)
+            platformFundBalance = platformFundBalance.div(1e15).mul(1e15)
             if (platformFundBalance.gt(parseEther('1'))) {
                 await waitForTx(
                     await vault.connect(platformFund).withdrawEther(platformFundBalance),
@@ -60,6 +61,7 @@ async function deploy() {
                 )
             }
             platformFundBalance = await ethers.provider.getBalance(platformFund.address)
+            platformFundBalance = platformFundBalance.div(1e15).mul(1e15)
             if (platformFundBalance.gt(parseEther('0.1'))) {
                 await waitForTx(
                     await vault.connect(platformFund).depositEtherFor(trader.address, { value: platformFundBalance.sub(parseEther('0.1')) }),
