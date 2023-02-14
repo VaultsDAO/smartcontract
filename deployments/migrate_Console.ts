@@ -74,12 +74,12 @@ async function deploy() {
     //     console.log('migrateBaseTokenAll -- END --')
     // }
 
-    // import migrateLibrary from "./6_migrate_Library";
-    {
-        console.log('migrateLibrary -- START --')
-        await migrateLibrary();
-        console.log('migrateLibrary -- END --')
-    }
+    // // import migrateLibrary from "./6_migrate_Library";
+    // {
+    //     console.log('migrateLibrary -- START --')
+    //     await migrateLibrary();
+    //     console.log('migrateLibrary -- END --')
+    // }
 
     // // import migrateUniswapV3 from "./6_migrate_UniswapV3";
     // {
@@ -116,19 +116,19 @@ async function deploy() {
     //     console.log('migrateAccountBalance -- END --')
     // }
 
-    // import migrateExchange from "./11_migrate_Exchange";
-    {
-        console.log('migrateExchange -- START --')
-        await migrateExchange();
-        console.log('migrateExchange -- END --')
-    }
+    // // import migrateExchange from "./11_migrate_Exchange";
+    // {
+    //     console.log('migrateExchange -- START --')
+    //     await migrateExchange();
+    //     console.log('migrateExchange -- END --')
+    // }
 
-    // import migrateInsuranceFund from "./12_migrate_InsuranceFund";
-    {
-        console.log('migrateInsuranceFund -- START --')
-        await migrateInsuranceFund();
-        console.log('migrateInsuranceFund -- END --')
-    }
+    // // import migrateInsuranceFund from "./12_migrate_InsuranceFund";
+    // {
+    //     console.log('migrateInsuranceFund -- START --')
+    //     await migrateInsuranceFund();
+    //     console.log('migrateInsuranceFund -- END --')
+    // }
 
     // // import migrateVault from "./13_migrate_Vault";
     // {
@@ -144,12 +144,12 @@ async function deploy() {
     //     console.log('migrateCollateralManager -- END --')
     // }
 
-    // import migrateClearingHouse from "./15_migrate_ClearingHouse";
-    {
-        console.log('migrateClearingHouse -- START --')
-        await migrateClearingHouse();
-        console.log('migrateClearingHouse -- END --')
-    }
+    // // import migrateClearingHouse from "./15_migrate_ClearingHouse";
+    // {
+    //     console.log('migrateClearingHouse -- START --')
+    //     await migrateClearingHouse();
+    //     console.log('migrateClearingHouse -- END --')
+    // }
 
     // // import migratePNFTToken from "./20_migrate_PNFTToken";
     // {
@@ -201,31 +201,46 @@ async function deploy() {
     var testFaucet = (await hre.ethers.getContractAt('TestFaucet', deployData.testFaucet.address)) as TestFaucet;
     var wETH = (await hre.ethers.getContractAt('TestERC20', deployData.wETH.address)) as TestERC20;
 
-    if ((await insuranceFund.getClearingHouse()).toLowerCase() != clearingHouse.address.toLowerCase()) {
-        await waitForTx(
-            await insuranceFund.setClearingHouse(clearingHouse.address), 'insuranceFund.setClearingHouse(clearingHouse.address)'
-        )
-    }
+    console.log(
+        (await exchange.getOverPriceSpreadInfo(deployData.vAZUKI.address))[0].toString()
+    )
 
-    return
+    // console.log(
+    //     (await exchange.getInsuranceFundFeeRatio(deployData.vBAYC.address, false)).toString()
+    // )
+
+    // console.log(
+    //     'insuranceFund.getRepegAccumulatedFund',
+    //     formatEther((await accountBalance.getPnlAndPendingFee(insuranceFund.address))[0]),
+    //     formatEther(await insuranceFund.getRepegAccumulatedFund()),
+    //     formatEther(await insuranceFund.getRepegDistributedFund()),
+    // )
+
+    // if ((await insuranceFund.getClearingHouse()).toLowerCase() != clearingHouse.address.toLowerCase()) {
+    //     await waitForTx(
+    //         await insuranceFund.setClearingHouse(clearingHouse.address), 'insuranceFund.setClearingHouse(clearingHouse.address)'
+    //     )
+    // }
+
+    // return
 
 
-    let nftPriceFeeds = [
-        deployData.nftPriceFeedBAYC,
-        deployData.nftPriceFeedMAYC,
-        deployData.nftPriceFeedCRYPTOPUNKS,
-        deployData.nftPriceFeedMOONBIRD,
-        deployData.nftPriceFeedAZUKI,
-        deployData.nftPriceFeedCLONEX,
-        deployData.nftPriceFeedDOODLE,
-    ];
-    for (let i = 0; i < nftPriceFeeds.length; i++) {
-        var nftPriceFeedAddress = nftPriceFeeds[i].address
-        var priceFeed = (await hre.ethers.getContractAt('NftPriceFeed', nftPriceFeedAddress)) as NftPriceFeed;
-        console.log(
-            formatEther(await priceFeed.getPrice(0))
-        )
-    }
+    // let nftPriceFeeds = [
+    //     deployData.nftPriceFeedBAYC,
+    //     deployData.nftPriceFeedMAYC,
+    //     deployData.nftPriceFeedCRYPTOPUNKS,
+    //     deployData.nftPriceFeedMOONBIRD,
+    //     deployData.nftPriceFeedAZUKI,
+    //     deployData.nftPriceFeedCLONEX,
+    //     deployData.nftPriceFeedDOODLE,
+    // ];
+    // for (let i = 0; i < nftPriceFeeds.length; i++) {
+    //     var nftPriceFeedAddress = nftPriceFeeds[i].address
+    //     var priceFeed = (await hre.ethers.getContractAt('NftPriceFeed', nftPriceFeedAddress)) as NftPriceFeed;
+    //     console.log(
+    //         formatEther(await priceFeed.getPrice(0))
+    //     )
+    // }
 
 
     // let addr = '0x1a8a3373bf1aeb5e1a21015e71541ff4be09ee41'

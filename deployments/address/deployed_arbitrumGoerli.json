@@ -120,7 +120,7 @@
     },
     "exchange": {
         "address": "0x11810deA012E77521cf994C82B8Cf05Eb786DB1A",
-        "implAddress": "0x9A7875EB04751B997299991CA11896D5e99737Ef"
+        "implAddress": "0xac19838757160474a86DF81cF2c7eb4D194C3989"
     },
     "insuranceFund": {
         "address": "0xFbCdd83BF266a49e35b860d29C9B92Aca155a441",

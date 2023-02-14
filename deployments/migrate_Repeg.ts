@@ -74,19 +74,27 @@ async function deploy() {
                 'isOverPriceSpread',
                 isOverPriceSpread
             )
+            let overPriceSpreadTimestamp = await exchange.getOverPriceSpreadTimestamp(baseTokenAddr)
+            console.log(
+                baseTokenAddr,
+                'overPriceSpreadTimestamp',
+                overPriceSpreadTimestamp.toString()
+            )
+            var isUpdateOverPriceSpreadTimestamp = false
             if (isOverPriceSpread) {
-                let overPriceSpreadTimestamp = await exchange.getOverPriceSpreadTimestamp(baseTokenAddr)
-                console.log(
-                    baseTokenAddr,
-                    'overPriceSpreadTimestamp',
-                    overPriceSpreadTimestamp.toString()
-                )
                 if (overPriceSpreadTimestamp.eq(0)) {
-                    await waitForTx(
-                        await exchange.connect(platformFund).updateOverPriceSpreadTimestamp(baseTokenAddr),
-                        'exchange.updateOverPriceSpreadTimestamp(' + baseTokenAddr + ')'
-                    )
+                    isUpdateOverPriceSpreadTimestamp = true
                 }
+            } else {
+                if (!overPriceSpreadTimestamp.eq(0)) {
+                    isUpdateOverPriceSpreadTimestamp = true
+                }
+            }
+            if (isUpdateOverPriceSpreadTimestamp) {
+                await waitForTx(
+                    await exchange.connect(platformFund).updateOverPriceSpreadTimestamp(baseTokenAddr),
+                    'exchange.updateOverPriceSpreadTimestamp(' + baseTokenAddr + ')'
+                )
             }
         }
     }
