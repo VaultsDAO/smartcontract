@@ -107,9 +107,6 @@ export function createClearingHouseFixture(
         });
         let exchangeLogic = await ExchangeLogic.deploy();
 
-        let FundingLogic = await ethers.getContractFactory("FundingLogic");
-        let fundingLogic = await FundingLogic.deploy();
-
         const wethDecimals = await WETH.decimals()
 
         let baseToken: BaseToken, quoteToken: QuoteToken, mockedNFTPriceFeed: MockContract

@@ -165,6 +165,10 @@ contract InsuranceFund is IInsuranceFund, ReentrancyGuardUpgradeable, OwnerPausa
         return _surplusBeneficiary;
     }
 
+    function getClearingHouse() external view override returns (address) {
+        return _clearingHouse;
+    }
+
     //
     // PUBLIC VIEW
     //
@@ -197,7 +201,7 @@ contract InsuranceFund is IInsuranceFund, ReentrancyGuardUpgradeable, OwnerPausa
     function _distributeRepegFund(int256 fund) internal {
         _distributedRepegFund = _distributedRepegFund.add(fund);
         // RF_LF: limit fund
-        // require(_distributedFund <= _accumulatedFund, "RF_LF");
+        require(_distributedRepegFund <= _accumulatedRepegFund, "RF_LF");
     }
 
     // external function

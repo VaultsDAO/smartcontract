@@ -71,6 +71,8 @@ interface IInsuranceFund {
     /// @return surplusBeneficiary The address of `SurplusBeneficiary`
     function getSurplusBeneficiary() external view returns (address surplusBeneficiary);
 
+    function getClearingHouse() external view returns (address);
+
     function getRepegAccumulatedFund() external view returns (int256);
 
     function getRepegDistributedFund() external view returns (int256);

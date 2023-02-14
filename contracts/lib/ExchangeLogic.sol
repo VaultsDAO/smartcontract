@@ -90,6 +90,8 @@ library ExchangeLogic {
         address insuranceFund = IClearingHouse(chAddress).getInsuranceFund();
         // insuranceFundFee
         _modifyOwedRealizedPnl(chAddress, insuranceFund, response.insuranceFundFee.toInt256());
+        // update repeg fund
+        IInsuranceFund(insuranceFund).addRepegFund(response.insuranceFundFee.div(2));
         // platformFundFee
         _modifyOwedRealizedPnl(
             chAddress,
@@ -505,6 +507,8 @@ library ExchangeLogic {
                 vars.insuranceFund,
                 vars.liquidationFeeToIF.toInt256()
             );
+            // update repeg fund
+            IInsuranceFund(vars.insuranceFund).addRepegFund(vars.liquidationFeeToIF.div(2));
         }
 
         // assume there is no longer any unsettled bad debt in the system

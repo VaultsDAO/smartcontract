@@ -74,12 +74,12 @@ async function deploy() {
     //     console.log('migrateBaseTokenAll -- END --')
     // }
 
-    // // import migrateLibrary from "./6_migrate_Library";
-    // {
-    //     console.log('migrateLibrary -- START --')
-    //     await migrateLibrary();
-    //     console.log('migrateLibrary -- END --')
-    // }
+    // import migrateLibrary from "./6_migrate_Library";
+    {
+        console.log('migrateLibrary -- START --')
+        await migrateLibrary();
+        console.log('migrateLibrary -- END --')
+    }
 
     // // import migrateUniswapV3 from "./6_migrate_UniswapV3";
     // {
@@ -116,19 +116,19 @@ async function deploy() {
     //     console.log('migrateAccountBalance -- END --')
     // }
 
-    // // import migrateExchange from "./11_migrate_Exchange";
-    // {
-    //     console.log('migrateExchange -- START --')
-    //     await migrateExchange();
-    //     console.log('migrateExchange -- END --')
-    // }
+    // import migrateExchange from "./11_migrate_Exchange";
+    {
+        console.log('migrateExchange -- START --')
+        await migrateExchange();
+        console.log('migrateExchange -- END --')
+    }
 
-    // // import migrateInsuranceFund from "./12_migrate_InsuranceFund";
-    // {
-    //     console.log('migrateInsuranceFund -- START --')
-    //     await migrateInsuranceFund();
-    //     console.log('migrateInsuranceFund -- END --')
-    // }
+    // import migrateInsuranceFund from "./12_migrate_InsuranceFund";
+    {
+        console.log('migrateInsuranceFund -- START --')
+        await migrateInsuranceFund();
+        console.log('migrateInsuranceFund -- END --')
+    }
 
     // // import migrateVault from "./13_migrate_Vault";
     // {
@@ -144,12 +144,12 @@ async function deploy() {
     //     console.log('migrateCollateralManager -- END --')
     // }
 
-    // // import migrateClearingHouse from "./15_migrate_ClearingHouse";
-    // {
-    //     console.log('migrateClearingHouse -- START --')
-    //     await migrateClearingHouse();
-    //     console.log('migrateClearingHouse -- END --')
-    // }
+    // import migrateClearingHouse from "./15_migrate_ClearingHouse";
+    {
+        console.log('migrateClearingHouse -- START --')
+        await migrateClearingHouse();
+        console.log('migrateClearingHouse -- END --')
+    }
 
     // // import migratePNFTToken from "./20_migrate_PNFTToken";
     // {
@@ -200,6 +200,14 @@ async function deploy() {
     var pNFTToken = (await hre.ethers.getContractAt('MockPNFTToken', deployData.pNFTToken.address)) as MockPNFTToken;
     var testFaucet = (await hre.ethers.getContractAt('TestFaucet', deployData.testFaucet.address)) as TestFaucet;
     var wETH = (await hre.ethers.getContractAt('TestERC20', deployData.wETH.address)) as TestERC20;
+
+    if ((await insuranceFund.getClearingHouse()).toLowerCase() != clearingHouse.address.toLowerCase()) {
+        await waitForTx(
+            await insuranceFund.setClearingHouse(clearingHouse.address), 'insuranceFund.setClearingHouse(clearingHouse.address)'
+        )
+    }
+
+    return
 
 
     let nftPriceFeeds = [

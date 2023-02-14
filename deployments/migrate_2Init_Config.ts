@@ -128,6 +128,11 @@ async function deploy() {
             await clearingHouseConfig.setDurationRepegOverPriceSpread(durationRepegOverPriceSpread), 'await clearingHouseConfig.setDurationRepegOverPriceSpread(' + durationRepegOverPriceSpread + ')'
         )
     }
+    if ((await insuranceFund.getClearingHouse()).toLowerCase() != clearingHouse.address.toLowerCase()) {
+        await waitForTx(
+            await insuranceFund.setClearingHouse(clearingHouse.address), 'insuranceFund.setClearingHouse(clearingHouse.address)'
+        )
+    }
 }
 
 // We recommend this pattern to be able to use async/await everywhere
