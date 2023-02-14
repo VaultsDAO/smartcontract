@@ -202,6 +202,24 @@ async function deploy() {
     var wETH = (await hre.ethers.getContractAt('TestERC20', deployData.wETH.address)) as TestERC20;
 
 
+    let nftPriceFeeds = [
+        deployData.nftPriceFeedBAYC,
+        deployData.nftPriceFeedMAYC,
+        deployData.nftPriceFeedCRYPTOPUNKS,
+        deployData.nftPriceFeedMOONBIRD,
+        deployData.nftPriceFeedAZUKI,
+        deployData.nftPriceFeedCLONEX,
+        deployData.nftPriceFeedDOODLE,
+    ];
+    for (let i = 0; i < nftPriceFeeds.length; i++) {
+        var nftPriceFeedAddress = nftPriceFeeds[i].address
+        var priceFeed = (await hre.ethers.getContractAt('NftPriceFeed', nftPriceFeedAddress)) as NftPriceFeed;
+        console.log(
+            formatEther(await priceFeed.getPrice(0))
+        )
+    }
+
+
     // let addr = '0x1a8a3373bf1aeb5e1a21015e71541ff4be09ee41'
     // let balance = await vault.getBalanceByToken(addr, wETH.address)
     // let pnlAndFee = (await accountBalance.getPnlAndPendingFee(addr))

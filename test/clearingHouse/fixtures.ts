@@ -292,6 +292,8 @@ export function createClearingHouseFixture(
             rewardMiner = (await RewardMiner.deploy()) as RewardMiner
         }
 
+        await insuranceFund.setClearingHouse(clearingHouse.address)
+
         await clearingHouseConfig.setSettlementTokenBalanceCap(ethers.constants.MaxUint256)
         await quoteToken.mintMaximumTo(clearingHouse.address)
         await baseToken.mintMaximumTo(clearingHouse.address)

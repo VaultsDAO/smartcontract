@@ -57,12 +57,8 @@ library LiquidityLogic {
         GenericLogic.settleFundingGlobal(chAddress, params.baseToken);
 
         // for multiplier
-        (
-            uint256 oldLongPositionSize,
-            uint256 oldShortPositionSize,
-            int256 oldDeltaBase,
-            uint256 deltaQuote
-        ) = GenericLogic.getInfoMultiplier(chAddress, params.baseToken);
+        (uint256 oldLongPositionSize, uint256 oldShortPositionSize, uint256 oldDeltaQuote) = GenericLogic
+            .getInfoMultiplier(chAddress, params.baseToken);
         // for multiplier
 
         // note that we no longer check available tokens here because CH will always auto-mint in UniswapV3MintCallback
@@ -75,10 +71,10 @@ library LiquidityLogic {
             params.baseToken,
             oldLongPositionSize,
             oldShortPositionSize,
-            oldDeltaBase,
+            oldDeltaQuote,
             0,
             0,
-            deltaQuote
+            true
         );
         // for multiplier
 
@@ -133,12 +129,8 @@ library LiquidityLogic {
         GenericLogic.settleFundingGlobal(chAddress, params.baseToken);
 
         // for multiplier
-        (
-            uint256 oldLongPositionSize,
-            uint256 oldShortPositionSize,
-            int256 oldDeltaBase,
-            uint256 deltaQuote
-        ) = GenericLogic.getInfoMultiplier(chAddress, params.baseToken);
+        (uint256 oldLongPositionSize, uint256 oldShortPositionSize, uint256 oldDeltaQuote) = GenericLogic
+            .getInfoMultiplier(chAddress, params.baseToken);
         // for multiplier
 
         // must settle funding first
@@ -154,10 +146,10 @@ library LiquidityLogic {
             params.baseToken,
             oldLongPositionSize,
             oldShortPositionSize,
-            oldDeltaBase,
+            oldDeltaQuote,
             0,
             0,
-            deltaQuote
+            true
         );
         // for multiplier
 

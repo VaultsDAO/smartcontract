@@ -148,6 +148,7 @@ describe("ClearingHouse random trade liquidity repeg close", () => {
                     referralCode: ethers.constants.HashZero,
                 })
             }
+
             if (i % 2 == 0) {
                 rndInt = (Math.floor(Math.random() * 1000000) % 20) + 1;
                 await clearingHouse.connect(maker).addLiquidity({
@@ -245,6 +246,8 @@ describe("ClearingHouse random trade liquidity repeg close", () => {
             formatEther(owedRealizedPnlTrade2),
             formatEther(owedRealizedPnlAdmin),
             formatEther(owedRealizedPnlPlatformFund.add(owedRealizedPnlInsuranceFund).add(owedRealizedPnlTrade1).add(owedRealizedPnlTrade2).add(owedRealizedPnlAdmin)),
+            formatEther(await insuranceFund.getRepegAccumulatedFund()),
+            formatEther(await insuranceFund.getRepegDistributedFund()),
         )
 
         console.log(

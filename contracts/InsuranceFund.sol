@@ -9,10 +9,7 @@ import { SafeERC20Upgradeable } from "@openzeppelin/contracts-upgradeable/token/
 import { PerpMath } from "./lib/PerpMath.sol";
 import { PerpSafeCast } from "./lib/PerpSafeCast.sol";
 import { InsuranceFundStorageV1 } from "./storage/InsuranceFundStorage.sol";
-import {
-    SafeERC20Upgradeable,
-    IERC20Upgradeable
-} from "@openzeppelin/contracts-upgradeable/token/ERC20/SafeERC20Upgradeable.sol";
+import { SafeERC20Upgradeable, IERC20Upgradeable } from "@openzeppelin/contracts-upgradeable/token/ERC20/SafeERC20Upgradeable.sol";
 // import { ISurplusBeneficiary } from "@perp/voting-escrow/contracts/interface/ISurplusBeneficiary.sol";
 import { PerpSafeCast } from "./lib/PerpSafeCast.sol";
 import { InsuranceFundStorageV2 } from "./storage/InsuranceFundStorage.sol";
@@ -31,6 +28,11 @@ contract InsuranceFund is IInsuranceFund, ReentrancyGuardUpgradeable, OwnerPausa
     //
     // MODIFIER
     //
+
+    function _requireOnlyClearingHouse() internal view {
+        // only AccountBalance
+        require(_msgSender() == _clearingHouse, "RF_OCH");
+    }
 
     function initialize(address tokenArg) external initializer {
         // token address is not contract
@@ -65,6 +67,10 @@ contract InsuranceFund is IInsuranceFund, ReentrancyGuardUpgradeable, OwnerPausa
         emit SurplusBeneficiaryChanged(surplusBeneficiary);
     }
 
+    function setClearingHouse(address clearingHouseArg) external {
+        _clearingHouse = clearingHouseArg;
+    }
+
     /// @inheritdoc IInsuranceFund
     function repay() external override nonReentrant whenNotPaused {
         address vault = _vault;
@@ -77,8 +83,9 @@ contract InsuranceFund is IInsuranceFund, ReentrancyGuardUpgradeable, OwnerPausa
 
         uint256 tokenBalance = IERC20Upgradeable(token).balanceOf(address(this));
         uint256 insuranceFundSettlementValueAbs = insuranceFundSettlementValue.abs();
-        uint256 repaidAmount =
-            tokenBalance >= insuranceFundSettlementValueAbs ? insuranceFundSettlementValueAbs : tokenBalance;
+        uint256 repaidAmount = tokenBalance >= insuranceFundSettlementValueAbs
+            ? insuranceFundSettlementValueAbs
+            : tokenBalance;
 
         IERC20Upgradeable(token).approve(vault, repaidAmount);
         IVault(vault).deposit(token, repaidAmount);
@@ -170,5 +177,38 @@ contract InsuranceFund is IInsuranceFund, ReentrancyGuardUpgradeable, OwnerPausa
         int256 insuranceFundSettlementTokenValueX10_S = IVault(vault).getSettlementTokenValue(address(this));
         int256 insuranceFundWalletBalanceX10_S = IERC20Upgradeable(token).balanceOf(address(this)).toInt256();
         return insuranceFundSettlementTokenValueX10_S.add(insuranceFundWalletBalanceX10_S);
+    }
+
+    //
+    function getRepegAccumulatedFund() external view override returns (int256) {
+        return _accumulatedRepegFund;
+    }
+
+    function getRepegDistributedFund() external view override returns (int256) {
+        return _distributedRepegFund;
+    }
+
+    // internal function
+
+    function _addRepegFund(uint256 fund) internal {
+        _accumulatedRepegFund = _accumulatedRepegFund.add(fund.toInt256());
+    }
+
+    function _distributeRepegFund(int256 fund) internal {
+        _distributedRepegFund = _distributedRepegFund.add(fund);
+        // RF_LF: limit fund
+        // require(_distributedFund <= _accumulatedFund, "RF_LF");
+    }
+
+    // external function
+
+    function addRepegFund(uint256 fund) external override {
+        _requireOnlyClearingHouse();
+        _addRepegFund(fund);
+    }
+
+    function repegFund(int256 fund) external override {
+        _requireOnlyClearingHouse();
+        _distributeRepegFund(fund);
     }
 }

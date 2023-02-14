@@ -10,6 +10,7 @@ import { IOrderBook } from "../interface/IOrderBook.sol";
 import { IExchange } from "../interface/IExchange.sol";
 import { IVault } from "../interface/IVault.sol";
 import { IMarketRegistry } from "../interface/IMarketRegistry.sol";
+import { IInsuranceFund } from "../interface/IInsuranceFund.sol";
 import { FullMath } from "@uniswap/v3-core/contracts/libraries/FullMath.sol";
 import { PerpSafeCast } from "./PerpSafeCast.sol";
 import { PerpMath } from "./PerpMath.sol";
@@ -306,14 +307,14 @@ library GenericLogic {
         uint256 shortPositionSize,
         uint256 oldMarkPrice,
         uint256 newMarkPrice,
-        uint256 newDetalPositionSize
+        uint256 newDeltaPositionSize
     ) internal view returns (uint256 newLongPositionSizeRate, uint256 newShortPositionSizeRate) {
         (uint256 newLongPositionSize, uint256 newShortPositionSize) = getNewPositionSizeForMultiplier(
             longPositionSize,
             shortPositionSize,
             oldMarkPrice,
             newMarkPrice,
-            newDetalPositionSize
+            newDeltaPositionSize
         );
         newLongPositionSizeRate = longPositionSize != 0 ? newLongPositionSize.divMultiplier(longPositionSize) : 0;
         newShortPositionSizeRate = shortPositionSize != 0 ? newShortPositionSize.divMultiplier(shortPositionSize) : 0;
@@ -324,7 +325,7 @@ library GenericLogic {
         uint256 shortPositionSize,
         uint256 oldMarkPrice,
         uint256 newMarkPrice,
-        uint256 newDetalPositionSize
+        uint256 newDeltaPositionSize
     ) internal view returns (uint256 newLongPositionSize, uint256 newShortPositionSize) {
         newLongPositionSize = longPositionSize;
         newShortPositionSize = shortPositionSize;
@@ -344,52 +345,53 @@ library GenericLogic {
             newShortPositionSize = FullMath.mulDiv(newShortPositionSize, oldMarkPrice, newMarkPrice);
         }
 
-        uint256 oldDetalPositionSize = newLongPositionSize.toInt256().sub(newShortPositionSize.toInt256()).abs();
-        int256 diffDetalPositionSize = newDetalPositionSize.toInt256().sub(oldDetalPositionSize.toInt256());
-        uint256 newTotalPositionSize = newLongPositionSize.add(newShortPositionSize);
+        // ajust to new delta base if newDeltaPositionSize > 0
+        if (newDeltaPositionSize > 0) {
+            uint256 oldDetalPositionSize = newLongPositionSize.toInt256().sub(newShortPositionSize.toInt256()).abs();
+            int256 diffDetalPositionSize = newDeltaPositionSize.toInt256().sub(oldDetalPositionSize.toInt256());
+            uint256 newTotalPositionSize = newLongPositionSize.add(newShortPositionSize);
 
-        if (
-            (diffDetalPositionSize > 0 && newLongPositionSize > newShortPositionSize) ||
-            (diffDetalPositionSize < 0 && newLongPositionSize < newShortPositionSize)
-        ) {
-            newLongPositionSize = FullMath.mulDiv(
-                newLongPositionSize,
-                (1e18 + FullMath.mulDiv(diffDetalPositionSize.abs(), 1e18, newTotalPositionSize)),
-                1e18
-            );
-            newShortPositionSize = FullMath.mulDiv(
-                newShortPositionSize,
-                (1e18 - FullMath.mulDiv(diffDetalPositionSize.abs(), 1e18, newTotalPositionSize)),
-                1e18
-            );
-        } else if (
-            (diffDetalPositionSize > 0 && newLongPositionSize < newShortPositionSize) ||
-            (diffDetalPositionSize < 0 && newLongPositionSize > newShortPositionSize)
-        ) {
-            newLongPositionSize = FullMath.mulDiv(
-                newLongPositionSize,
-                (1e18 - FullMath.mulDiv(diffDetalPositionSize.abs(), 1e18, newTotalPositionSize)),
-                1e18
-            );
-            newShortPositionSize = FullMath.mulDiv(
-                newShortPositionSize,
-                (1e18 + FullMath.mulDiv(diffDetalPositionSize.abs(), 1e18, newTotalPositionSize)),
-                1e18
-            );
+            if (
+                (diffDetalPositionSize > 0 && newLongPositionSize > newShortPositionSize) ||
+                (diffDetalPositionSize < 0 && newLongPositionSize < newShortPositionSize)
+            ) {
+                newLongPositionSize = FullMath.mulDiv(
+                    newLongPositionSize,
+                    (1e18 + FullMath.mulDiv(diffDetalPositionSize.abs(), 1e18, newTotalPositionSize)),
+                    1e18
+                );
+                newShortPositionSize = FullMath.mulDiv(
+                    newShortPositionSize,
+                    (1e18 - FullMath.mulDiv(diffDetalPositionSize.abs(), 1e18, newTotalPositionSize)),
+                    1e18
+                );
+            } else if (
+                (diffDetalPositionSize > 0 && newLongPositionSize < newShortPositionSize) ||
+                (diffDetalPositionSize < 0 && newLongPositionSize > newShortPositionSize)
+            ) {
+                newLongPositionSize = FullMath.mulDiv(
+                    newLongPositionSize,
+                    (1e18 - FullMath.mulDiv(diffDetalPositionSize.abs(), 1e18, newTotalPositionSize)),
+                    1e18
+                );
+                newShortPositionSize = FullMath.mulDiv(
+                    newShortPositionSize,
+                    (1e18 + FullMath.mulDiv(diffDetalPositionSize.abs(), 1e18, newTotalPositionSize)),
+                    1e18
+                );
+            }
         }
+
         return (newLongPositionSize, newShortPositionSize);
     }
 
     function getInfoMultiplier(
         address chAddress,
         address baseToken
-    )
-        internal
-        returns (uint256 oldLongPositionSize, uint256 oldShortPositionSize, int256 oldDeltaBase, uint256 deltaQuote)
-    {
+    ) internal returns (uint256 oldLongPositionSize, uint256 oldShortPositionSize, uint256 deltaQuote) {
         (oldLongPositionSize, oldShortPositionSize) = IAccountBalance(IClearingHouse(chAddress).getAccountBalance())
             .getMarketPositionSize(baseToken);
-        oldDeltaBase = oldLongPositionSize.toInt256().sub(oldShortPositionSize.toInt256());
+        int256 oldDeltaBase = oldLongPositionSize.toInt256().sub(oldShortPositionSize.toInt256());
         if (oldDeltaBase != 0) {
             bool isBaseToQuote = oldDeltaBase > 0 ? true : false;
             IOrderBook.ReplaySwapResponse memory estimate = IExchange(IClearingHouse(chAddress).getExchange())
@@ -409,35 +411,68 @@ library GenericLogic {
         }
     }
 
+    struct InternalInfoMultiplierVars {
+        bool isBaseToQuote;
+        int256 oldDeltaBase;
+        uint256 newDeltaBase;
+        uint256 newDeltaQuote;
+        uint256 newLongPositionSizeRate;
+        uint256 newShortPositionSizeRate;
+        int256 costDeltaQuote;
+    }
+
     function updateInfoMultiplier(
         address chAddress,
         address baseToken,
         uint256 oldLongPositionSize,
         uint256 oldShortPositionSize,
-        int256 oldDeltaBase,
+        uint256 oldDeltaQuote,
         uint256 oldMarkPrice,
         uint256 newMarkPrice,
-        uint256 deltaQuote
+        bool isFixBaseOrQuote
     ) internal {
-        uint256 newDeltaBase;
-        if (deltaQuote > 0) {
-            bool isBaseToQuote = oldDeltaBase > 0 ? true : false;
-            IOrderBook.ReplaySwapResponse memory estimate = IExchange(IClearingHouse(chAddress).getExchange())
-                .estimateSwap(
-                    DataTypes.OpenPositionParams({
-                        baseToken: baseToken,
-                        isBaseToQuote: isBaseToQuote,
-                        isExactInput: !isBaseToQuote,
-                        oppositeAmountBound: 0,
-                        amount: deltaQuote,
-                        sqrtPriceLimitX96: 0,
-                        deadline: block.timestamp + 60,
-                        referralCode: ""
-                    })
-                );
-            newDeltaBase = isBaseToQuote ? estimate.amountIn : estimate.amountOut;
+        InternalInfoMultiplierVars memory vars;
+
+        vars.oldDeltaBase = oldLongPositionSize.toInt256().sub(oldShortPositionSize.toInt256());
+        vars.newDeltaBase;
+        vars.newDeltaQuote;
+
+        if (isFixBaseOrQuote) {
+            if (vars.oldDeltaBase != 0) {
+                vars.isBaseToQuote = vars.oldDeltaBase > 0 ? true : false;
+                IOrderBook.ReplaySwapResponse memory estimate = IExchange(IClearingHouse(chAddress).getExchange())
+                    .estimateSwap(
+                        DataTypes.OpenPositionParams({
+                            baseToken: baseToken,
+                            isBaseToQuote: vars.isBaseToQuote,
+                            isExactInput: vars.isBaseToQuote,
+                            oppositeAmountBound: 0,
+                            amount: vars.oldDeltaBase.abs(),
+                            sqrtPriceLimitX96: 0,
+                            deadline: block.timestamp + 60,
+                            referralCode: ""
+                        })
+                    );
+                vars.newDeltaQuote = vars.isBaseToQuote ? estimate.amountOut : estimate.amountIn;
+            }
         } else {
-            newDeltaBase = oldLongPositionSize.toInt256().sub(oldShortPositionSize.toInt256()).abs();
+            if (oldDeltaQuote > 0) {
+                vars.isBaseToQuote = vars.oldDeltaBase > 0 ? true : false;
+                IOrderBook.ReplaySwapResponse memory estimate = IExchange(IClearingHouse(chAddress).getExchange())
+                    .estimateSwap(
+                        DataTypes.OpenPositionParams({
+                            baseToken: baseToken,
+                            isBaseToQuote: vars.isBaseToQuote,
+                            isExactInput: !vars.isBaseToQuote,
+                            oppositeAmountBound: 0,
+                            amount: oldDeltaQuote,
+                            sqrtPriceLimitX96: 0,
+                            deadline: block.timestamp + 60,
+                            referralCode: ""
+                        })
+                    );
+                vars.newDeltaBase = vars.isBaseToQuote ? estimate.amountIn : estimate.amountOut;
+            }
         }
 
         (uint256 newLongPositionSizeRate, uint256 newShortPositionSizeRate) = GenericLogic
@@ -446,7 +481,7 @@ library GenericLogic {
                 oldShortPositionSize,
                 oldMarkPrice,
                 newMarkPrice,
-                newDeltaBase
+                vars.newDeltaBase
             );
 
         // console.log("oldDeltaBase %d", oldDeltaBase.abs());
@@ -460,6 +495,30 @@ library GenericLogic {
             newLongPositionSizeRate,
             newShortPositionSizeRate
         );
+
+        if (vars.newDeltaQuote > 0) {
+            // console.log("update Mul");
+            // console.log(oldDeltaQuote);
+            // console.log(vars.newDeltaQuote);
+
+            vars.costDeltaQuote = vars.oldDeltaBase > 0
+                ? vars.newDeltaQuote.toInt256().sub(oldDeltaQuote.toInt256())
+                : oldDeltaQuote.toInt256().sub(vars.newDeltaQuote.toInt256());
+            if (vars.costDeltaQuote != 0) {
+                // update repeg fund
+                IInsuranceFund(IClearingHouse(chAddress).getInsuranceFund()).repegFund(vars.costDeltaQuote);
+                // update RealizedPnl for InsuranceFund
+                IAccountBalance(IClearingHouse(chAddress).getAccountBalance()).modifyOwedRealizedPnl(
+                    IClearingHouse(chAddress).getInsuranceFund(),
+                    vars.costDeltaQuote.neg256()
+                );
+                // check RealizedPnl for InsuranceFund after repeg
+                (int256 owedRealizedPnl, , ) = IAccountBalance(IClearingHouse(chAddress).getAccountBalance())
+                    .getPnlAndPendingFee(IClearingHouse(chAddress).getInsuranceFund());
+                // GL_INE: InsuranceFund not enough fund
+                require(owedRealizedPnl >= 0, "GL_INE");
+            }
+        }
     }
 
     struct InternalRealizePnlParams {

@@ -32,7 +32,7 @@ import { forwardBothTimestamps } from "../shared/time"
 import { filterLogs } from "../shared/utilities"
 import { ClearingHouseFixture, createClearingHouseFixture } from "./fixtures"
 
-describe("ClearingHouse multiplier", () => {
+describe("ClearingHouse maker", () => {
 
     const [admin, maker, trader1, trader2, liquidator, priceAdmin, user01, fundingFund, platformFund] = waffle.provider.getWallets()
     const loadFixture: ReturnType<typeof waffle.createFixtureLoader> = waffle.createFixtureLoader([admin])
@@ -85,10 +85,9 @@ describe("ClearingHouse multiplier", () => {
         await collateral.mint(liquidator.address, parseUnits("1000", collateralDecimals))
         await deposit(liquidator, vault, 1000, collateral)
 
-        await clearingHouseConfig.setDurationRepegOverPriceSpread(0)
     })
 
-    it("repeg up", async () => {
+    it("maker", async () => {
         // maker add liquidity
         await clearingHouse.connect(maker).addLiquidity({
             baseToken: baseToken.address,
@@ -101,7 +100,7 @@ describe("ClearingHouse multiplier", () => {
                 isBaseToQuote: true,
                 isExactInput: true,
                 oppositeAmountBound: 0,
-                amount: parseEther("9"),
+                amount: parseEther("10"),
                 sqrtPriceLimitX96: 0,
                 deadline: ethers.constants.MaxUint256,
                 referralCode: ethers.constants.HashZero,
@@ -113,22 +112,18 @@ describe("ClearingHouse multiplier", () => {
                 isBaseToQuote: false,
                 isExactInput: false,
                 oppositeAmountBound: 0,
-                amount: parseEther("10"),
+                amount: parseEther("5"),
                 sqrtPriceLimitX96: 0,
                 deadline: ethers.constants.MaxUint256,
                 referralCode: ethers.constants.HashZero,
             })
         }
 
-        mockedNFTPriceFeed.smocked.getPrice.will.return.with(async () => {
-            return parseUnits("120", 18)
+        await clearingHouse.connect(maker).removeLiquidity({
+            baseToken: baseToken.address,
+            liquidity: parseEther('2000'),
+            deadline: ethers.constants.MaxUint256,
         })
-
-        console.log("before repeg");
-        await exchange.connect(maker).isOverPriceSpread(baseToken.address);
-        await clearingHouse.connect(maker).repeg(baseToken.address);
-        console.log("after repeg");
-        await exchange.connect(maker).isOverPriceSpread(baseToken.address);
 
         await clearingHouse.connect(trader1).closePosition({
             baseToken: baseToken.address,
@@ -145,23 +140,12 @@ describe("ClearingHouse multiplier", () => {
             deadline: ethers.constants.MaxUint256,
             referralCode: ethers.constants.HashZero,
         })
-        {
-            let size1 = (await accountBalance.getTotalPositionSize(trader1.address, baseToken.address))
-            console.log(
-                'getTotalPositionSize1',
-                formatEther(size1),
-            )
-            let size2 = (await accountBalance.getTotalPositionSize(trader2.address, baseToken.address))
-            console.log(
-                'getTotalPositionSize2',
-                formatEther(size2),
-            )
-        }
 
         let owedRealizedPnlPlatformFund = (await accountBalance.getPnlAndPendingFee(platformFund.address))[0]
         let owedRealizedPnlInsuranceFund = (await accountBalance.getPnlAndPendingFee(insuranceFund.address))[0]
         let owedRealizedPnlTrade1 = (await accountBalance.getPnlAndPendingFee(trader1.address))[0]
         let owedRealizedPnlTrade2 = (await accountBalance.getPnlAndPendingFee(trader2.address))[0]
+        let owedRealizedPnlAdmin = (await accountBalance.getPnlAndPendingFee(admin.address))[0]
 
         console.log(
             'owedRealizedPnl',
@@ -169,8 +153,12 @@ describe("ClearingHouse multiplier", () => {
             formatEther(owedRealizedPnlInsuranceFund),
             formatEther(owedRealizedPnlTrade1),
             formatEther(owedRealizedPnlTrade2),
-            formatEther(owedRealizedPnlPlatformFund.add(owedRealizedPnlInsuranceFund).add(owedRealizedPnlTrade1).add(owedRealizedPnlTrade2)),
+            formatEther(owedRealizedPnlAdmin),
+            formatEther(owedRealizedPnlPlatformFund.add(owedRealizedPnlInsuranceFund).add(owedRealizedPnlTrade1).add(owedRealizedPnlTrade2).add(owedRealizedPnlAdmin)),
+            formatEther(await insuranceFund.getRepegAccumulatedFund()),
+            formatEther(await insuranceFund.getRepegDistributedFund()),
         )
+
     })
 
 })

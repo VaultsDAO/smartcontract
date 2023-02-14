@@ -186,12 +186,6 @@ contract ClearingHouse is
         emit RewardMinerChanged(rewardMinerArg);
     }
 
-    function setRepegFund(address repegFundArg) external onlyOwner {
-        require(repegFundArg.isContract(), "CH_RFNC");
-        _repegFund = repegFundArg;
-        emit RepegFundChanged(repegFundArg);
-    }
-
     /// @inheritdoc IClearingHouse
     function addLiquidity(
         DataTypes.AddLiquidityParams memory params
@@ -465,10 +459,6 @@ contract ClearingHouse is
         return _maker;
     }
 
-    function getRepegFund() external view override returns (address) {
-        return _repegFund;
-    }
-
     /// @inheritdoc IClearingHouse
     function getAccountValue(address trader) public view override returns (int256) {
         return IVault(_vault).getAccountValue(trader).parseSettlementToken(_settlementTokenDecimals);
@@ -578,7 +568,7 @@ contract ClearingHouse is
         uint256 newDeltaBase;
         uint256 oldLongPositionSize;
         uint256 oldShortPositionSize;
-        uint256 deltaQuote;
+        uint256 oldDeltaQuote;
     }
 
     ///REPEG
@@ -606,8 +596,7 @@ contract ClearingHouse is
             (
                 repegParams.oldLongPositionSize,
                 repegParams.oldShortPositionSize,
-                repegParams.oldDeltaBase,
-                repegParams.deltaQuote
+                repegParams.oldDeltaQuote
             ) = GenericLogic.getInfoMultiplier(address(this), baseToken);
             // for multiplier
 
@@ -646,10 +635,10 @@ contract ClearingHouse is
                 baseToken,
                 repegParams.oldLongPositionSize,
                 repegParams.oldShortPositionSize,
-                repegParams.oldDeltaBase,
+                repegParams.oldDeltaQuote,
                 repegParams.oldMarkPrice,
                 repegParams.newMarkPrice,
-                repegParams.deltaQuote
+                false
             );
             // for multiplier
             IExchange(_exchange).updateOverPriceSpreadTimestamp(baseToken);
