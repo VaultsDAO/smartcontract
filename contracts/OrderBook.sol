@@ -16,13 +16,11 @@ import { PerpSafeCast } from "./lib/PerpSafeCast.sol";
 import { PerpFixedPoint96 } from "./lib/PerpFixedPoint96.sol";
 import { Funding } from "./lib/Funding.sol";
 import { PerpMath } from "./lib/PerpMath.sol";
-import { Tick } from "./lib/Tick.sol";
 import { ClearingHouseCallee } from "./base/ClearingHouseCallee.sol";
 import { UniswapV3CallbackBridge } from "./base/UniswapV3CallbackBridge.sol";
 import { IMarketRegistry } from "./interface/IMarketRegistry.sol";
 import { OrderBookStorageV1 } from "./storage/OrderBookStorage.sol";
 import { IOrderBook } from "./interface/IOrderBook.sol";
-import { OpenOrder } from "./lib/OpenOrder.sol";
 import { DataTypes } from "./types/DataTypes.sol";
 
 import "hardhat/console.sol";
@@ -295,16 +293,6 @@ contract OrderBook is
         // OB_OEX: Only exchange
         require(_msgSender() == _exchange, "OB_OEX");
     }
-
-    // function getAmount0Amount1ForLiquidity(
-    //     address baseToken,
-    //     int24 lowerTick,
-    //     int24 upperTick,
-    //     uint128 liquidity
-    // ) external view returns (uint256 addedAmount0, uint256 addedAmount1) {
-    //     address pool = IMarketRegistry(_marketRegistry).getPool(baseToken);
-    //     return UniswapV3Broker.getAmount0Amount1ForLiquidity(pool, lowerTick, upperTick, liquidity);
-    // }
 
     function estimateSwap(ReplaySwapParams memory params) external view override returns (ReplaySwapResponse memory) {
         address pool = IMarketRegistry(_marketRegistry).getPool(params.baseToken);

@@ -16,7 +16,6 @@ import { SettlementTokenMath } from "./SettlementTokenMath.sol";
 import { SafeMathUpgradeable } from "@openzeppelin/contracts-upgradeable/math/SafeMathUpgradeable.sol";
 import { SignedSafeMathUpgradeable } from "@openzeppelin/contracts-upgradeable/math/SignedSafeMathUpgradeable.sol";
 import { DataTypes } from "../types/DataTypes.sol";
-import { OpenOrder } from "../lib/OpenOrder.sol";
 import { GenericLogic } from "../lib/GenericLogic.sol";
 import "hardhat/console.sol";
 

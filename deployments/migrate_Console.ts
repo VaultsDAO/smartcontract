@@ -201,9 +201,25 @@ async function deploy() {
     var testFaucet = (await hre.ethers.getContractAt('TestFaucet', deployData.testFaucet.address)) as TestFaucet;
     var wETH = (await hre.ethers.getContractAt('TestERC20', deployData.wETH.address)) as TestERC20;
 
-    console.log(
-        (await exchange.getOverPriceSpreadInfo(deployData.vAZUKI.address))[0].toString()
-    )
+    // {
+    //     await waitForTx(
+    //         await clearingHouse.connect(trader1).openPosition({
+    //             baseToken: deployData.vDOODLE.address,
+    //             isBaseToQuote: true,
+    //             isExactInput: true,
+    //             oppositeAmountBound: 0,
+    //             amount: parseEther('20'),
+    //             sqrtPriceLimitX96: encodePriceSqrt('4.3', '1'),
+    //             deadline: ethers.constants.MaxUint256,
+    //             referralCode: ethers.constants.HashZero,
+    //         }),
+    //         'clearingHouse.connect(trader).openPosition'
+    //     )
+    // }
+
+    // console.log(
+    //     (await exchange.getOverPriceSpreadInfo(deployData.vAZUKI.address))[0].toString()
+    // )
 
     // console.log(
     //     (await exchange.getInsuranceFundFeeRatio(deployData.vBAYC.address, false)).toString()
@@ -221,7 +237,6 @@ async function deploy() {
     //         await insuranceFund.setClearingHouse(clearingHouse.address), 'insuranceFund.setClearingHouse(clearingHouse.address)'
     //     )
     // }
-
     // return
 
 
@@ -539,34 +554,32 @@ async function deploy() {
     // ];
     // for (let i = 0; i < 7; i++) {
     //     var baseTokenAddress = baseTokens[i].address
-
     //     console.log(
     //         '--------------------------------------',
     //         baseTokenAddress,
     //         '--------------------------------------',
     //     )
-
     //     const baseToken = (await ethers.getContractAt('BaseToken', baseTokenAddress)) as BaseToken;
-
     //     {
-    //         var maxTickCrossedWithinBlock: number = 200
+    //         // var maxTickCrossedWithinBlock: number = 200
+    //         var maxTickCrossedWithinBlock: number = 1774544
     //         if ((await exchange.getMaxTickCrossedWithinBlock(baseToken.address)).toString() != maxTickCrossedWithinBlock.toString()) {
     //             await tryWaitForTx(
     //                 await exchange.setMaxTickCrossedWithinBlock(baseToken.address, maxTickCrossedWithinBlock), 'exchange.setMaxTickCrossedWithinBlock(baseToken.address, maxTickCrossedWithinBlock)'
     //             )
     //         }
-    //         {
-    //             if ((await marketRegistry.getInsuranceFundFeeRatio(baseToken.address)).toString() != '1000') {
-    //                 await waitForTx(
-    //                     await marketRegistry.setInsuranceFundFeeRatio(baseToken.address, '1000'), 'marketRegistry.setInsuranceFundFeeRatio(baseToken.address, 1000)'
-    //                 )
-    //             }
-    //             if ((await marketRegistry.getPlatformFundFeeRatio(baseToken.address)).toString() != '1500') {
-    //                 await waitForTx(
-    //                     await marketRegistry.setPlatformFundFeeRatio(baseToken.address, '1500'), 'marketRegistry.setInsuranceFundFeeRatio(baseToken.address, 1500)'
-    //                 )
-    //             }
-    //         }
+    //         // {
+    //         //     if ((await marketRegistry.getInsuranceFundFeeRatio(baseToken.address)).toString() != '1000') {
+    //         //         await waitForTx(
+    //         //             await marketRegistry.setInsuranceFundFeeRatio(baseToken.address, '1000'), 'marketRegistry.setInsuranceFundFeeRatio(baseToken.address, 1000)'
+    //         //         )
+    //         //     }
+    //         //     if ((await marketRegistry.getPlatformFundFeeRatio(baseToken.address)).toString() != '1500') {
+    //         //         await waitForTx(
+    //         //             await marketRegistry.setPlatformFundFeeRatio(baseToken.address, '1500'), 'marketRegistry.setInsuranceFundFeeRatio(baseToken.address, 1500)'
+    //         //         )
+    //         //     }
+    //         // }
     //     }
     // }
 

@@ -26,7 +26,6 @@ import { IIndexPrice } from "./interface/IIndexPrice.sol";
 import { IBaseToken } from "./interface/IBaseToken.sol";
 import { ExchangeStorageV2 } from "./storage/ExchangeStorage.sol";
 import { IExchange } from "./interface/IExchange.sol";
-import { OpenOrder } from "./lib/OpenOrder.sol";
 import { DataTypes } from "./types/DataTypes.sol";
 import { GenericLogic } from "./lib/GenericLogic.sol";
 import { ExchangeLogic } from "./lib/ExchangeLogic.sol";

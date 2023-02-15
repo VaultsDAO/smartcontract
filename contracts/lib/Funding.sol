@@ -1,9 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 pragma solidity 0.7.6;
 
-import { Tick } from "./Tick.sol";
 import { PerpMath } from "./PerpMath.sol";
-import { OpenOrder } from "./OpenOrder.sol";
 import { PerpSafeCast } from "./PerpSafeCast.sol";
 import { PerpFixedPoint96 } from "./PerpFixedPoint96.sol";
 import { TickMath } from "@uniswap/v3-core/contracts/libraries/TickMath.sol";

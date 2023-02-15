@@ -31,7 +31,6 @@ import { ClearingHouseStorage } from "./storage/ClearingHouseStorage.sol";
 import { BlockContext } from "./base/BlockContext.sol";
 import { IClearingHouse } from "./interface/IClearingHouse.sol";
 import { AccountMarket } from "./lib/AccountMarket.sol";
-import { OpenOrder } from "./lib/OpenOrder.sol";
 import { LiquidityLogic } from "./lib/LiquidityLogic.sol";
 import { ExchangeLogic } from "./lib/ExchangeLogic.sol";
 import { GenericLogic } from "./lib/GenericLogic.sol";
@@ -228,7 +227,7 @@ contract ClearingHouse is
         address[] memory baseTokens = IAccountBalance(_accountBalance).getBaseTokens(trader);
         uint256 baseTokenLength = baseTokens.length;
         for (uint256 i = 0; i < baseTokenLength; i++) {
-            _settleFunding(trader, baseTokens[i]);
+            GenericLogic.settleFunding(address(this), trader, baseTokens[i]);
         }
     }
 
@@ -289,60 +288,6 @@ contract ClearingHouse is
         // positionSizeToBeLiquidated = 0 means liquidating as much as possible
         return _liquidate(trader, baseToken, positionSize, false);
     }
-
-    function emergencyLiquidate(
-        address trader,
-        address baseToken,
-        int256 positionSize
-    ) external whenNotPaused nonReentrant onlyOwner returns (uint256 base, uint256 quote, uint256 fee) {
-        // positionSizeToBeLiquidated = 0 means liquidating as much as possible
-        return _liquidate(trader, baseToken, positionSize, true);
-    }
-
-    // /// @inheritdoc IClearingHouse
-    // function cancelExcessOrders(address baseToken) external override onlyMaker whenNotPaused nonReentrant {
-    //     // input requirement checks:
-    //     //   maker: in _cancelExcessOrders()
-    //     //   baseToken: in Exchange.settleFunding()
-    //     //   orderIds: in OrderBook.removeLiquidityByIds()
-
-    //     _cancelExcessOrders(baseToken);
-    // }
-
-    // /// @inheritdoc IClearingHouse
-    // function cancelAllExcessOrders(address baseToken) external override onlyMaker whenNotPaused nonReentrant {
-    //     // input requirement checks:
-    //     //   maker: in _cancelExcessOrders()
-    //     //   baseToken: in Exchange.settleFunding()
-    //     //   orderIds: in OrderBook.removeLiquidityByIds()
-
-    //     _cancelExcessOrders(baseToken);
-    // }
-
-    /// @inheritdoc IClearingHouse
-    // function quitMarket(address trader, address baseToken) external override returns (uint256 base, uint256 quote) {
-    //     // CH_MNC: Market not closed
-    //     require(IBaseToken(baseToken).isClosed(), "CH_MNC");
-
-    //     _settleFunding(trader, baseToken);
-
-    //     int256 positionSize = _getTakerPosition(trader, baseToken);
-
-    //     // if position is 0, no need to do settlement accounting
-    //     if (positionSize == 0) {
-    //         return (0, 0);
-    //     }
-
-    //     (int256 positionNotional, int256 openNotional, int256 realizedPnl, uint256 closedPrice) = IAccountBalance(
-    //         _accountBalance
-    //     ).settlePositionInClosedMarket(trader, baseToken);
-
-    //     emit PositionClosed(trader, baseToken, positionSize, positionNotional, openNotional, realizedPnl, closedPrice);
-
-    //     _settleBadDebt(trader);
-
-    //     return (positionSize.abs(), positionNotional.abs());
-    // }
 
     /// @inheritdoc IUniswapV3MintCallback
     /// @dev namings here follow Uniswap's convention
@@ -497,28 +442,11 @@ contract ClearingHouse is
             );
     }
 
-    // /// @dev only cancel open orders if there are not enough free collateral with mmRatio
-    // /// or account is able to being liquidated.
-    // function _cancelExcessOrders(address baseToken) internal {
-    //     _checkMarketOpen(baseToken);
-
-    //     // remove all orders in internal function
-    //     LiquidityLogic.removeAllLiquidity(address(this), baseToken);
-    // }
-
     function _openPositionFor(
         address trader,
         DataTypes.OpenPositionParams memory params
     ) internal returns (uint256 base, uint256 quote, uint256 fee) {
         return ExchangeLogic.openPositionFor(address(this), trader, params);
-    }
-
-    /// @dev Settle trader's funding payment to his/her realized pnl.
-    function _settleFunding(
-        address trader,
-        address baseToken
-    ) internal returns (DataTypes.Growth memory fundingGrowthGlobal) {
-        return GenericLogic.settleFunding(address(this), trader, baseToken);
     }
 
     //

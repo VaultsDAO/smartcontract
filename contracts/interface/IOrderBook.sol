@@ -3,7 +3,6 @@ pragma solidity 0.7.6;
 pragma abicoder v2;
 
 import { DataTypes } from "../types/DataTypes.sol";
-import { OpenOrder } from "../lib/OpenOrder.sol";
 
 interface IOrderBook {
     struct AddLiquidityParams {

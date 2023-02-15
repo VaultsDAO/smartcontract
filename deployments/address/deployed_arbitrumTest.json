@@ -93,6 +93,15 @@
     "uniswapV3Factory": {
         "address": "0x4893376342d5D7b3e31d4184c08b265e5aB2A3f6"
     },
+    "genericLogic": {
+        "address": "0xcB6a61b2E9D38d259Ef8266D7830d2D98fD16f13"
+    },
+    "liquidityLogic": {
+        "address": "0xEb873ba146BEA40F618A8Fa5B13C38C59CF2C9A9"
+    },
+    "exchangeLogic": {
+        "address": "0xAcBB70C7693278756060771A1CC025Bb62c05325"
+    },
     "clearingHouseConfig": {
         "address": "0x53D711e7695100381306AAFCa4b295A141f8d955",
         "implAddress": "0x7A770C01D8cf1B6565315D37444C57A1Cd5d0097"
@@ -111,11 +120,11 @@
     },
     "exchange": {
         "address": "0x79b2B0B20B53a8d269375B9e2C030b7Ca0C22d50",
-        "implAddress": "0x0609d86111a05fc118D584A73f916a49934505E9"
+        "implAddress": "0x7c11b62139Ac22b7FCF23b05F2494177dBA90D66"
     },
     "insuranceFund": {
         "address": "0xA01e4abB40E4546695E1051D82939f718e03198A",
-        "implAddress": "0x9E659954ebE650F25F2F61D14c82FcF46Ea80a3b"
+        "implAddress": "0x2f0EA01FEF4832DC839970Db2B3C2f2b2b65c068"
     },
     "vault": {
         "address": "0x217AF33FA96dB0261bB9b570456203F81956e050",
@@ -125,18 +134,9 @@
         "address": "0xc31509cCeec35b29f9b35C3f3bD73f9753723e64",
         "implAddress": "0xdb3576B1414372706683a406249385Ba62cE892c"
     },
-    "genericLogic": {
-        "address": "0xe2b2eaC33531c40B3Dfcad63606301E41E82410E"
-    },
-    "liquidityLogic": {
-        "address": "0x9547F0410D708B6b4283C82Cead532915bb7443b"
-    },
-    "exchangeLogic": {
-        "address": "0x836df0b0D7cF4f0C0653b6d368A8762827D5554D"
-    },
     "clearingHouse": {
         "address": "0xf55b291Acbda07E69e49e1Dfa078E6db1Ee70E42",
-        "implAddress": "0x6Aad7c5A3EBD046676590F508B4180BeA38538a9"
+        "implAddress": "0x3576B58fdA0e122C81E1BA9184871D2C2A29B076"
     },
     "testFaucet": {
         "address": "0xafFABBC0bf710D1D0fdA35FAeEFBe1bB77c70EC2",
