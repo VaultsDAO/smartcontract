@@ -13,7 +13,6 @@ import { UniswapV3Broker } from "./lib/UniswapV3Broker.sol";
 import { PerpSafeCast } from "./lib/PerpSafeCast.sol";
 import { SwapMath } from "./lib/SwapMath.sol";
 import { PerpFixedPoint96 } from "./lib/PerpFixedPoint96.sol";
-import { Funding } from "./lib/Funding.sol";
 import { PerpMath } from "./lib/PerpMath.sol";
 import { AccountMarket } from "./lib/AccountMarket.sol";
 import { ClearingHouseCallee } from "./base/ClearingHouseCallee.sol";
@@ -328,7 +327,7 @@ contract Exchange is
         uint256 indexTwap;
         (fundingGrowthGlobal, markTwap, indexTwap) = _getFundingGrowthGlobalAndTwaps(baseToken);
 
-        fundingPayment = Funding.calcPendingFundingPaymentWithLiquidityCoefficient(
+        fundingPayment = FundingLogic.calcPendingFundingPaymentWithLiquidityCoefficient(
             IAccountBalance(_accountBalance).getOriginBase(trader, baseToken),
             IAccountBalance(_accountBalance).getAccountInfo(trader, baseToken).lastLongTwPremiumGrowthGlobalX96,
             IAccountBalance(_accountBalance).getAccountInfo(trader, baseToken).lastShortTwPremiumGrowthGlobalX96,
@@ -449,7 +448,7 @@ contract Exchange is
     function getPendingFundingPayment(address trader, address baseToken) public view override returns (int256) {
         (DataTypes.Growth memory fundingGrowthGlobal, , ) = _getFundingGrowthGlobalAndTwaps(baseToken);
         return
-            Funding.calcPendingFundingPaymentWithLiquidityCoefficient(
+            FundingLogic.calcPendingFundingPaymentWithLiquidityCoefficient(
                 IAccountBalance(_accountBalance).getOriginBase(trader, baseToken),
                 IAccountBalance(_accountBalance).getAccountInfo(trader, baseToken).lastLongTwPremiumGrowthGlobalX96,
                 IAccountBalance(_accountBalance).getAccountInfo(trader, baseToken).lastShortTwPremiumGrowthGlobalX96,

@@ -2,7 +2,6 @@
 pragma solidity 0.7.6;
 pragma abicoder v2;
 import { IAccountBalance } from "../interface/IAccountBalance.sol";
-import { IInsuranceFund } from "../interface/IInsuranceFund.sol";
 import { IBaseToken } from "../interface/IBaseToken.sol";
 import { IClearingHouse } from "../interface/IClearingHouse.sol";
 import { IClearingHouseConfig } from "../interface/IClearingHouseConfig.sol";
@@ -22,6 +21,7 @@ import { DataTypes } from "../types/DataTypes.sol";
 import { GenericLogic } from "../lib/GenericLogic.sol";
 import { UniswapV3Broker } from "../lib/UniswapV3Broker.sol";
 import { SwapMath } from "../lib/SwapMath.sol";
+import { PerpFixedPoint96 } from "./PerpFixedPoint96.sol";
 import "hardhat/console.sol";
 
 library FundingLogic {
@@ -35,6 +35,37 @@ library FundingLogic {
     using PerpMath for uint128;
     using PerpMath for int256;
     using SettlementTokenMath for int256;
+
+    /// @dev block-based funding is calculated as: premium * timeFraction / 1 day, for 1 day as the default period
+    int256 internal constant _DEFAULT_FUNDING_PERIOD = 1 days;
+
+    //
+    // INTERNAL PURE
+    //
+
+    function calcPendingFundingPaymentWithLiquidityCoefficient(
+        int256 baseBalance,
+        int256 twLongPremiumGrowthGlobalX96,
+        int256 twShortPremiumGrowthGlobalX96,
+        DataTypes.Growth memory fundingGrowthGlobal
+    ) public pure returns (int256) {
+        int256 balanceCoefficientInFundingPayment = 0;
+        if (baseBalance > 0) {
+            balanceCoefficientInFundingPayment = PerpMath.mulDiv(
+                baseBalance,
+                fundingGrowthGlobal.twLongPremiumX96.sub(twLongPremiumGrowthGlobalX96),
+                uint256(PerpFixedPoint96._IQ96)
+            );
+        }
+        if (baseBalance < 0) {
+            balanceCoefficientInFundingPayment = PerpMath.mulDiv(
+                baseBalance,
+                fundingGrowthGlobal.twShortPremiumX96.sub(twShortPremiumGrowthGlobalX96),
+                uint256(PerpFixedPoint96._IQ96)
+            );
+        }
+        return balanceCoefficientInFundingPayment.div(_DEFAULT_FUNDING_PERIOD);
+    }
 
     function getSqrtMarkTwapX96(
         address chAddress,

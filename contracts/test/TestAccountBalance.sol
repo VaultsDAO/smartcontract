@@ -3,7 +3,6 @@ pragma solidity 0.7.6;
 pragma abicoder v2;
 
 import "../AccountBalance.sol";
-import "../lib/Funding.sol";
 
 contract TestAccountBalance is AccountBalance {
     using AddressUpgradeable for address;
