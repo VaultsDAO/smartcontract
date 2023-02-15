@@ -29,10 +29,12 @@ async function deploy() {
     // 
     if (deployData.exchange.implAddress == undefined || deployData.exchange.implAddress == '') {
         var genericLogic = await hre.ethers.getContractAt('GenericLogic', deployData.genericLogic.address);
+        var fundingLogic = await hre.ethers.getContractAt('FundingLogic', deployData.fundingLogic.address);
         var exchangeLogic = await hre.ethers.getContractAt('ExchangeLogic', deployData.exchangeLogic.address);
         let Exchange = await hre.ethers.getContractFactory("Exchange", {
             libraries: {
                 GenericLogic: genericLogic.address,
+                FundingLogic: fundingLogic.address,
                 ExchangeLogic: exchangeLogic.address,
             },
         });

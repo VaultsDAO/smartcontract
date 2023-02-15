@@ -6,7 +6,7 @@ import hre, { ethers } from "hardhat";
 
 import { encodePriceSqrt, formatSqrtPriceX96ToPrice } from "../test/shared/utilities";
 import { AccountBalance, BaseToken, ClearingHouse, ClearingHouseConfig, CollateralManager, Exchange, InsuranceFund, MarketRegistry, MockPNFTToken, NftPriceFeed, OrderBook, QuoteToken, RewardMiner, TestERC20, TestFaucet, UniswapV3Pool, Vault } from "../typechain";
-import { getMaxTickRange } from "../test/helper/number";
+import { getMaxTickRange, priceToTick } from "../test/helper/number";
 import helpers from "./helpers";
 import { formatEther, parseEther } from "ethers/lib/utils";
 const { waitForTx, tryWaitForTx } = helpers;
@@ -201,19 +201,94 @@ async function deploy() {
     var testFaucet = (await hre.ethers.getContractAt('TestFaucet', deployData.testFaucet.address)) as TestFaucet;
     var wETH = (await hre.ethers.getContractAt('TestERC20', deployData.wETH.address)) as TestERC20;
 
+    console.log('START') 
+
+    // {
+    //     var vBAYC = (await hre.ethers.getContractAt('BaseToken', deployData.vBAYC.address)) as BaseToken;
+
+    //     var isBaseToQuote = true;
+
+    //     let currPriceX96 = await exchange.getSqrtMarkTwapX96(vBAYC.address, 0)
+    //     let currPrice = new bn(formatSqrtPriceX96ToPrice(currPriceX96, 18))
+
+    //     let limitTick = await exchange.getMaxTickCrossedWithinBlock(vBAYC.address)
+    //     let currentPriceTick = priceToTick(currPrice.toNumber(), 60)
+    //     let limitPriceTick = currentPriceTick + (isBaseToQuote ? -limitTick : limitTick)
+    //     let limitPrice = new bn(1.0001).pow(limitPriceTick)
+
+    //     console.log(
+    //         'limitQuote',
+    //         limitTick,
+    //         currentPriceTick,
+    //         limitPriceTick,
+    //         currPrice.toFixed(4).toString(),
+    //         limitPrice.toFixed(4).toString(),
+    //     )
+
+    //     let estimateSwap = await exchange.estimateSwap({
+    //         baseToken: vBAYC.address,
+    //         isBaseToQuote: isBaseToQuote,
+    //         isExactInput: !isBaseToQuote,
+    //         oppositeAmountBound: 0,
+    //         amount: ethers.constants.MaxUint256.div(1e10),
+    //         sqrtPriceLimitX96: encodePriceSqrt(limitPrice.toString(), '1'),
+    //         deadline: ethers.constants.MaxUint256,
+    //         referralCode: ethers.constants.HashZero,
+    //     })
+    //     let limitQuote: bn;
+    //     if (isBaseToQuote) {
+    //         limitQuote = new bn(estimateSwap.amountOut.toString())
+    //     } else {
+    //         limitQuote = new bn(estimateSwap.amountIn.toString())
+    //     }
+    //     console.log(
+    //         'limitQuote',
+    //         limitTick,
+    //         currentPriceTick,
+    //         limitPriceTick,
+    //         currPrice.toFixed(4).toString(),
+    //         limitPrice.toFixed(4).toString(),
+    //         formatEther(limitQuote.toString()),
+    //     )
+    // }
+
+
     // {
     //     await waitForTx(
     //         await clearingHouse.connect(trader1).openPosition({
     //             baseToken: deployData.vDOODLE.address,
-    //             isBaseToQuote: true,
+    //             isBaseToQuote: false,
     //             isExactInput: true,
     //             oppositeAmountBound: 0,
-    //             amount: parseEther('20'),
-    //             sqrtPriceLimitX96: encodePriceSqrt('4.3', '1'),
+    //             amount: parseEther('200'),
+    //             sqrtPriceLimitX96: encodePriceSqrt('4.4', '1'),
     //             deadline: ethers.constants.MaxUint256,
     //             referralCode: ethers.constants.HashZero,
     //         }),
     //         'clearingHouse.connect(trader).openPosition'
+    //     )
+    // }
+
+    {
+        await waitForTx(
+            await clearingHouse.connect(trader1).openPosition({
+                baseToken: deployData.vDOODLE.address,
+                isBaseToQuote: true,
+                isExactInput: false,
+                oppositeAmountBound: 0,
+                amount: parseEther('200'),
+                sqrtPriceLimitX96: encodePriceSqrt('4.35', '1'),
+                deadline: ethers.constants.MaxUint256,
+                referralCode: ethers.constants.HashZero,
+            }),
+            'clearingHouse.connect(trader).openPosition'
+        )
+    }
+
+    // {
+    //     console.log(
+    //         'isLiquidatable',
+    //         await clearingHouse.isLiquidatable('0xbbe698f1459da7dd2b6962bc48bbbc8a80e2210e')
     //     )
     // }
 

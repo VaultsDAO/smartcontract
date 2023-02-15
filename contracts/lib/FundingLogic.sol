@@ -130,7 +130,6 @@ library FundingLogic {
         uint256 timestamp,
         DataTypes.Growth memory lastFundingGrowthGlobal
     ) public view returns (DataTypes.Growth memory fundingGrowthGlobal, uint256 markTwap, uint256 indexTwap) {
-        bool marketOpen = IBaseToken(baseToken).isOpen();
         // shorten twapInterval if prior observations are not enough
         uint32 twapInterval;
         if (firstTrade != 0) {

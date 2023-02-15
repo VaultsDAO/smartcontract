@@ -75,6 +75,7 @@ describe("Deployment check", () => {
         deployData.vault = {} as ContractData
         deployData.collateralManager = {} as ContractData
         deployData.genericLogic = {} as ContractData
+        deployData.fundingLogic = {} as ContractData
         deployData.liquidityLogic = {} as ContractData
         deployData.exchangeLogic = {} as ContractData
         deployData.clearingHouse = {} as ContractData
@@ -195,6 +196,40 @@ describe("Deployment check", () => {
                 deployData.genericLogic.address = genericLogic.address;
             }
         }
+        var genericLogic = await ethers.getContractAt('GenericLogic', deployData.genericLogic.address);
+        const FundingLogic = await ethers.getContractFactory("FundingLogic");
+        if (deployData.fundingLogic.address == undefined || deployData.fundingLogic.address == '') {
+            const fundingLogic = await waitForDeploy(await FundingLogic.deploy())
+            {
+                deployData.fundingLogic.address = fundingLogic.address;
+            }
+        }
+        var fundingLogic = await ethers.getContractAt('FundingLogic', deployData.fundingLogic.address);
+        const LiquidityLogic = await ethers.getContractFactory("LiquidityLogic", {
+            libraries: {
+                GenericLogic: genericLogic.address,
+            },
+        });
+        {
+            const liquidityLogic = await waitForDeploy(await LiquidityLogic.deploy())
+            {
+                deployData.liquidityLogic.address = liquidityLogic.address;
+            }
+        }
+        var liquidityLogic = await ethers.getContractAt('LiquidityLogic', deployData.liquidityLogic.address);
+        const ExchangeLogic = await ethers.getContractFactory("ExchangeLogic", {
+            libraries: {
+                GenericLogic: genericLogic.address,
+            },
+        });
+        {
+            const exchangeLogic = await waitForDeploy(await ExchangeLogic.deploy())
+            {
+                deployData.exchangeLogic.address = exchangeLogic.address;
+            }
+        }
+        var exchangeLogic = await ethers.getContractAt('ExchangeLogic', deployData.exchangeLogic.address);
+
         const ClearingHouseConfig = await ethers.getContractFactory("ClearingHouseConfig");
         {
             const clearingHouseConfig = await waitForDeploy(await ClearingHouseConfig.deploy())
@@ -279,10 +314,11 @@ describe("Deployment check", () => {
                 deployData.accountBalance.address = transparentUpgradeableProxy.address;
             }
         }
-        var genericLogic = await ethers.getContractAt('GenericLogic', deployData.genericLogic.address);
-        const Exchange = await ethers.getContractFactory("Exchange", {
+        let Exchange = await ethers.getContractFactory("Exchange", {
             libraries: {
                 GenericLogic: genericLogic.address,
+                FundingLogic: fundingLogic.address,
+                ExchangeLogic: exchangeLogic.address,
             },
         });
         if (deployData.exchange.implAddress == undefined || deployData.exchange.implAddress == '') {
@@ -384,30 +420,6 @@ describe("Deployment check", () => {
                 deployData.collateralManager.address = transparentUpgradeableProxy.address;
             }
         }
-        const LiquidityLogic = await ethers.getContractFactory("LiquidityLogic", {
-            libraries: {
-                GenericLogic: genericLogic.address,
-            },
-        });
-        const ExchangeLogic = await ethers.getContractFactory("ExchangeLogic", {
-            libraries: {
-                GenericLogic: genericLogic.address,
-            },
-        });
-        {
-            const liquidityLogic = await waitForDeploy(await LiquidityLogic.deploy())
-            {
-                deployData.liquidityLogic.address = liquidityLogic.address;
-            }
-        }
-        {
-            const exchangeLogic = await waitForDeploy(await ExchangeLogic.deploy())
-            {
-                deployData.exchangeLogic.address = exchangeLogic.address;
-            }
-        }
-        var liquidityLogic = await ethers.getContractAt('LiquidityLogic', deployData.liquidityLogic.address);
-        var exchangeLogic = await ethers.getContractAt('ExchangeLogic', deployData.exchangeLogic.address);
         let ClearingHouse = await ethers.getContractFactory("ClearingHouse", {
             libraries: {
                 GenericLogic: genericLogic.address,
