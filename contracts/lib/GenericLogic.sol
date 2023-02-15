@@ -298,7 +298,11 @@ library GenericLogic {
             return deltaTwapRatio.abs().mul(marketInfo.optimalFundingRatio).div(1e6);
         }
         // 5% < delta
-        return deltaTwapRatio.abs();
+        return
+            PerpMath.min(
+                deltaTwapRatio.abs(),
+                uint256(IClearingHouseConfig(IExchange(exchange).getClearingHouseConfig()).getMaxFundingRate())
+            );
     }
 
     function getNewPositionSizeForMultiplierRate(

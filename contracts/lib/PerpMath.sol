@@ -33,6 +33,10 @@ library PerpMath {
         return a < b ? a : b;
     }
 
+    function min(uint256 a, uint256 b) internal pure returns (uint256) {
+        return a < b ? a : b;
+    }
+
     function abs(int256 value) internal pure returns (uint256) {
         return value >= 0 ? value.toUint256() : neg256(value).toUint256();
     }

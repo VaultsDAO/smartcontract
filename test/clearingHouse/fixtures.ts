@@ -7,7 +7,6 @@ import {
     ClearingHouse,
     ClearingHouseConfig,
     CollateralManager,
-    DelegateApproval,
     Exchange,
     InsuranceFund,
     MarketRegistry,
@@ -58,7 +57,6 @@ export interface ClearingHouseFixture {
 }
 
 export interface ClearingHouseWithDelegateApprovalFixture extends ClearingHouseFixture {
-    delegateApproval: DelegateApproval
     clearingHouseOpenPositionAction: number
     clearingHouseAddLiquidityAction: number
     clearingHouseRemoveLiquidityAction: number
@@ -533,7 +531,6 @@ export function createClearingHouseWithDelegateApprovalFixture(): () => Promise<
 
         return {
             ...clearingHouseFixture,
-            delegateApproval,
             clearingHouseOpenPositionAction: await delegateApproval.getClearingHouseOpenPositionAction(),
             clearingHouseAddLiquidityAction: await delegateApproval.getClearingHouseAddLiquidityAction(),
             clearingHouseRemoveLiquidityAction: await delegateApproval.getClearingHouseRemoveLiquidityAction(),

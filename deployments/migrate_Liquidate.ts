@@ -69,6 +69,19 @@ async function deploy() {
             let positionSize = (await accountBalance.getTotalPositionSize(traderAddr, baseTokenAddr))
             let liqPositionSize = positionSize
             // update liqPositionSize if buyingPower < positionValue
+            
+            // var isBaseToQuote = liqPositionSize.gt(0) ? true : false
+            // let relaySwapResp = await exchange.estimateSwap({
+            //     baseToken: baseTokenAddr,
+            //     isBaseToQuote: isBaseToQuote,
+            //     isExactInput: !isBaseToQuote,
+            //     oppositeAmountBound: 0,
+            //     amount: ethers.constants.MaxUint256.div(1e10),
+            //     sqrtPriceLimitX96: encodePriceSqrt(limitPrice.toString(), '1'),
+            //     deadline: ethers.constants.MaxUint256,
+            //     referralCode: ethers.constants.HashZero,
+            // })
+
             if (buyingPower.lt(positionValue)) {
                 liqPositionSize = liqPositionSize.mul(buyingPower).div(positionValue)
             }
