@@ -1,6 +1,6 @@
 import { MockContract, smockit } from "@eth-optimism/smock"
 import { parseEther } from "ethers/lib/utils"
-import { ethers } from "hardhat"
+import { ethers, waffle } from "hardhat"
 import {
     AccountBalance,
     ClearingHouse,
@@ -62,6 +62,8 @@ export async function mockedVaultFixture(): Promise<MockedVaultFixture> {
     const accountBalance = (await accountBalanceFactory.deploy()) as AccountBalance
     const mockedAccountBalance = await smockit(accountBalance)
 
+    const [admin, maker, taker, alice, a1, a2, a3, fundingFund, platformFund] = waffle.provider.getWallets()
+
     const vaultFactory = await ethers.getContractFactory("Vault")
     const vault = (await vaultFactory.deploy()) as Vault
     await vault.initialize(
@@ -69,6 +71,7 @@ export async function mockedVaultFixture(): Promise<MockedVaultFixture> {
         mockedClearingHouseConfig.address,
         mockedAccountBalance.address,
         mockedExchange.address,
+        maker.address,
     )
 
     const collateralManagerFactory = await ethers.getContractFactory("CollateralManager")
@@ -97,7 +100,10 @@ export async function mockedVaultFixture(): Promise<MockedVaultFixture> {
         uniV3Factory.address,
         mockedExchange.address,
         mockedAccountBalance.address,
+        marketRegistry.address,
         insuranceFund.address,
+        platformFund.address,
+        maker.address,
     )
     const mockedClearingHouse = await smockit(clearingHouse)
 

@@ -75,6 +75,7 @@ describe("Deployment check", () => {
         deployData.vault = {} as ContractData
         deployData.collateralManager = {} as ContractData
         deployData.genericLogic = {} as ContractData
+        deployData.vaultLogic = {} as ContractData
         deployData.fundingLogic = {} as ContractData
         deployData.liquidityLogic = {} as ContractData
         deployData.exchangeLogic = {} as ContractData
@@ -194,6 +195,13 @@ describe("Deployment check", () => {
             const genericLogic = await waitForDeploy(await GenericLogic.deploy())
             {
                 deployData.genericLogic.address = genericLogic.address;
+            }
+        }
+        const VaultLogic = await ethers.getContractFactory("VaultLogic");
+        if (deployData.vaultLogic.address == undefined || deployData.vaultLogic.address == '') {
+            const vaultLogic = await waitForDeploy(await VaultLogic.deploy())
+            {
+                deployData.vaultLogic.address = vaultLogic.address;
             }
         }
         var genericLogic = await ethers.getContractAt('GenericLogic', deployData.genericLogic.address);
@@ -362,7 +370,12 @@ describe("Deployment check", () => {
                 deployData.insuranceFund.address = transparentUpgradeableProxy.address;
             }
         }
-        const Vault = await ethers.getContractFactory("Vault");
+        var vaultLogic = await ethers.getContractAt('VaultLogic', deployData.vaultLogic.address);
+        let Vault = await ethers.getContractFactory("Vault", {
+            libraries: {
+                VaultLogic: vaultLogic.address,
+            },
+        });
         {
             const vault = await waitForDeploy(await Vault.deploy())
             {
@@ -485,6 +498,7 @@ describe("Deployment check", () => {
             await exchange.setClearingHouse(clearingHouse.address)
             await accountBalance.setClearingHouse(clearingHouse.address)
             await vault.setClearingHouse(clearingHouse.address)
+            await insuranceFund.setClearingHouse(clearingHouse.address)
 
             const vBAYC = await ethers.getContractAt('BaseToken', deployData.vBAYC.address);
             {

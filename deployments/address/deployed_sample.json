@@ -96,6 +96,9 @@
     "genericLogic": {
         "address": ""
     },
+    "vaultLogic": {
+        "address": ""
+    },
     "fundingLogic": {
         "address": ""
     },

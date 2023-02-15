@@ -20,6 +20,7 @@ import {
     UniswapV3Factory,
     UniswapV3Pool,
     Vault,
+    VaultLogic,
 } from "../../typechain"
 import { ChainlinkPriceFeedV2 } from "../../typechain"
 import { MockPNFTToken } from "../../typechain/MockPNFTToken"
@@ -92,6 +93,8 @@ export function createClearingHouseFixture(
 
         let GenericLogic = await ethers.getContractFactory("GenericLogic");
         let genericLogic = await GenericLogic.deploy();
+        let VaultLogic = await ethers.getContractFactory("VaultLogic");
+        let vaultLogic = await VaultLogic.deploy();
         let LiquidityLogic = await ethers.getContractFactory("LiquidityLogic", {
             libraries: {
                 GenericLogic: genericLogic.address,
@@ -192,7 +195,11 @@ export function createClearingHouseFixture(
         const [admin, maker, taker, alice, a1, a2, a3, fundingFund, platformFund] = waffle.provider.getWallets()
 
         // deploy vault
-        const vaultFactory = await ethers.getContractFactory("TestVault")
+        const vaultFactory = await ethers.getContractFactory("TestVault", {
+            libraries: {
+                VaultLogic: vaultLogic.address,
+            },
+        })
         const vault = (await vaultFactory.deploy()) as Vault
         await vault.initialize(
             insuranceFund.address,

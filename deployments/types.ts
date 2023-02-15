@@ -47,6 +47,7 @@ type DeployData = {
     proxyAdminAddress: string,
     uniswapV3Factory: ContractData,
     genericLogic: ContractData,
+    vaultLogic: ContractData,
     fundingLogic: ContractData,
     liquidityLogic: ContractData,
     exchangeLogic: ContractData,

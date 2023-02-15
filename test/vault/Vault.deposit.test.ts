@@ -10,7 +10,6 @@ describe("Vault deposit test", () => {
     const loadFixture: ReturnType<typeof waffle.createFixtureLoader> = waffle.createFixtureLoader([admin])
     let vault: Vault
     let usdc: TestERC20
-    let weth: TestERC20
     let wbtc: TestERC20
     let wethPriceFeed: MockContract
     let clearingHouseConfig: ClearingHouseConfig
@@ -22,8 +21,7 @@ describe("Vault deposit test", () => {
     beforeEach(async () => {
         fixture = await loadFixture(createClearingHouseFixture())
         vault = fixture.vault
-        usdc = fixture.USDC
-        weth = fixture.WETH
+        usdc = fixture.WETH
         wbtc = fixture.WBTC
         wethPriceFeed = fixture.mockedWethPriceFeed
         clearingHouseConfig = fixture.clearingHouseConfig
@@ -36,9 +34,7 @@ describe("Vault deposit test", () => {
         await usdc.mint(alice.address, amount)
 
         await usdc.connect(alice).approve(vault.address, ethers.constants.MaxUint256)
-        await weth.connect(alice).approve(vault.address, ethers.constants.MaxUint256)
         await wbtc.connect(alice).approve(vault.address, ethers.constants.MaxUint256)
-        await weth.connect(bob).approve(vault.address, ethers.constants.MaxUint256)
         await wbtc.connect(bob).approve(vault.address, ethers.constants.MaxUint256)
     })
 

@@ -14,7 +14,7 @@ import {
     Vault,
 } from "../../typechain"
 import { ClearingHouseFixture, createClearingHouseFixture } from "../clearingHouse/fixtures"
-import { addOrder, closePosition, q2bExactInput, removeAllOrders } from "../helper/clearingHouseHelper"
+import { closePosition, q2bExactInput } from "../helper/clearingHouseHelper"
 import { initMarket } from "../helper/marketHelper"
 import { IGNORABLE_DUST } from "../helper/number"
 import { deposit } from "../helper/token"
@@ -32,7 +32,7 @@ describe("Vault withdraw test", () => {
     let accountBalance: AccountBalance | TestAccountBalance
     let collateralManager: CollateralManager
     let pool: UniswapV3Pool
-    let mockedBaseAggregator: MockContract
+    let mockedNFTPriceFeed: MockContract
     let usdcDecimals: number
     let fixture: ClearingHouseFixture
 
@@ -58,7 +58,7 @@ describe("Vault withdraw test", () => {
     beforeEach(async () => {
         fixture = await loadFixture(createClearingHouseFixture())
         vault = fixture.vault
-        usdc = fixture.USDC
+        usdc = fixture.WETH
         weth = fixture.WETH
         wbtc = fixture.WBTC
         wethPriceFeed = fixture.mockedWethPriceFeed
@@ -67,15 +67,13 @@ describe("Vault withdraw test", () => {
         accountBalance = fixture.accountBalance
         collateralManager = fixture.collateralManager
         pool = fixture.pool
-        mockedBaseAggregator = fixture.mockedBaseAggregator
+        mockedNFTPriceFeed = fixture.mockedNFTPriceFeed
 
         usdcDecimals = await usdc.decimals()
 
         const initPrice = "151.373306858723226652"
         await initMarket(fixture, initPrice)
-        mockedBaseAggregator.smocked.latestRoundData.will.return.with(async () => {
-            return [0, parseUnits("151.373306", 6), 0, 0, 0]
-        })
+        mockedNFTPriceFeed.smocked.getPrice.will.return.with(parseUnits("151.373306", 6))
 
         wethPriceFeed.smocked.getPrice.will.return.with(parseEther("2500"))
         wbtcPriceFeed.smocked.getPrice.will.return.with(parseEther("40000"))

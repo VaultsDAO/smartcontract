@@ -258,6 +258,28 @@ describe("ClearingHouse random trade liquidity repeg close", () => {
             formatEther((await collateral.balanceOf(trader1.address))),
             formatEther((await collateral.balanceOf(trader2.address))),
         )
+
+        await vault.connect(trader1).withdrawAll(collateral.address)
+        await vault.connect(trader2).withdrawAll(collateral.address)
+        await vault.connect(platformFund).withdrawAll(collateral.address)
+
+        owedRealizedPnlPlatformFund = (await accountBalance.getPnlAndPendingFee(platformFund.address))[0]
+        owedRealizedPnlInsuranceFund = (await accountBalance.getPnlAndPendingFee(insuranceFund.address))[0]
+        owedRealizedPnlTrade1 = (await accountBalance.getPnlAndPendingFee(trader1.address))[0]
+        owedRealizedPnlTrade2 = (await accountBalance.getPnlAndPendingFee(trader2.address))[0]
+        owedRealizedPnlAdmin = (await accountBalance.getPnlAndPendingFee(admin.address))[0]
+
+        console.log(
+            'owedRealizedPnl',
+            formatEther(owedRealizedPnlPlatformFund),
+            formatEther(owedRealizedPnlInsuranceFund),
+            formatEther(owedRealizedPnlTrade1),
+            formatEther(owedRealizedPnlTrade2),
+            formatEther(owedRealizedPnlAdmin),
+            formatEther(owedRealizedPnlPlatformFund.add(owedRealizedPnlInsuranceFund).add(owedRealizedPnlTrade1).add(owedRealizedPnlTrade2).add(owedRealizedPnlAdmin)),
+            formatEther(await insuranceFund.getRepegAccumulatedFund()),
+            formatEther(await insuranceFund.getRepegDistributedFund()),
+        )
     })
 
 
