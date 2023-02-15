@@ -564,14 +564,15 @@ contract Exchange is
         uint256 timestamp = IBaseToken(baseToken).isOpen()
             ? _blockTimestamp()
             : IBaseToken(baseToken).getPausedTimestamp();
-        (fundingGrowthGlobal, markTwap, indexTwap) = FundingLogic.getFundingGrowthGlobalAndTwaps(
-            _clearingHouse,
-            baseToken,
-            _firstTradedTimestampMap[baseToken],
-            _lastSettledTimestampMap[baseToken],
-            timestamp,
-            _globalFundingGrowthX96Map[baseToken]
-        );
+        return
+            FundingLogic.getFundingGrowthGlobalAndTwaps(
+                _clearingHouse,
+                baseToken,
+                _firstTradedTimestampMap[baseToken],
+                _lastSettledTimestampMap[baseToken],
+                timestamp,
+                _globalFundingGrowthX96Map[baseToken]
+            );
     }
 
     /// @dev get a price limit for replaySwap s.t. it can stop when reaching the limit to save gas
