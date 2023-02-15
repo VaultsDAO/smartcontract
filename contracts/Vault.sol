@@ -23,6 +23,7 @@ import { BaseRelayRecipient } from "./gsn/BaseRelayRecipient.sol";
 import { OwnerPausable } from "./base/OwnerPausable.sol";
 import { VaultStorageV2 } from "./storage/VaultStorage.sol";
 import { Collateral } from "./lib/Collateral.sol";
+import { VaultLogic } from "./lib/VaultLogic.sol";
 import { IVault } from "./interface/IVault.sol";
 import { IWETH9 } from "./interface/external/IWETH9.sol";
 import { ICollateralManager } from "./interface/ICollateralManager.sol";
@@ -430,37 +431,7 @@ contract Vault is IVault, ReentrancyGuardUpgradeable, OwnerPausable, BaseRelayRe
     /// @inheritdoc IVault
     function isLiquidatable(address trader) public view override returns (bool) {
         address[] storage collateralTokens = _collateralTokensMap[trader];
-        if (collateralTokens.length == 0) {
-            return false;
-        }
-
-        (int256 accountValueX10_18, ) = _getAccountValueAndTotalCollateralValue(trader);
-        if (accountValueX10_18 < getMarginRequirementForCollateralLiquidation(trader)) {
-            return true;
-        }
-
-        int256 settlementTokenValueX10_18 = _getSettlementTokenValue(trader);
-        uint256 settlementTokenDebtX10_18 = settlementTokenValueX10_18 < 0
-            ? settlementTokenValueX10_18.neg256().toUint256()
-            : 0;
-
-        if (
-            settlementTokenDebtX10_18 >
-            _getNonSettlementTokenValue(trader).mulRatio(
-                ICollateralManager(_collateralManager).getDebtNonSettlementTokenValueRatio()
-            )
-        ) {
-            return true;
-        }
-
-        if (
-            settlementTokenDebtX10_18.formatSettlementToken(_decimals) >
-            ICollateralManager(_collateralManager).getDebtThresholdByTrader(trader)
-        ) {
-            return true;
-        }
-
-        return false;
+        return VaultLogic.isLiquidatable(address(this), trader, collateralTokens);
     }
 
     /// @inheritdoc IVault
@@ -523,39 +494,7 @@ contract Vault is IVault, ReentrancyGuardUpgradeable, OwnerPausable, BaseRelayRe
         address trader,
         address token
     ) public view override returns (uint256 maxRepaidSettlementX10_S, uint256 maxLiquidatableCollateral) {
-        // V_TINAC: token is not a collateral
-        require(_isCollateral(token), "V_TINAC");
-
-        uint256 maxRepaidSettlementX10_18 = _getMaxRepaidSettlement(trader);
-        uint24 discountRatio = ICollateralManager(_collateralManager).getCollateralConfig(token).discountRatio;
-        (uint256 indexTwap, uint8 priceFeedDecimals) = _getIndexPriceAndDecimals(token);
-
-        uint256 discountedIndexTwap = indexTwap.mulRatio(_ONE_HUNDRED_PERCENT_RATIO.subRatio(discountRatio));
-        maxLiquidatableCollateral = _getCollateralBySettlement(
-            token,
-            maxRepaidSettlementX10_18,
-            discountedIndexTwap,
-            priceFeedDecimals
-        );
-
-        uint256 tokenBalance = getBalanceByToken(trader, token).toUint256();
-        if (maxLiquidatableCollateral > tokenBalance) {
-            maxLiquidatableCollateral = tokenBalance;
-
-            // Deliberately rounding down when calculating settlement. Thus, when calculating
-            // collateral with settlement, the result is always <= maxCollateral.
-            // This makes sure that collateral will always be <= user's collateral balance.
-            maxRepaidSettlementX10_18 = _getSettlementByCollateral(
-                token,
-                maxLiquidatableCollateral,
-                discountedIndexTwap,
-                priceFeedDecimals
-            );
-        }
-
-        maxRepaidSettlementX10_S = maxRepaidSettlementX10_18.formatSettlementToken(_decimals);
-
-        return (maxRepaidSettlementX10_S, maxLiquidatableCollateral);
+        return VaultLogic.getMaxRepaidSettlementAndLiquidatableCollateral(address(this), trader, token);
     }
 
     /// @inheritdoc IVault
@@ -781,7 +720,7 @@ contract Vault is IVault, ReentrancyGuardUpgradeable, OwnerPausable, BaseRelayRe
     //
 
     function _getTokenDecimals(address token) internal view returns (uint8) {
-        return IERC20Metadata(token).decimals();
+        return VaultLogic._getTokenDecimals(token);
     }
 
     function _getFreeCollateral(address trader) internal view returns (uint256 freeCollateralX10_18) {
@@ -821,10 +760,8 @@ contract Vault is IVault, ReentrancyGuardUpgradeable, OwnerPausable, BaseRelayRe
     function _getTotalCollateralValueAndUnrealizedPnl(
         address trader
     ) internal view returns (int256 totalCollateralValueX10_18, int256 unrealizedPnlX10_18) {
-        int256 settlementTokenBalanceX10_18;
-        (settlementTokenBalanceX10_18, unrealizedPnlX10_18) = _getSettlementTokenBalanceAndUnrealizedPnl(trader);
-        uint256 nonSettlementTokenValueX10_18 = _getNonSettlementTokenValue(trader);
-        return (nonSettlementTokenValueX10_18.toInt256().add(settlementTokenBalanceX10_18), unrealizedPnlX10_18);
+        address[] storage collateralTokens = _collateralTokensMap[trader];
+        return VaultLogic._getTotalCollateralValueAndUnrealizedPnl(address(this), trader, collateralTokens);
     }
 
     /// @notice Get the specified trader's settlement token balance, including pending fee, funding payment,
@@ -838,60 +775,26 @@ contract Vault is IVault, ReentrancyGuardUpgradeable, OwnerPausable, BaseRelayRe
     function _getSettlementTokenBalanceAndUnrealizedPnl(
         address trader
     ) internal view returns (int256 settlementTokenBalanceX10_18, int256 unrealizedPnlX10_18) {
-        int256 fundingPaymentX10_18 = IExchange(_exchange).getAllPendingFundingPayment(trader);
-
-        int256 owedRealizedPnlX10_18;
-        uint256 pendingFeeX10_18;
-        (owedRealizedPnlX10_18, unrealizedPnlX10_18, pendingFeeX10_18) = IAccountBalance(_accountBalance)
-            .getPnlAndPendingFee(trader);
-
-        settlementTokenBalanceX10_18 = getBalance(trader).parseSettlementToken(_decimals).add(
-            pendingFeeX10_18.toInt256().sub(fundingPaymentX10_18).add(owedRealizedPnlX10_18)
-        );
-
-        return (settlementTokenBalanceX10_18, unrealizedPnlX10_18);
+        return VaultLogic._getSettlementTokenBalanceAndUnrealizedPnl(address(this), trader);
     }
 
     /// @return settlementTokenValueX10_18 settlementTokenBalance + totalUnrealizedPnl, in 18 decimals
     function _getSettlementTokenValue(address trader) internal view returns (int256 settlementTokenValueX10_18) {
-        (int256 settlementBalanceX10_18, int256 unrealizedPnlX10_18) = _getSettlementTokenBalanceAndUnrealizedPnl(
-            trader
-        );
-        return settlementBalanceX10_18.add(unrealizedPnlX10_18);
+        return VaultLogic._getSettlementTokenValue(address(this), trader);
     }
 
     /// @return nonSettlementTokenValueX10_18 total non-settlement token value in 18 decimals
     function _getNonSettlementTokenValue(address trader) internal view returns (uint256 nonSettlementTokenValueX10_18) {
-        address[] memory collateralTokens = _collateralTokensMap[trader];
-        uint256 tokenLen = collateralTokens.length;
-        for (uint256 i = 0; i < tokenLen; i++) {
-            address token = collateralTokens[i];
-            uint256 collateralValueX10_18 = _getCollateralValue(trader, token);
-            uint24 collateralRatio = ICollateralManager(_collateralManager).getCollateralConfig(token).collateralRatio;
-
-            nonSettlementTokenValueX10_18 = nonSettlementTokenValueX10_18.add(
-                collateralValueX10_18.mulRatio(collateralRatio)
-            );
-        }
-
-        return nonSettlementTokenValueX10_18;
+        return VaultLogic._getNonSettlementTokenValue(address(this), trader, _collateralTokensMap[trader]);
     }
 
     /// @return collateralValueX10_18 collateral value in 18 decimals
     function _getCollateralValue(address trader, address token) internal view returns (uint256 collateralValueX10_18) {
-        int256 tokenBalance = getBalanceByToken(trader, token);
-        (uint256 indexTwap, uint8 priceFeedDecimals) = _getIndexPriceAndDecimals(token);
-        return _getSettlementByCollateral(token, tokenBalance.toUint256(), indexTwap, priceFeedDecimals);
+        return VaultLogic._getCollateralValue(address(this), trader, token);
     }
 
     function _getIndexPriceAndDecimals(address token) internal view returns (uint256, uint8) {
-        return (
-            ICollateralManager(_collateralManager).getPrice(
-                token,
-                IClearingHouseConfig(_clearingHouseConfig).getTwapInterval()
-            ),
-            ICollateralManager(_collateralManager).getPriceFeedDecimals(token)
-        );
+        return VaultLogic._getIndexPriceAndDecimals(address(this), token);
     }
 
     /// @return settlementX10_18 collateral value in 18 decimals
@@ -901,13 +804,7 @@ contract Vault is IVault, ReentrancyGuardUpgradeable, OwnerPausable, BaseRelayRe
         uint256 price,
         uint8 priceFeedDecimals
     ) internal view returns (uint256 settlementX10_18) {
-        uint8 collateralTokenDecimals = _getTokenDecimals(token);
-
-        // Convert token decimals with as much precision as possible
-        return
-            collateralTokenDecimals > 18
-                ? collateral.mulDiv(price, 10 ** priceFeedDecimals).convertTokenDecimals(collateralTokenDecimals, 18)
-                : collateral.convertTokenDecimals(collateralTokenDecimals, 18).mulDiv(price, 10 ** priceFeedDecimals);
+        return VaultLogic._getSettlementByCollateral(token, collateral, price, priceFeedDecimals);
     }
 
     /// @return collateral collateral amount
@@ -917,32 +814,13 @@ contract Vault is IVault, ReentrancyGuardUpgradeable, OwnerPausable, BaseRelayRe
         uint256 price,
         uint8 priceFeedDecimals
     ) internal view returns (uint256 collateral) {
-        uint8 collateralTokenDecimals = _getTokenDecimals(token);
-
-        // Convert token decimals with as much precision as possible
-        return
-            collateralTokenDecimals > 18
-                ? settlementX10_18.convertTokenDecimals(18, collateralTokenDecimals).mulDivRoundingUp(
-                    10 ** priceFeedDecimals,
-                    price
-                )
-                : settlementX10_18.mulDivRoundingUp(10 ** priceFeedDecimals, price).convertTokenDecimals(
-                    18,
-                    collateralTokenDecimals
-                );
+        return VaultLogic._getCollateralBySettlement(token, settlementX10_18, price, priceFeedDecimals);
     }
 
     function _getAccountValueAndTotalCollateralValue(
         address trader
     ) internal view returns (int256 accountValueX10_18, int256 totalCollateralValueX10_18) {
-        int256 unrealizedPnlX10_18;
-
-        (totalCollateralValueX10_18, unrealizedPnlX10_18) = _getTotalCollateralValueAndUnrealizedPnl(trader);
-
-        // accountValue = totalCollateralValue + totalUnrealizedPnl, in 18 decimals
-        accountValueX10_18 = totalCollateralValueX10_18.add(unrealizedPnlX10_18);
-
-        return (accountValueX10_18, totalCollateralValueX10_18);
+        return VaultLogic._getAccountValueAndTotalCollateralValue(address(this), trader, _collateralTokensMap[trader]);
     }
 
     /// @notice Get the maximum value denominated in settlement token when liquidating a trader's collateral tokens
@@ -953,29 +831,7 @@ contract Vault is IVault, ReentrancyGuardUpgradeable, OwnerPausable, BaseRelayRe
     ///      maxRepaidSettlement = maxRepaidSettlementWithoutInsuranceFundFee / (1 - IFRatio)
     /// @return maxRepaidSettlementX10_18 max repaid settlement token in 18 decimals
     function _getMaxRepaidSettlement(address trader) internal view returns (uint256 maxRepaidSettlementX10_18) {
-        // max(max(-settlementTokenValue, 0), totalMarginReq) * liquidationRatio
-        int256 settlementTokenValueX10_18 = _getSettlementTokenValue(trader);
-        uint256 settlementTokenDebtX10_18 = settlementTokenValueX10_18 < 0
-            ? settlementTokenValueX10_18.neg256().toUint256()
-            : 0;
-
-        uint256 totalMarginRequirementX10_18 = _getTotalMarginRequirement(
-            trader,
-            IClearingHouseConfig(_clearingHouseConfig).getImRatio()
-        );
-
-        uint256 maxDebtX10_18 = MathUpgradeable.max(settlementTokenDebtX10_18, totalMarginRequirementX10_18);
-        uint256 collateralValueDustX10_18 = ICollateralManager(_collateralManager)
-            .getCollateralValueDust()
-            .parseSettlementToken(_decimals);
-        uint256 maxRepaidSettlementWithoutInsuranceFundFeeX10_18 = maxDebtX10_18 > collateralValueDustX10_18
-            ? maxDebtX10_18.mulRatio(ICollateralManager(_collateralManager).getLiquidationRatio())
-            : maxDebtX10_18;
-
-        return
-            maxRepaidSettlementWithoutInsuranceFundFeeX10_18.divRatio(
-                _ONE_HUNDRED_PERCENT_RATIO.subRatio(ICollateralManager(_collateralManager).getCLInsuranceFundFeeRatio())
-            );
+        return VaultLogic._getMaxRepaidSettlement(address(this), trader);
     }
 
     /// @return totalMarginRequirementX10_18 total margin requirement in 18 decimals
@@ -983,13 +839,11 @@ contract Vault is IVault, ReentrancyGuardUpgradeable, OwnerPausable, BaseRelayRe
         address trader,
         uint24 ratio
     ) internal view returns (uint256 totalMarginRequirementX10_18) {
-        // uint256 totalDebtValueX10_18 = IAccountBalance(_accountBalance).getTotalDebtValue(trader);
-        uint256 totalDebtValueX10_18 = IAccountBalance(_accountBalance).getTotalAbsPositionValue(trader);
-        return totalDebtValueX10_18.mulRatio(ratio);
+        return VaultLogic._getTotalMarginRequirement(address(this), trader, ratio);
     }
 
     function _isCollateral(address token) internal view returns (bool) {
-        return ICollateralManager(_collateralManager).isCollateral(token);
+        return VaultLogic._isCollateral(address(this), token);
     }
 
     function _requireWETH9IsCollateral() internal view {
