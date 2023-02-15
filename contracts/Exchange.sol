@@ -576,19 +576,12 @@ contract Exchange is
 
     /// @dev get a price limit for replaySwap s.t. it can stop when reaching the limit to save gas
     function _getSqrtPriceLimitForReplaySwap(address baseToken, bool isLong) internal view returns (uint160) {
-        int24 lastUpdatedTick = _lastUpdatedTickMap[baseToken];
-        uint24 maxDeltaTick = _maxTickCrossedWithinBlockMap[baseToken];
-
-        // price limit = max tick + 1 or min tick - 1, depending on which direction
-        int24 tickBoundary = isLong
-            ? lastUpdatedTick + int24(maxDeltaTick) + 1
-            : lastUpdatedTick - int24(maxDeltaTick) - 1;
-
-        // tickBoundary should be in [MIN_TICK, MAX_TICK]
-        tickBoundary = tickBoundary > TickMath.MAX_TICK ? TickMath.MAX_TICK : tickBoundary;
-        tickBoundary = tickBoundary < TickMath.MIN_TICK ? TickMath.MIN_TICK : tickBoundary;
-
-        return TickMath.getSqrtRatioAtTick(tickBoundary);
+        return
+            FundingLogic.getSqrtPriceLimitForReplaySwap(
+                isLong,
+                _lastUpdatedTickMap[baseToken],
+                _maxTickCrossedWithinBlockMap[baseToken]
+            );
     }
 
     // @dev use virtual for testing

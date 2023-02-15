@@ -269,21 +269,21 @@ async function deploy() {
     //     )
     // }
 
-    {
-        await waitForTx(
-            await clearingHouse.connect(trader1).openPosition({
-                baseToken: deployData.vDOODLE.address,
-                isBaseToQuote: true,
-                isExactInput: false,
-                oppositeAmountBound: 0,
-                amount: parseEther('200'),
-                sqrtPriceLimitX96: encodePriceSqrt('4.35', '1'),
-                deadline: ethers.constants.MaxUint256,
-                referralCode: ethers.constants.HashZero,
-            }),
-            'clearingHouse.connect(trader).openPosition'
-        )
-    }
+    // {
+    //     await waitForTx(
+    //         await clearingHouse.connect(trader1).openPosition({
+    //             baseToken: deployData.vDOODLE.address,
+    //             isBaseToQuote: true,
+    //             isExactInput: false,
+    //             oppositeAmountBound: 0,
+    //             amount: parseEther('200'),
+    //             sqrtPriceLimitX96: encodePriceSqrt('4.35', '1'),
+    //             deadline: ethers.constants.MaxUint256,
+    //             referralCode: ethers.constants.HashZero,
+    //         }),
+    //         'clearingHouse.connect(trader).openPosition'
+    //     )
+    // }
 
     // {
     //     console.log(

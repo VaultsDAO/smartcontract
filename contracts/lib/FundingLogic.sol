@@ -5,22 +5,16 @@ import { IAccountBalance } from "../interface/IAccountBalance.sol";
 import { IBaseToken } from "../interface/IBaseToken.sol";
 import { IClearingHouse } from "../interface/IClearingHouse.sol";
 import { IClearingHouseConfig } from "../interface/IClearingHouseConfig.sol";
-import { IOrderBook } from "../interface/IOrderBook.sol";
-import { IExchange } from "../interface/IExchange.sol";
-import { IVault } from "../interface/IVault.sol";
 import { IMarketRegistry } from "../interface/IMarketRegistry.sol";
-import { IRewardMiner } from "../interface/IRewardMiner.sol";
 import { IIndexPrice } from "../interface/IIndexPrice.sol";
-import { FullMath } from "@uniswap/v3-core/contracts/libraries/FullMath.sol";
+import { TickMath } from "@uniswap/v3-core/contracts/libraries/TickMath.sol";
 import { PerpSafeCast } from "./PerpSafeCast.sol";
 import { PerpMath } from "./PerpMath.sol";
 import { SettlementTokenMath } from "./SettlementTokenMath.sol";
 import { SafeMathUpgradeable } from "@openzeppelin/contracts-upgradeable/math/SafeMathUpgradeable.sol";
 import { SignedSafeMathUpgradeable } from "@openzeppelin/contracts-upgradeable/math/SignedSafeMathUpgradeable.sol";
 import { DataTypes } from "../types/DataTypes.sol";
-import { GenericLogic } from "../lib/GenericLogic.sol";
 import { UniswapV3Broker } from "../lib/UniswapV3Broker.sol";
-import { SwapMath } from "../lib/SwapMath.sol";
 import { PerpFixedPoint96 } from "./PerpFixedPoint96.sol";
 import "hardhat/console.sol";
 
@@ -229,5 +223,22 @@ library FundingLogic {
             }
         }
         return (fundingGrowthGlobal, markTwap, indexTwap);
+    }
+
+    function getSqrtPriceLimitForReplaySwap(
+        bool isLong,
+        int24 lastUpdatedTick,
+        uint24 maxDeltaTick
+    ) public pure returns (uint160) {
+        // price limit = max tick + 1 or min tick - 1, depending on which direction
+        int24 tickBoundary = isLong
+            ? lastUpdatedTick + int24(maxDeltaTick) + 1
+            : lastUpdatedTick - int24(maxDeltaTick) - 1;
+
+        // tickBoundary should be in [MIN_TICK, MAX_TICK]
+        tickBoundary = tickBoundary > TickMath.MAX_TICK ? TickMath.MAX_TICK : tickBoundary;
+        tickBoundary = tickBoundary < TickMath.MIN_TICK ? TickMath.MIN_TICK : tickBoundary;
+
+        return TickMath.getSqrtRatioAtTick(tickBoundary);
     }
 }

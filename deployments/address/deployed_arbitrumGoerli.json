@@ -96,6 +96,9 @@
     "genericLogic": {
         "address": "0x3135d0f7E79486A85dDd0A9f59d676f3Be6801bF"
     },
+    "fundingLogic": {
+        "address": ""
+    },
     "liquidityLogic": {
         "address": "0x35921340893B70E00f67595C7A6e1A63271bd6Ee"
     },
