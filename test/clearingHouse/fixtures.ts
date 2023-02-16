@@ -20,7 +20,6 @@ import {
     UniswapV3Factory,
     UniswapV3Pool,
     Vault,
-    VaultLogic,
 } from "../../typechain"
 import { ChainlinkPriceFeedV2 } from "../../typechain"
 import { MockPNFTToken } from "../../typechain/MockPNFTToken"

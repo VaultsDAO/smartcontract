@@ -3,5 +3,6 @@ pragma solidity 0.7.6;
 pragma abicoder v2;
 
 interface IRewardMiner {
-    function mint(address trader, uint256 amount) external;
+    function mint(address trader, uint256 amount, int256 pnl) external;
+
 }

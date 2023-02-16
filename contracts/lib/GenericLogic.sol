@@ -123,13 +123,11 @@ library GenericLogic {
         address chAddress,
         address trader,
         address baseToken
-    ) public returns (DataTypes.Growth memory fundingGrowthGlobal) {
-        int256 fundingPayment;
+    ) public returns (DataTypes.Growth memory fundingGrowthGlobal, int256 fundingPayment) {
         (fundingPayment, fundingGrowthGlobal) = IExchange(IClearingHouse(chAddress).getExchange()).settleFunding(
             trader,
             baseToken
         );
-
         if (fundingPayment != 0) {
             IAccountBalance(IClearingHouse(chAddress).getAccountBalance()).modifyOwedRealizedPnl(
                 trader,
@@ -144,7 +142,7 @@ library GenericLogic {
             fundingGrowthGlobal.twLongPremiumX96,
             fundingGrowthGlobal.twShortPremiumX96
         );
-        return fundingGrowthGlobal;
+        return (fundingGrowthGlobal, fundingPayment);
     }
 
     function getFreeCollateralByRatio(address chAddress, address trader, uint24 ratio) public view returns (int256) {

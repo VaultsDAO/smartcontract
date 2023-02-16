@@ -18,6 +18,8 @@ abstract contract RewardMinerStorage {
         mapping(address => uint256) users;
         uint256 amount;
         uint256 total;
+        mapping(address => int256) pnlUsers;
+        int256 pnlAmount;
     }
     //
     address internal _clearingHouse;
@@ -36,5 +38,9 @@ abstract contract RewardMinerStorage {
     mapping(address => uint256) public _userSpendMap;
 
     address[10] private __gap1;
-    uint256[10] private __gap2;
+
+    uint256 internal _startPnlNumber;
+    uint256 internal _pnlRatio;
+
+    uint256[8] private __gap2;
 }

@@ -24,7 +24,7 @@ contract RewardMiner is IRewardMiner, BlockContext, OwnerPausable, RewardMinerSt
     using PerpMath for uint256;
     using PerpMath for int256;
 
-    event Mint(uint256 indexed periodNumber, address indexed trader, uint256 amount);
+    event Mint(uint256 indexed periodNumber, address indexed trader, uint256 amount, int256 pnl);
     event Spend(address indexed trader, uint256 amount);
 
     //
@@ -115,10 +115,10 @@ contract RewardMiner is IRewardMiner, BlockContext, OwnerPausable, RewardMinerSt
     function getCurrentPeriodInfo()
         external
         view
-        returns (uint256 periodNumber, uint256 start, uint256 end, uint256 total, uint256 amount)
+        returns (uint256 periodNumber, uint256 start, uint256 end, uint256 total, uint256 amount, int256 pnlAmount)
     {
         periodNumber = _getPeriodNumber();
-        (start, end, total, amount) = _getPeriodInfo(periodNumber);
+        (start, end, total, amount, pnlAmount) = _getPeriodInfo(periodNumber);
     }
 
     function getCurrentPeriodInfoTrader(
@@ -126,21 +126,32 @@ contract RewardMiner is IRewardMiner, BlockContext, OwnerPausable, RewardMinerSt
     )
         external
         view
-        returns (uint256 periodNumber, uint256 start, uint256 end, uint256 total, uint256 amount, uint256 traderAmount)
+        returns (
+            uint256 periodNumber,
+            uint256 start,
+            uint256 end,
+            uint256 total,
+            uint256 amount,
+            int256 pnlAmount,
+            uint256 traderAmount,
+            int256 traderPnl
+        )
     {
         periodNumber = _getPeriodNumber();
-        (start, end, total, amount) = _getPeriodInfo(periodNumber);
+        (start, end, total, amount, pnlAmount) = _getPeriodInfo(periodNumber);
         traderAmount = _periodDataMap[periodNumber].users[trader];
+        traderPnl = _periodDataMap[periodNumber].pnlUsers[trader];
     }
 
     function _getPeriodInfo(
         uint256 periodNumber
-    ) internal view returns (uint256 start, uint256 end, uint256 total, uint256 amount) {
+    ) internal view returns (uint256 start, uint256 end, uint256 total, uint256 amount, int256 pnlAmount) {
         require(_blockTimestamp() >= _start, "RM_IT");
         PeriodData storage periodData = _periodDataMap[periodNumber];
         if (periodData.periodNumber != 0) {
             total = periodData.total;
             amount = periodData.amount;
+            pnlAmount = periodData.pnlAmount;
         } else {
             for (uint256 i = 0; i < _periodConfigs.length; i++) {
                 PeriodConfig memory cfg = _periodConfigs[i];
@@ -167,7 +178,7 @@ contract RewardMiner is IRewardMiner, BlockContext, OwnerPausable, RewardMinerSt
         uint256 periodNumber = _getPeriodNumber();
         periodData = _periodDataMap[periodNumber];
         if (periodData.periodNumber == 0) {
-            (, , uint256 total, ) = _getPeriodInfo(periodNumber);
+            (, , uint256 total, , ) = _getPeriodInfo(periodNumber);
             if (total > 0) {
                 // periodData
                 periodData.periodNumber = periodNumber;
@@ -183,24 +194,61 @@ contract RewardMiner is IRewardMiner, BlockContext, OwnerPausable, RewardMinerSt
         return _getClaimable(trader);
     }
 
+    struct InternalSetClaimableVars {
+        uint256 periodNumber;
+        uint256 lastPeriodNumber;
+        int256 endPeriod;
+        uint256 userAmount;
+        int256 pnlUserAmount;
+    }
+
     function _getClaimable(address trader) internal view returns (uint256 amount) {
-        uint256 periodNumber = _getPeriodNumber();
-        uint256 lastPeriodNumber = _lastClaimPeriodNumberMap[trader];
+        InternalSetClaimableVars memory vars;
+        vars.periodNumber = _getPeriodNumber();
+        vars.lastPeriodNumber = _lastClaimPeriodNumberMap[trader];
         if (_periodNumbers.length > 0) {
-            int256 endPeriod = 0;
+            vars.endPeriod = 0;
             if (_limitClaimPeriod > 0 && (_periodNumbers.length - 1).toInt256() >= _limitClaimPeriod.toInt256()) {
-                endPeriod = (_periodNumbers.length - 1).toInt256().sub(_limitClaimPeriod.toInt256());
+                vars.endPeriod = (_periodNumbers.length - 1).toInt256().sub(_limitClaimPeriod.toInt256());
             }
-            for (int256 i = (_periodNumbers.length - 1).toInt256(); i >= endPeriod; i--) {
+            for (int256 i = (_periodNumbers.length - 1).toInt256(); i >= vars.endPeriod; i--) {
                 PeriodData storage periodData = _periodDataMap[_periodNumbers[uint256(i)]];
+
+                vars.userAmount = periodData.users[trader];
+                vars.pnlUserAmount = periodData.pnlUsers[trader];
+
                 if (
-                    periodData.amount > 0 &&
-                    periodData.periodNumber < periodNumber &&
-                    periodData.periodNumber > lastPeriodNumber
+                    (vars.userAmount > 0 || vars.pnlUserAmount > 0) &&
+                    periodData.periodNumber < vars.periodNumber &&
+                    periodData.periodNumber > vars.lastPeriodNumber
                 ) {
-                    amount = amount.add(periodData.users[trader].mul(periodData.total).div(periodData.amount));
+                    if (periodData.periodNumber < _startPnlNumber) {
+                        amount = amount.add(vars.userAmount.mul(periodData.total).div(periodData.amount));
+                    } else {
+                        if (vars.userAmount > 0) {
+                            amount = amount.add(
+                                vars
+                                    .userAmount
+                                    .mul(periodData.total)
+                                    .div(periodData.amount)
+                                    .mul(uint256(1e6).sub(_pnlRatio))
+                                    .div(1e6)
+                            );
+                        }
+                        if (vars.pnlUserAmount > 0) {
+                            amount = amount.add(
+                                vars
+                                    .pnlUserAmount
+                                    .mul(periodData.total.toInt256())
+                                    .div(periodData.pnlAmount)
+                                    .mul(_pnlRatio.toInt256())
+                                    .div(1e6)
+                                    .abs()
+                            );
+                        }
+                    }
                 }
-                if (periodData.periodNumber <= lastPeriodNumber) {
+                if (periodData.periodNumber <= vars.lastPeriodNumber) {
                     break;
                 }
             }
@@ -215,17 +263,51 @@ contract RewardMiner is IRewardMiner, BlockContext, OwnerPausable, RewardMinerSt
         _start = startArg;
     }
 
-    function mint(address trader, uint256 amount) external override {
+    function startPnlMiner(uint256 startPnlNumberArg, uint256 pnlRatioArg) external onlyOwner {
+        // RM_SZ: start zero
+        require(_startPnlNumber == 0, "RM_SZ");
+        // RM_IT: invalid number
+        require(startPnlNumberArg >= _getPeriodNumber(), "RM_IN");
+        _startPnlNumber = startPnlNumberArg;
+        _pnlRatio = pnlRatioArg;
+    }
+
+    function mint(address trader, uint256 amount, int256 pnl) external override {
         _requireOnlyClearingHouse();
         if (_start > 0 && _blockTimestamp() >= _start) {
             PeriodData storage periodData = _createPeriodData();
             if (periodData.total > 0) {
-                periodData.users[trader] = periodData.users[trader].add(amount);
-                periodData.amount = periodData.amount.add(amount);
+                // for volume
+                {
+                    periodData.users[trader] = periodData.users[trader].add(amount);
+                    periodData.amount = periodData.amount.add(amount);
 
-                _userAmountMap[trader] = _userAmountMap[trader].add(amount);
-
-                emit Mint(periodData.periodNumber, trader, amount);
+                    _userAmountMap[trader] = _userAmountMap[trader].add(amount);
+                }
+                // for pnl
+                if (periodData.periodNumber >= _startPnlNumber) {
+                    if (periodData.pnlUsers[trader] >= 0) {
+                        if (pnl >= 0) {
+                            periodData.pnlAmount = periodData.pnlAmount.add(pnl);
+                        } else {
+                            int256 newUserAmount = periodData.pnlUsers[trader].add(pnl);
+                            if (newUserAmount < 0) {
+                                periodData.pnlAmount = periodData.pnlAmount.sub(periodData.pnlUsers[trader]);
+                            } else {
+                                periodData.pnlAmount = periodData.pnlAmount.add(pnl);
+                            }
+                        }
+                    } else {
+                        if (pnl >= 0) {
+                            int256 newUserAmount = periodData.pnlUsers[trader].add(pnl);
+                            if (newUserAmount >= 0) {
+                                periodData.pnlAmount = periodData.pnlAmount.add(newUserAmount);
+                            }
+                        }
+                    }
+                    periodData.pnlUsers[trader] = periodData.pnlUsers[trader].add(pnl);
+                }
+                emit Mint(periodData.periodNumber, trader, amount, pnl);
             }
         }
     }

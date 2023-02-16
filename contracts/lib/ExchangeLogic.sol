@@ -65,7 +65,7 @@ library ExchangeLogic {
         InternalOpenPositionParams memory params
     ) internal returns (IExchange.SwapResponse memory) {
         // must settle funding first
-        GenericLogic.settleFunding(chAddress, params.trader, params.baseToken);
+        (, int256 fundingPayment) = GenericLogic.settleFunding(chAddress, params.trader, params.baseToken);
 
         IExchange.SwapResponse memory response = IExchange(IClearingHouse(chAddress).getExchange()).swap(
             IExchange.SwapParams({
@@ -153,6 +153,14 @@ library ExchangeLogic {
             response.sqrtPriceAfterX96
         );
 
+        // for miner amount
+        _mintMinerReward(
+            chAddress,
+            params.trader,
+            response.quote,
+            fee.toInt256().neg256().add(response.pnlToBeRealized).add(fundingPayment.neg256())
+        );
+
         return response;
     }
 
@@ -199,8 +207,6 @@ library ExchangeLogic {
                 oppositeAmountBound: params.oppositeAmountBound
             })
         );
-
-        _mintMinerReward(chAddress, trader, response.quote);
 
         _referredPositionChanged(params.referralCode);
 
@@ -262,17 +268,15 @@ library ExchangeLogic {
             })
         );
 
-        _mintMinerReward(chAddress, trader, response.quote);
-
         _referredPositionChanged(params.referralCode);
 
         return (response.base, response.quote, response.insuranceFundFee.add(response.platformFundFee));
     }
 
-    function _mintMinerReward(address chAddress, address trader, uint256 quote) internal {
+    function _mintMinerReward(address chAddress, address trader, uint256 quote, int256 pnl) internal {
         address rewardMiner = IClearingHouse(chAddress).getRewardMiner();
         if (rewardMiner != address(0)) {
-            IRewardMiner(rewardMiner).mint(trader, quote);
+            IRewardMiner(rewardMiner).mint(trader, quote, pnl);
         }
     }
 

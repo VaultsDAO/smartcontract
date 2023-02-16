@@ -151,22 +151,44 @@ describe("ClearingHouse rewardMiner", () => {
 
         await rewardMiner.startMiner((await rewardMiner.getBlockTimestamp()))
 
+        // {
+        //     await rewardMiner.startPnlMiner(1, 666666);
+        //     await rewardMiner.mintPnl(trader1.address, parseEther('1000'))
+        //     await rewardMiner.mintPnl(trader1.address, parseEther('-500'))
+        //     await rewardMiner.mintPnl(trader1.address, parseEther('-1000'))
+        //     await rewardMiner.mintPnl(trader1.address, parseEther('-100'))
+        //     await rewardMiner.mintPnl(trader1.address, parseEther('300'))
+        //     await rewardMiner.mintPnl(trader1.address, parseEther('500'))
+        //     await rewardMiner.mintPnl(trader1.address, parseEther('-200'))
+        //     await rewardMiner.mintPnl(trader1.address, parseEther('-200'))
+        //     await rewardMiner.mintPnl(trader1.address, parseEther('-200'))
+        //     await rewardMiner.mintPnl(trader1.address, parseEther('200'))
+        //     await rewardMiner.mintPnl(trader1.address, parseEther('300'))
+        //     return
+        // }
+
         console.log(
             (await rewardMiner.getPeriodNumber()).toString(),
             'claimable amount',
             formatEther((await rewardMiner.getClaimable(trader1.address))),
             formatEther((await rewardMiner.getClaimable(trader2.address))),
         )
-        for (let i = 0; i < 400; i++) {
+        for (let i = 0; i < 360; i++) {
+            if (i == 2) {
+                await rewardMiner.startPnlMiner(11, 666666);
+            }
             await rewardMiner.mint(trader1.address, parseEther('1000'))
             await rewardMiner.mint(trader2.address, parseEther('3000'))
+
+            await rewardMiner.mintPnl(trader2.address, parseEther('3000'))
+
             await rewardMiner.setBlockTimestamp((await rewardMiner.getBlockTimestamp()).add(periodDuration).toString())
             // console.log(
             //     (await rewardMiner.getPeriodNumber()).toString(),
             //     'claimable amount',
             //     formatEther((await rewardMiner.getClaimable(trader1.address))),
             //     formatEther((await rewardMiner.getClaimable(trader2.address))),
-            // )
+
             console.log(i)
         }
         console.log(

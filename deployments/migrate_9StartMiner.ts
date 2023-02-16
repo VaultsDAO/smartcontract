@@ -33,6 +33,10 @@ async function deploy() {
         await rewardMiner.startMiner(0),
         'rewardMiner.startMiner()'
     )
+    await waitForTx(
+        await rewardMiner.startPnlMiner(1, 666666),
+        'rewardMiner.startPnlMiner(1, 666666)'
+    )
 
 }
 
