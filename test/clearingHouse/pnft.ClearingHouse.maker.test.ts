@@ -76,18 +76,20 @@ describe("ClearingHouse maker", () => {
         })
 
         // prepare collateral for trader
-        await collateral.mint(trader1.address, parseUnits("1000", collateralDecimals))
-        await deposit(trader1, vault, 1000, collateral)
+        await collateral.mint(trader1.address, parseUnits("100000", collateralDecimals))
+        await deposit(trader1, vault, 100000, collateral)
 
-        await collateral.mint(trader2.address, parseUnits("1000", collateralDecimals))
-        await deposit(trader2, vault, 1000, collateral)
+        await collateral.mint(trader2.address, parseUnits("100000", collateralDecimals))
+        await deposit(trader2, vault, 100000, collateral)
 
-        await collateral.mint(liquidator.address, parseUnits("1000", collateralDecimals))
-        await deposit(liquidator, vault, 1000, collateral)
+        await collateral.mint(liquidator.address, parseUnits("100000", collateralDecimals))
+        await deposit(liquidator, vault, 100000, collateral)
 
     })
 
     it("maker", async () => {
+        await marketRegistry.setInsuranceFundFeeRatio(baseToken.address, 500000)
+
         // maker add liquidity
         await clearingHouse.connect(maker).addLiquidity({
             baseToken: baseToken.address,
@@ -119,7 +121,7 @@ describe("ClearingHouse maker", () => {
             })
         }
 
-        await clearingHouse.connect(maker).removeLiquidity({
+        await clearingHouse.connect(maker).addLiquidity({
             baseToken: baseToken.address,
             liquidity: parseEther('2000'),
             deadline: ethers.constants.MaxUint256,

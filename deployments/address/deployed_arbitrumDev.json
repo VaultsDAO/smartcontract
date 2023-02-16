@@ -93,6 +93,21 @@
     "uniswapV3Factory": {
         "address": "0x4893376342d5D7b3e31d4184c08b265e5aB2A3f6"
     },
+    "genericLogic": {
+        "address": ""
+    },
+    "vaultLogic": {
+        "address": ""
+    },
+    "fundingLogic": {
+        "address": ""
+    },
+    "liquidityLogic": {
+        "address": ""
+    },
+    "exchangeLogic": {
+        "address": ""
+    },
     "clearingHouseConfig": {
         "address": "0xe144D58FF12220a63bb2Ead4D75c7F08074A7277",
         "implAddress": "0xad588667337535443e9A507b99893eB252D3ea57"
@@ -111,7 +126,7 @@
     },
     "exchange": {
         "address": "0xF653965d60EdF584b311b0df9673565Bc7C5359f",
-        "implAddress": "0x32c4a74Ae8a86db1286B137b59a3CDf8A2d9e72a"
+        "implAddress": ""
     },
     "insuranceFund": {
         "address": "0x64f357D491967fF8961eDb6AD845BA8321C21B5B",
@@ -119,30 +134,15 @@
     },
     "vault": {
         "address": "0x7673d9fB58769853056Bdf60CB88b0f8b6cde8D2",
-        "implAddress": "0x690f2E1530C5cF7AbD770dF909df6B026AF26999"
+        "implAddress": ""
     },
     "collateralManager": {
         "address": "0x4a050D735119aa388643A05CecB852eA55278562",
         "implAddress": "0x86189a491Af2c60517F4E1Fd043186b328aF6B50"
     },
-    "genericLogic": {
-        "address": "0x48562491df33e6a23626FE24da25dc1Ea495AC33"
-    },
-    "vaultLogic": {
-        "address": ""
-    },
-    "fundingLogic": {
-        "address": ""
-    },
-    "liquidityLogic": {
-        "address": "0x3a656664f35e3fFbb4aa0844D2a2a48BD04E891d"
-    },
-    "exchangeLogic": {
-        "address": "0x7BF660dA27F40E8B7e97277f82F6be4f417459E2"
-    },
     "clearingHouse": {
         "address": "0xa621Ea45F69B71509BBAbbab57C4133F3C47Ac1e",
-        "implAddress": "0xB6501A98A5090ED4b1072186F9458e7E61B117C6"
+        "implAddress": ""
     },
     "testFaucet": {
         "address": "0xF48f84206110989756F8737B3605580a1728dF03",

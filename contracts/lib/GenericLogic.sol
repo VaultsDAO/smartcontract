@@ -47,6 +47,8 @@ library GenericLogic {
 
     event FundingPaymentSettled(address indexed trader, address indexed baseToken, int256 fundingPayment);
 
+    event MultiplierCostSpend(address indexed baseToken, int256 cost);
+
     /// @notice Emitted when taker's position is being changed
     /// @param trader Trader address
     /// @param baseToken The address of virtual base token(ETH, BTC, etc...)
@@ -311,7 +313,7 @@ library GenericLogic {
         uint256 oldMarkPrice,
         uint256 newMarkPrice,
         uint256 newDeltaPositionSize
-    ) internal view returns (uint256 newLongPositionSizeRate, uint256 newShortPositionSizeRate) {
+    ) internal pure returns (uint256 newLongPositionSizeRate, uint256 newShortPositionSizeRate) {
         (uint256 newLongPositionSize, uint256 newShortPositionSize) = getNewPositionSizeForMultiplier(
             longPositionSize,
             shortPositionSize,
@@ -329,7 +331,7 @@ library GenericLogic {
         uint256 oldMarkPrice,
         uint256 newMarkPrice,
         uint256 newDeltaPositionSize
-    ) internal view returns (uint256 newLongPositionSize, uint256 newShortPositionSize) {
+    ) internal pure returns (uint256 newLongPositionSize, uint256 newShortPositionSize) {
         newLongPositionSize = longPositionSize;
         newShortPositionSize = shortPositionSize;
 
@@ -391,7 +393,7 @@ library GenericLogic {
     function getInfoMultiplier(
         address chAddress,
         address baseToken
-    ) internal returns (uint256 oldLongPositionSize, uint256 oldShortPositionSize, uint256 deltaQuote) {
+    ) internal view returns (uint256 oldLongPositionSize, uint256 oldShortPositionSize, uint256 deltaQuote) {
         (oldLongPositionSize, oldShortPositionSize) = IAccountBalance(IClearingHouse(chAddress).getAccountBalance())
             .getMarketPositionSize(baseToken);
         int256 oldDeltaBase = oldLongPositionSize.toInt256().sub(oldShortPositionSize.toInt256());
@@ -414,53 +416,106 @@ library GenericLogic {
         }
     }
 
-    struct InternalInfoMultiplierVars {
+    struct InternalUpdateInfoMultiplierVars {
         bool isBaseToQuote;
-        int256 oldDeltaBase;
+        int256 deltaBase;
         uint256 newDeltaBase;
         uint256 newDeltaQuote;
         uint256 newLongPositionSizeRate;
         uint256 newShortPositionSizeRate;
         int256 costDeltaQuote;
+        bool isEnoughFund;
     }
 
     function updateInfoMultiplier(
         address chAddress,
         address baseToken,
-        uint256 oldLongPositionSize,
-        uint256 oldShortPositionSize,
+        uint256 longPositionSize,
+        uint256 shortPositionSize,
         uint256 oldDeltaQuote,
         uint256 oldMarkPrice,
         uint256 newMarkPrice,
-        bool isFixBaseOrQuote
+        bool isFixedPositionSize
     ) internal {
-        InternalInfoMultiplierVars memory vars;
+        InternalUpdateInfoMultiplierVars memory vars;
 
-        vars.oldDeltaBase = oldLongPositionSize.toInt256().sub(oldShortPositionSize.toInt256());
-        vars.newDeltaBase;
-        vars.newDeltaQuote;
+        vars.deltaBase = longPositionSize.toInt256().sub(shortPositionSize.toInt256());
+        vars.isBaseToQuote = vars.deltaBase > 0 ? true : false;
 
-        if (isFixBaseOrQuote) {
-            if (vars.oldDeltaBase != 0) {
-                vars.isBaseToQuote = vars.oldDeltaBase > 0 ? true : false;
-                IOrderBook.ReplaySwapResponse memory estimate = IExchange(IClearingHouse(chAddress).getExchange())
-                    .estimateSwap(
-                        DataTypes.OpenPositionParams({
-                            baseToken: baseToken,
-                            isBaseToQuote: vars.isBaseToQuote,
-                            isExactInput: vars.isBaseToQuote,
-                            oppositeAmountBound: 0,
-                            amount: vars.oldDeltaBase.abs(),
-                            sqrtPriceLimitX96: 0,
-                            deadline: block.timestamp + 60,
-                            referralCode: ""
-                        })
+        // update new size by price
+        {
+            (vars.newLongPositionSizeRate, vars.newShortPositionSizeRate) = GenericLogic
+                .getNewPositionSizeForMultiplierRate(
+                    longPositionSize,
+                    shortPositionSize,
+                    oldMarkPrice,
+                    newMarkPrice,
+                    0
+                );
+            IAccountBalance(IClearingHouse(chAddress).getAccountBalance()).modifyMarketMultiplier(
+                baseToken,
+                vars.newLongPositionSizeRate,
+                vars.newShortPositionSizeRate
+            );
+        }
+
+        (longPositionSize, shortPositionSize) = IAccountBalance(IClearingHouse(chAddress).getAccountBalance())
+            .getMarketPositionSize(baseToken);
+
+        vars.deltaBase = longPositionSize.toInt256().sub(shortPositionSize.toInt256());
+        if (vars.deltaBase != 0) {
+            IOrderBook.ReplaySwapResponse memory estimate = IExchange(IClearingHouse(chAddress).getExchange())
+                .estimateSwap(
+                    DataTypes.OpenPositionParams({
+                        baseToken: baseToken,
+                        isBaseToQuote: vars.isBaseToQuote,
+                        isExactInput: vars.isBaseToQuote,
+                        oppositeAmountBound: 0,
+                        amount: vars.deltaBase.abs(),
+                        sqrtPriceLimitX96: 0,
+                        deadline: block.timestamp + 60,
+                        referralCode: ""
+                    })
+                );
+            vars.newDeltaQuote = vars.isBaseToQuote ? estimate.amountOut : estimate.amountIn;
+            vars.costDeltaQuote = (
+                vars.isBaseToQuote
+                    ? vars.newDeltaQuote.toInt256().sub(oldDeltaQuote.toInt256())
+                    : oldDeltaQuote.toInt256().sub(vars.newDeltaQuote.toInt256())
+            );
+        }
+
+        if (!isFixedPositionSize) {
+            // for repeg price
+            // estimate for check cost and fund
+            vars.isEnoughFund = false;
+            if (vars.costDeltaQuote > 0) {
+                int256 remainDistributedFund = IInsuranceFund(IClearingHouse(chAddress).getInsuranceFund())
+                    .getRepegAccumulatedFund()
+                    .sub(IInsuranceFund(IClearingHouse(chAddress).getInsuranceFund()).getRepegDistributedFund());
+                (int256 owedRealizedPnl, , ) = IAccountBalance(IClearingHouse(chAddress).getAccountBalance())
+                    .getPnlAndPendingFee(IClearingHouse(chAddress).getInsuranceFund());
+
+                if (remainDistributedFund >= vars.costDeltaQuote) {
+                    if (owedRealizedPnl >= vars.costDeltaQuote) {
+                        vars.isEnoughFund = true;
+                    }
+                }
+                if (!vars.isEnoughFund) {
+                    // using cost with owedRealizedPnl from insuranceFund
+                    vars.costDeltaQuote = PerpMath.min(
+                        vars.costDeltaQuote,
+                        PerpMath.min(
+                            remainDistributedFund > 0 ? remainDistributedFund : 0,
+                            owedRealizedPnl > 0 ? owedRealizedPnl : 0
+                        )
                     );
-                vars.newDeltaQuote = vars.isBaseToQuote ? estimate.amountOut : estimate.amountIn;
+                }
+            } else {
+                vars.isEnoughFund = true;
             }
-        } else {
-            if (oldDeltaQuote > 0) {
-                vars.isBaseToQuote = vars.oldDeltaBase > 0 ? true : false;
+            if (!vars.isEnoughFund) {
+                // estimate cost to base
                 IOrderBook.ReplaySwapResponse memory estimate = IExchange(IClearingHouse(chAddress).getExchange())
                     .estimateSwap(
                         DataTypes.OpenPositionParams({
@@ -468,59 +523,47 @@ library GenericLogic {
                             isBaseToQuote: vars.isBaseToQuote,
                             isExactInput: !vars.isBaseToQuote,
                             oppositeAmountBound: 0,
-                            amount: oldDeltaQuote,
+                            amount: (
+                                vars.isBaseToQuote
+                                    ? oldDeltaQuote.add(vars.costDeltaQuote.abs())
+                                    : oldDeltaQuote.sub(vars.costDeltaQuote.abs())
+                            ),
                             sqrtPriceLimitX96: 0,
                             deadline: block.timestamp + 60,
                             referralCode: ""
                         })
                     );
                 vars.newDeltaBase = vars.isBaseToQuote ? estimate.amountIn : estimate.amountOut;
+                (vars.newLongPositionSizeRate, vars.newShortPositionSizeRate) = GenericLogic
+                    .getNewPositionSizeForMultiplierRate(
+                        longPositionSize,
+                        shortPositionSize,
+                        newMarkPrice,
+                        newMarkPrice,
+                        vars.newDeltaBase
+                    );
+                IAccountBalance(IClearingHouse(chAddress).getAccountBalance()).modifyMarketMultiplier(
+                    baseToken,
+                    vars.newLongPositionSizeRate,
+                    vars.newShortPositionSizeRate
+                );
             }
         }
-
-        (uint256 newLongPositionSizeRate, uint256 newShortPositionSizeRate) = GenericLogic
-            .getNewPositionSizeForMultiplierRate(
-                oldLongPositionSize,
-                oldShortPositionSize,
-                oldMarkPrice,
-                newMarkPrice,
-                vars.newDeltaBase
+        if (vars.costDeltaQuote != 0) {
+            // update repeg fund
+            IInsuranceFund(IClearingHouse(chAddress).getInsuranceFund()).repegFund(vars.costDeltaQuote);
+            // update RealizedPnl for InsuranceFund
+            IAccountBalance(IClearingHouse(chAddress).getAccountBalance()).modifyOwedRealizedPnl(
+                IClearingHouse(chAddress).getInsuranceFund(),
+                vars.costDeltaQuote.neg256()
             );
-
-        // console.log("oldDeltaBase %d", oldDeltaBase.abs());
-        // console.log("deltaQuote %d", deltaQuote);
-        // console.log("newDeltaBase %d", newDeltaBase);
-        // console.log("newLongPositionSize %d", newLongPositionSizeRate);
-        // console.log("newShortPositionSize %d", newShortPositionSizeRate);
-
-        IAccountBalance(IClearingHouse(chAddress).getAccountBalance()).modifyMarketMultiplier(
-            baseToken,
-            newLongPositionSizeRate,
-            newShortPositionSizeRate
-        );
-
-        if (vars.newDeltaQuote > 0) {
-            // console.log("update Mul");
-            // console.log(oldDeltaQuote);
-            // console.log(vars.newDeltaQuote);
-
-            vars.costDeltaQuote = vars.oldDeltaBase > 0
-                ? vars.newDeltaQuote.toInt256().sub(oldDeltaQuote.toInt256())
-                : oldDeltaQuote.toInt256().sub(vars.newDeltaQuote.toInt256());
-            if (vars.costDeltaQuote != 0) {
-                // update repeg fund
-                IInsuranceFund(IClearingHouse(chAddress).getInsuranceFund()).repegFund(vars.costDeltaQuote);
-                // update RealizedPnl for InsuranceFund
-                IAccountBalance(IClearingHouse(chAddress).getAccountBalance()).modifyOwedRealizedPnl(
-                    IClearingHouse(chAddress).getInsuranceFund(),
-                    vars.costDeltaQuote.neg256()
-                );
-                // check RealizedPnl for InsuranceFund after repeg
-                (int256 owedRealizedPnl, , ) = IAccountBalance(IClearingHouse(chAddress).getAccountBalance())
-                    .getPnlAndPendingFee(IClearingHouse(chAddress).getInsuranceFund());
-                // GL_INE: InsuranceFund not enough fund
-                require(owedRealizedPnl >= 0, "GL_INE");
-            }
+            // check RealizedPnl for InsuranceFund after repeg
+            (int256 owedRealizedPnl, , ) = IAccountBalance(IClearingHouse(chAddress).getAccountBalance())
+                .getPnlAndPendingFee(IClearingHouse(chAddress).getInsuranceFund());
+            // GL_INE: InsuranceFund not enough fund
+            require(owedRealizedPnl >= 0, "GL_INE");
+            // emit event
+            emit MultiplierCostSpend(baseToken, vars.costDeltaQuote);
         }
     }
 

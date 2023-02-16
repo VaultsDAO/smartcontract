@@ -130,12 +130,12 @@ async function deploy() {
     //     console.log('migrateInsuranceFund -- END --')
     // }
 
-    // import migrateVault from "./13_migrate_Vault";
-    {
-        console.log('migrateVault -- START --')
-        await migrateVault();
-        console.log('migrateVault -- END --')
-    }
+    // // import migrateVault from "./13_migrate_Vault";
+    // {
+    //     console.log('migrateVault -- START --')
+    //     await migrateVault();
+    //     console.log('migrateVault -- END --')
+    // }
 
     // // import migrateCollateralManager from "./14_migrate_CollateralManager";
     // {

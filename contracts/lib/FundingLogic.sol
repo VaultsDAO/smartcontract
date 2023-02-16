@@ -81,7 +81,17 @@ library FundingLogic {
     ) public view returns (int256) {
         IMarketRegistry.MarketInfo memory marketInfo = IMarketRegistry(IClearingHouse(chAddress).getMarketRegistry())
             .getMarketInfo(baseToken);
+        // optimalDeltaTwapRatio
         if ((deltaTwapX96.abs().mul(1e6)) <= (indexTwapX96.mul(marketInfo.optimalDeltaTwapRatio))) {
+            return
+                deltaTwapX96 = PerpMath.mulDiv(
+                    deltaTwapX96,
+                    PerpMath.mulDiv(marketInfo.optimalFundingRatio, marketInfo.optimalFundingRatio, 1e6),
+                    1e6
+                ); // 25% * 25%;
+        }
+        // unhealthyDeltaTwapRatio
+        if ((deltaTwapX96.abs().mul(1e6)) <= (indexTwapX96.mul(marketInfo.unhealthyDeltaTwapRatio))) {
             return deltaTwapX96 = PerpMath.mulDiv(deltaTwapX96, marketInfo.optimalFundingRatio, 1e6); // 25%;
         }
         return deltaTwapX96;

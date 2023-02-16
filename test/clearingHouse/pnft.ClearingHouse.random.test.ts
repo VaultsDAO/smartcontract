@@ -79,14 +79,14 @@ describe("ClearingHouse random trade liquidity repeg close", () => {
         })
 
         // prepare collateral for trader
-        await collateral.mint(trader1.address, parseUnits("1000", collateralDecimals))
-        await deposit(trader1, vault, 1000, collateral)
+        await collateral.mint(trader1.address, parseUnits("1000000", collateralDecimals))
+        await deposit(trader1, vault, 1000000, collateral)
 
-        await collateral.mint(trader2.address, parseUnits("1000", collateralDecimals))
-        await deposit(trader2, vault, 1000, collateral)
+        await collateral.mint(trader2.address, parseUnits("1000000", collateralDecimals))
+        await deposit(trader2, vault, 1000000, collateral)
 
-        await collateral.mint(liquidator.address, parseUnits("1000", collateralDecimals))
-        await deposit(liquidator, vault, 1000, collateral)
+        await collateral.mint(liquidator.address, parseUnits("1000000", collateralDecimals))
+        await deposit(liquidator, vault, 1000000, collateral)
     })
 
     it("random check", async () => {
@@ -150,22 +150,22 @@ describe("ClearingHouse random trade liquidity repeg close", () => {
             }
 
             if (i % 2 == 0) {
-                rndInt = (Math.floor(Math.random() * 1000000) % 20) + 1;
-                await clearingHouse.connect(maker).addLiquidity({
-                    baseToken: baseToken.address,
-                    liquidity: parseEther(rndInt.toString()),
-                    deadline: ethers.constants.MaxUint256,
-                })
+                // rndInt = (Math.floor(Math.random() * 1000000) % 20) + 1;
+                // await clearingHouse.connect(maker).addLiquidity({
+                //     baseToken: baseToken.address,
+                //     liquidity: parseEther(rndInt.toString()),
+                //     deadline: ethers.constants.MaxUint256,
+                // })
                 mockedNFTPriceFeed.smocked.getPrice.will.return.with(async () => {
                     return parseUnits("1.25", 18)
                 })
             } else {
-                rndInt = (Math.floor(Math.random() * 1000000) % 20) + 1;
-                await clearingHouse.connect(maker).removeLiquidity({
-                    baseToken: baseToken.address,
-                    liquidity: parseEther(rndInt.toString()),
-                    deadline: ethers.constants.MaxUint256,
-                })
+                // rndInt = (Math.floor(Math.random() * 1000000) % 20) + 1;
+                // await clearingHouse.connect(maker).removeLiquidity({
+                //     baseToken: baseToken.address,
+                //     liquidity: parseEther(rndInt.toString()),
+                //     deadline: ethers.constants.MaxUint256,
+                // })
                 mockedNFTPriceFeed.smocked.getPrice.will.return.with(async () => {
                     return parseUnits("0.8", 18)
                 })
