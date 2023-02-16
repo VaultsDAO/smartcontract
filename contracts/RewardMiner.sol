@@ -24,7 +24,8 @@ contract RewardMiner is IRewardMiner, BlockContext, OwnerPausable, RewardMinerSt
     using PerpMath for uint256;
     using PerpMath for int256;
 
-    event Mint(uint256 indexed periodNumber, address indexed trader, uint256 amount, int256 pnl);
+    event Mint(uint256 indexed periodNumber, address indexed trader, uint256 amount);
+    event MintWithPnl(uint256 indexed periodNumber, address indexed trader, uint256 amount, int256 pnl);
     event Spend(address indexed trader, uint256 amount);
 
     //
@@ -307,7 +308,7 @@ contract RewardMiner is IRewardMiner, BlockContext, OwnerPausable, RewardMinerSt
                     }
                     periodData.pnlUsers[trader] = periodData.pnlUsers[trader].add(pnl);
                 }
-                emit Mint(periodData.periodNumber, trader, amount, pnl);
+                emit MintWithPnl(periodData.periodNumber, trader, amount, pnl);
             }
         }
     }
