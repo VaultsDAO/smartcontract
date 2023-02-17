@@ -520,11 +520,9 @@ library ExchangeLogic {
         emit GenericLogic.PositionLiquidated(
             params.trader,
             params.baseToken,
-            vars.liquidatedPositionSize,
-            vars.liquidatedPositionNotional,
+            vars.liquidatedPositionSize.abs(),
+            vars.liquidatedPositionNotional.abs(),
             vars.liquidationPenalty,
-            vars.pnlToBeRealized, // realizedPnl
-            vars.sqrtPriceX96,
             params.liquidator,
             vars.liquidationFeeToLiquidator
         );

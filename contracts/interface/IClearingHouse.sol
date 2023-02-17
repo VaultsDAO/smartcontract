@@ -130,11 +130,9 @@ interface IClearingHouse {
     event PositionLiquidated(
         address indexed trader,
         address indexed baseToken,
-        int256 exchangedPositionSize,
-        int256 exchangedPositionNotional,
-        uint256 fee,
-        int256 realizedPnl,
-        uint256 sqrtPriceAfterX96,
+        uint256 positionSize,
+        uint256 positionNotional,
+        uint256 liquidationPenaltyFee,
         address liquidator,
         uint256 liquidatorFee
     );
