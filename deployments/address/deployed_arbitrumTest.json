@@ -142,7 +142,7 @@
     },
     "clearingHouse": {
         "address": "0xf55b291Acbda07E69e49e1Dfa078E6db1Ee70E42",
-        "implAddress": "0xbB6BEC2684A8AA835bA7d54DcAEDD1dE4F0B83a3"
+        "implAddress": "0x577a2fc9d08eDCe7C1E113D092917303aa58f594"
     },
     "testFaucet": {
         "address": "0xafFABBC0bf710D1D0fdA35FAeEFBe1bB77c70EC2",
