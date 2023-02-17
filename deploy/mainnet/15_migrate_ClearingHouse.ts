@@ -28,11 +28,6 @@ async function deploy() {
     const GenericLogic = await hre.ethers.getContractFactory("GenericLogic");
     // 
     var proxyAdmin = await hre.ethers.getContractAt('ProxyAdmin', deployData.proxyAdminAddress);
-    if (network == 'local') {
-        const [admin, maker, priceAdmin, platformFund, trader, liquidator] = await ethers.getSigners()
-        deployData.platformFundAddress = platformFund.address
-        deployData.makerFundAddress = maker.address
-    }
     //
     if (deployData.clearingHouse.implAddress == undefined || deployData.clearingHouse.implAddress == '') {
         var genericLogic = await hre.ethers.getContractAt('GenericLogic', deployData.genericLogic.address);

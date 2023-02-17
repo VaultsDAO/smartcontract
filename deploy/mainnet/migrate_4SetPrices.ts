@@ -54,14 +54,18 @@ async function deploy() {
         'priceDOODLE'
     ];
     for (let i = 0; i < nftPriceFeeds.length; i++) {
+        console.log(
+            '--------------------------------------',
+            priceKeys[i].substring(5),
+            '--------------------------------------',
+        )
         var nftPriceFeedAddress = nftPriceFeeds[i].address
         var initPrice = formatEther(priceData[priceKeys[i]]);
-        console.log(initPrice);
-        console.log(parseEther(initPrice).toString())
         var priceFeed = (await hre.ethers.getContractAt('NftPriceFeed', nftPriceFeedAddress)) as NftPriceFeed;
         if (!(await priceFeed.getPrice(0)).eq(parseEther(initPrice))) {
             await waitForTx(
-                await priceFeed.connect(priceAdmin).setPrice(parseEther(initPrice)), 'priceFeed.connect(priceAdmin).setPrice(parseEther(price))'
+                await priceFeed.connect(priceAdmin).setPrice(parseEther(initPrice)),
+                'priceFeed.connect(priceAdmin).setPrice(parseEther(' + initPrice + '))'
             )
         }
     }

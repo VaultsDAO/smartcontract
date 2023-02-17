@@ -29,7 +29,7 @@
         "symbol": "DOODLE-ETH"
     },
     "wETH": {
-        "address": "",
+        "address": "0x82aF49447D8a07e3bd95BD0d56f35241523fBab1",
         "name": "Wrapped Ether",
         "symbol": "WETH",
         "decimals": 18
@@ -91,7 +91,7 @@
     "makerFundAddress": "",
     "proxyAdminAddress": "",
     "uniswapV3Factory": {
-        "address": ""
+        "address": "0x1F98431c8aD98523631AE4a59f267346ea31F984"
     },
     "genericLogic": {
         "address": ""
