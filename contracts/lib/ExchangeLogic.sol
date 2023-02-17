@@ -154,7 +154,7 @@ library ExchangeLogic {
         );
 
         // for miner amount
-        _mintMinerReward(
+        rewardMinerMint(
             chAddress,
             params.trader,
             response.quote,
@@ -273,53 +273,12 @@ library ExchangeLogic {
         return (response.base, response.quote, response.insuranceFundFee.add(response.platformFundFee));
     }
 
-    function _mintMinerReward(address chAddress, address trader, uint256 quote, int256 pnl) internal {
+    function rewardMinerMint(address chAddress, address trader, uint256 quote, int256 pnl) public {
         address rewardMiner = IClearingHouse(chAddress).getRewardMiner();
         if (rewardMiner != address(0)) {
             IRewardMiner(rewardMiner).mint(trader, quote, pnl);
         }
     }
-
-    // function liquidate(
-    //     address chAddress,
-    //     address liquidator,
-    //     address trader,
-    //     address baseToken,
-    //     bool isForced
-    // ) public returns (uint256 base, uint256 quote, uint256 fee) {
-    //     //
-    //     GenericLogic.checkMarketOpen(baseToken);
-
-    //     GenericLogic.requireNotMaker(chAddress, trader);
-
-    //     if (!isForced) {
-    //         // CH_EAV: enough account value
-    //         require(GenericLogic.isLiquidatable(chAddress, trader), "CH_EAV");
-    //     }
-
-    //     int256 positionSize = GenericLogic.getTakerPositionSafe(chAddress, trader, baseToken);
-
-    //     // old position is long. when closing, it's baseToQuote && exactInput (sell exact base)
-    //     // old position is short. when closing, it's quoteToBase && exactOutput (buy exact base back)
-    //     bool isBaseToQuote = positionSize > 0;
-    //     //
-    //     IExchange.SwapResponse memory response = _openPosition(
-    //         chAddress,
-    //         InternalOpenPositionParams({
-    //             trader: trader,
-    //             baseToken: baseToken,
-    //             isBaseToQuote: isBaseToQuote,
-    //             isExactInput: isBaseToQuote,
-    //             isClose: true,
-    //             amount: positionSize.abs(),
-    //             sqrtPriceLimitX96: 0
-    //         })
-    //     );
-
-    //     IVault(IClearingHouse(chAddress).getVault()).settleBadDebt(trader);
-
-    //     return (response.base, response.quote, response.insuranceFundFee.add(response.platformFundFee));
-    // }
 
     function _getLiquidatedPositionSizeAndNotional(
         address chAddress,

@@ -225,9 +225,13 @@ contract ClearingHouse is
 
         address[] memory baseTokens = IAccountBalance(_accountBalance).getBaseTokens(trader);
         uint256 baseTokenLength = baseTokens.length;
+        int256 fundingPaymentTotal;
         for (uint256 i = 0; i < baseTokenLength; i++) {
-            GenericLogic.settleFunding(address(this), trader, baseTokens[i]);
+            (, int256 fundingPayment) = GenericLogic.settleFunding(address(this), trader, baseTokens[i]);
+            fundingPaymentTotal = fundingPaymentTotal.add(fundingPayment);
         }
+        // reward miner
+        ExchangeLogic.rewardMinerMint(address(this), trader, 0, fundingPaymentTotal.neg256());
     }
 
     /// @inheritdoc IClearingHouse
