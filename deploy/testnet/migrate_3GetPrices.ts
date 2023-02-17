@@ -46,6 +46,11 @@ async function deploy() {
         'priceDOODLE'
     ];
     for (let i = 0; i < nftAddrs.length; i++) {
+        console.log(
+            '--------------------------------------',
+            priceKeys[i].substring(5),
+            '--------------------------------------',
+        )
         let price = await nftOracle.getAssetPrice(nftAddrs[i])
         priceData[priceKeys[i]] = price.toString()
         await fs.writeFileSync(fileName, JSON.stringify(priceData, null, 4))

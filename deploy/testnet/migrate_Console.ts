@@ -41,6 +41,8 @@ export default deploy;
 
 async function deploy() {
 
+    console.log('START')
+
     // {
     //     console.log('migrateAdmin -- START --')
     //     await migrateAdmin();
@@ -202,8 +204,6 @@ async function deploy() {
     var testFaucet = (await hre.ethers.getContractAt('TestFaucet', deployData.testFaucet.address)) as TestFaucet;
     var wETH = (await hre.ethers.getContractAt('TestERC20', deployData.wETH.address)) as TestERC20;
 
-    console.log('START')
-
     // {
     //     const eventTopic = clearingHouse.interface.getEventTopic(clearingHouse.interface.events["Repeg(uint256,uint256)"])
     //     console.log(eventTopic)
@@ -256,29 +256,20 @@ async function deploy() {
     // await clearingHouse.setRewardMiner(deployData.rewardMiner.address)
 
     // {
-    //     var vBAYC = (await hre.ethers.getContractAt('BaseToken', deployData.vBAYC.address)) as BaseToken;
+    //     var baseToken = (await hre.ethers.getContractAt('BaseToken', deployData.vBAYC.address)) as BaseToken;
 
     //     var isBaseToQuote = true;
 
-    //     let currPriceX96 = await exchange.getSqrtMarkTwapX96(vBAYC.address, 0)
+    //     let currPriceX96 = await exchange.getSqrtMarkTwapX96(baseToken.address, 0)
     //     let currPrice = new bn(formatSqrtPriceX96ToPrice(currPriceX96, 18))
 
-    //     let limitTick = await exchange.getMaxTickCrossedWithinBlock(vBAYC.address)
+    //     let limitTick = 100
     //     let currentPriceTick = priceToTick(currPrice.toNumber(), 60)
     //     let limitPriceTick = currentPriceTick + (isBaseToQuote ? -limitTick : limitTick)
     //     let limitPrice = new bn(1.0001).pow(limitPriceTick)
 
-    //     console.log(
-    //         'limitQuote',
-    //         limitTick,
-    //         currentPriceTick,
-    //         limitPriceTick,
-    //         currPrice.toFixed(4).toString(),
-    //         limitPrice.toFixed(4).toString(),
-    //     )
-
     //     let estimateSwap = await exchange.estimateSwap({
-    //         baseToken: vBAYC.address,
+    //         baseToken: baseToken.address,
     //         isBaseToQuote: isBaseToQuote,
     //         isExactInput: !isBaseToQuote,
     //         oppositeAmountBound: 0,
@@ -287,10 +278,13 @@ async function deploy() {
     //         deadline: ethers.constants.MaxUint256,
     //         referralCode: ethers.constants.HashZero,
     //     })
+    //     let limitBase: bn;
     //     let limitQuote: bn;
     //     if (isBaseToQuote) {
+    //         limitBase = new bn(estimateSwap.amountIn.toString())
     //         limitQuote = new bn(estimateSwap.amountOut.toString())
     //     } else {
+    //         limitBase = new bn(estimateSwap.amountOut.toString())
     //         limitQuote = new bn(estimateSwap.amountIn.toString())
     //     }
     //     console.log(
@@ -300,6 +294,7 @@ async function deploy() {
     //         limitPriceTick,
     //         currPrice.toFixed(4).toString(),
     //         limitPrice.toFixed(4).toString(),
+    //         formatEther(limitBase.toString()),
     //         formatEther(limitQuote.toString()),
     //     )
     // }
@@ -352,16 +347,16 @@ async function deploy() {
     //     (await exchange.getInsuranceFundFeeRatio(deployData.vBAYC.address, false)).toString()
     // )
 
-    console.log(
-        'insuranceFund.getPnlAndPendingFee',
-        formatEther((await accountBalance.getPnlAndPendingFee(insuranceFund.address))[0]),
-        formatEther(await insuranceFund.getRepegAccumulatedFund()),
-        formatEther(await insuranceFund.getRepegDistributedFund()),
-        'platformFund.getPnlAndPendingFee',
-        formatEther((await accountBalance.getPnlAndPendingFee(platformFund.address))[0].add(
-            (await vault.getBalanceByToken(platformFund.address, wETH.address))
-        )),
-    )
+    // console.log(
+    //     'insuranceFund.getPnlAndPendingFee',
+    //     formatEther((await accountBalance.getPnlAndPendingFee(insuranceFund.address))[0]),
+    //     formatEther(await insuranceFund.getRepegAccumulatedFund()),
+    //     formatEther(await insuranceFund.getRepegDistributedFund()),
+    //     'platformFund.getPnlAndPendingFee',
+    //     formatEther((await accountBalance.getPnlAndPendingFee(platformFund.address))[0].add(
+    //         (await vault.getBalanceByToken(platformFund.address, wETH.address))
+    //     )),
+    // )
 
     // if ((await insuranceFund.getClearingHouse()).toLowerCase() != clearingHouse.address.toLowerCase()) {
     //     await waitForTx(
