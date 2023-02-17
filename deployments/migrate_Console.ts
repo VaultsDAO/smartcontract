@@ -165,7 +165,7 @@ async function deploy() {
     //     console.log('migrateRewardMiner -- END --')
     // }
 
-    return
+    // return
 
 
     const network = hre.network.name;
@@ -202,6 +202,9 @@ async function deploy() {
     var wETH = (await hre.ethers.getContractAt('TestERC20', deployData.wETH.address)) as TestERC20;
 
     console.log('START')
+
+    // let periodNumber = await rewardMiner.getPeriodNumber()
+    // await rewardMiner.startPnlMiner(periodNumber, '666666')
 
     // await clearingHouse.setRewardMiner(deployData.rewardMiner.address)
     // await rewardMiner.setClearingHouse(deployData.clearingHouse.address)

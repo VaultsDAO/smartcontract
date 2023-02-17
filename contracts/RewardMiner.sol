@@ -257,7 +257,7 @@ contract RewardMiner is IRewardMiner, BlockContext, OwnerPausable, RewardMinerSt
                     periodData.periodNumber < vars.periodNumber &&
                     periodData.periodNumber > vars.lastPeriodNumber
                 ) {
-                    if (periodData.periodNumber < _startPnlNumber) {
+                    if (_startPnlNumber == 0 || periodData.periodNumber < _startPnlNumber) {
                         amount = amount.add(vars.userAmount.mul(periodData.total).div(periodData.amount));
                     } else {
                         if (vars.userAmount > 0) {
@@ -320,27 +320,29 @@ contract RewardMiner is IRewardMiner, BlockContext, OwnerPausable, RewardMinerSt
                     _userAmountMap[trader] = _userAmountMap[trader].add(amount);
                 }
                 // for pnl
-                if (periodData.periodNumber >= _startPnlNumber) {
-                    if (periodData.pnlUsers[trader] >= 0) {
-                        if (pnl >= 0) {
-                            periodData.pnlAmount = periodData.pnlAmount.add(pnl);
-                        } else {
-                            int256 newUserAmount = periodData.pnlUsers[trader].add(pnl);
-                            if (newUserAmount < 0) {
-                                periodData.pnlAmount = periodData.pnlAmount.sub(periodData.pnlUsers[trader]);
-                            } else {
+                if (_startPnlNumber > 0) {
+                    if (periodData.periodNumber >= _startPnlNumber) {
+                        if (periodData.pnlUsers[trader] >= 0) {
+                            if (pnl >= 0) {
                                 periodData.pnlAmount = periodData.pnlAmount.add(pnl);
+                            } else {
+                                int256 newUserAmount = periodData.pnlUsers[trader].add(pnl);
+                                if (newUserAmount < 0) {
+                                    periodData.pnlAmount = periodData.pnlAmount.sub(periodData.pnlUsers[trader]);
+                                } else {
+                                    periodData.pnlAmount = periodData.pnlAmount.add(pnl);
+                                }
+                            }
+                        } else {
+                            if (pnl >= 0) {
+                                int256 newUserAmount = periodData.pnlUsers[trader].add(pnl);
+                                if (newUserAmount >= 0) {
+                                    periodData.pnlAmount = periodData.pnlAmount.add(newUserAmount);
+                                }
                             }
                         }
-                    } else {
-                        if (pnl >= 0) {
-                            int256 newUserAmount = periodData.pnlUsers[trader].add(pnl);
-                            if (newUserAmount >= 0) {
-                                periodData.pnlAmount = periodData.pnlAmount.add(newUserAmount);
-                            }
-                        }
+                        periodData.pnlUsers[trader] = periodData.pnlUsers[trader].add(pnl);
                     }
-                    periodData.pnlUsers[trader] = periodData.pnlUsers[trader].add(pnl);
                 }
                 emit MintWithPnl(periodData.periodNumber, trader, amount, pnl);
             }

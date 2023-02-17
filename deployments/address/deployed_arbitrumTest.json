@@ -160,7 +160,7 @@
     },
     "rewardMiner": {
         "address": "0x4C4DaE0793a5259f44612ef27158A6E2E5E53679",
-        "implAddress": "0x848B4563E5e7Ac371Fd90f0D9f4028dde994E456"
+        "implAddress": "0xC0328678979e88eD7517Fe692e97bc6448D27511"
     },
     "testCheck": {
         "addLiquidity": false,
