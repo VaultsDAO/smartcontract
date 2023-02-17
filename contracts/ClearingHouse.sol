@@ -578,7 +578,7 @@ contract ClearingHouse is
             // for multiplier
             IExchange(_exchange).updateOverPriceSpreadTimestamp(baseToken);
             // emit event
-            emit Repeg(repegParams.oldMarkPrice, repegParams.newMarkPrice);
+            emit Repeg(baseToken, repegParams.oldMarkPrice, repegParams.newMarkPrice);
         }
     }
 }

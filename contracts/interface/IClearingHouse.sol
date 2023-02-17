@@ -78,8 +78,6 @@ interface IClearingHouse {
 
     event RewardMinerChanged(address indexed rewardMinerArg);
 
-    event RepegFundChanged(address indexed repegFundArg);
-
     /// @notice Emitted when open position with non-zero referral code
     /// @param referralCode The referral code by partners
     event ReferredPositionChanged(bytes32 indexed referralCode);
@@ -170,7 +168,7 @@ interface IClearingHouse {
     /// @param delegateApproval The address of DelegateApproval
     event DelegateApprovalChanged(address indexed delegateApproval);
 
-    event Repeg(uint256 oldMarkPrice, uint256 newMarkPrice);
+    event Repeg(address indexed baseToken, uint256 oldMarkPrice, uint256 newMarkPrice);
 
     /// @notice Maker can call `addLiquidity` to provide liquidity on Uniswap V3 pool
     /// @dev Tx will fail if adding `base == 0 && quote == 0` / `liquidity == 0`

@@ -5,7 +5,7 @@ import bn from "bignumber.js"
 import hre, { ethers } from "hardhat";
 
 import { encodePriceSqrt, formatSqrtPriceX96ToPrice } from "../test/shared/utilities";
-import { AccountBalance, BaseToken, ClearingHouse, ClearingHouseConfig, CollateralManager, Exchange, InsuranceFund, MarketRegistry, MockPNFTToken, NftPriceFeed, OrderBook, QuoteToken, RewardMiner, TestERC20, TestFaucet, UniswapV3Pool, Vault } from "../typechain";
+import { AccountBalance, BaseToken, ClearingHouse, ClearingHouseConfig, CollateralManager, Exchange, GenericLogic, InsuranceFund, MarketRegistry, MockPNFTToken, NftPriceFeed, OrderBook, QuoteToken, RewardMiner, TestERC20, TestFaucet, UniswapV3Pool, Vault } from "../typechain";
 import { getMaxTickRange, priceToTick } from "../test/helper/number";
 import helpers from "./helpers";
 import { formatEther, parseEther } from "ethers/lib/utils";
@@ -187,6 +187,7 @@ async function deploy() {
     const [admin, maker, priceAdmin, platformFund, trader1, trader2, trader3, trader4, hieuq] = await ethers.getSigners()
 
     // deploy UniV3 factory
+    var genericLogic = (await hre.ethers.getContractAt('GenericLogic', deployData.genericLogic.address)) as GenericLogic;
     var clearingHouseConfig = (await hre.ethers.getContractAt('ClearingHouseConfig', deployData.clearingHouseConfig.address)) as ClearingHouseConfig;
     var marketRegistry = (await hre.ethers.getContractAt('MarketRegistry', deployData.marketRegistry.address)) as MarketRegistry;
     var orderBook = (await hre.ethers.getContractAt('OrderBook', deployData.orderBook.address)) as OrderBook;
@@ -202,6 +203,21 @@ async function deploy() {
     var wETH = (await hre.ethers.getContractAt('TestERC20', deployData.wETH.address)) as TestERC20;
 
     console.log('START')
+
+    // {
+    //     const eventTopic = clearingHouse.interface.getEventTopic(clearingHouse.interface.events["Repeg(uint256,uint256)"])
+    //     console.log(eventTopic)
+    //     var filter = {
+    //         fromBlock: 0,
+    //         toBlock: 'latest',
+    //         address: clearingHouse.address,
+    //         topics: [eventTopic]
+    //     };
+    //     let logs = await ethers.provider.getLogs(filter)
+    //     logs.forEach(log => {
+    //         console.log(log)
+    //     });
+    // }
 
     // let periodNumber = await rewardMiner.getPeriodNumber()
     // await rewardMiner.startPnlMiner(periodNumber, '666666')
@@ -336,16 +352,16 @@ async function deploy() {
     //     (await exchange.getInsuranceFundFeeRatio(deployData.vBAYC.address, false)).toString()
     // )
 
-    console.log(
-        'insuranceFund.getPnlAndPendingFee',
-        formatEther((await accountBalance.getPnlAndPendingFee(insuranceFund.address))[0]),
-        formatEther(await insuranceFund.getRepegAccumulatedFund()),
-        formatEther(await insuranceFund.getRepegDistributedFund()),
-        'platformFund.getPnlAndPendingFee',
-        formatEther((await accountBalance.getPnlAndPendingFee(platformFund.address))[0].add(
-            (await vault.getBalanceByToken(platformFund.address, wETH.address))
-        )),
-    )
+    // console.log(
+    //     'insuranceFund.getPnlAndPendingFee',
+    //     formatEther((await accountBalance.getPnlAndPendingFee(insuranceFund.address))[0]),
+    //     formatEther(await insuranceFund.getRepegAccumulatedFund()),
+    //     formatEther(await insuranceFund.getRepegDistributedFund()),
+    //     'platformFund.getPnlAndPendingFee',
+    //     formatEther((await accountBalance.getPnlAndPendingFee(platformFund.address))[0].add(
+    //         (await vault.getBalanceByToken(platformFund.address, wETH.address))
+    //     )),
+    // )
 
     // if ((await insuranceFund.getClearingHouse()).toLowerCase() != clearingHouse.address.toLowerCase()) {
     //     await waitForTx(
