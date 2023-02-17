@@ -489,11 +489,14 @@ library GenericLogic {
                 int256 remainDistributedFund = IInsuranceFund(IClearingHouse(chAddress).getInsuranceFund())
                     .getRepegAccumulatedFund()
                     .sub(IInsuranceFund(IClearingHouse(chAddress).getInsuranceFund()).getRepegDistributedFund());
-                (int256 owedRealizedPnl, , ) = IAccountBalance(IClearingHouse(chAddress).getAccountBalance())
-                    .getPnlAndPendingFee(IClearingHouse(chAddress).getInsuranceFund());
-
+                int256 freeCollateral = IVault(IClearingHouse(chAddress).getVault())
+                    .getFreeCollateralByToken(
+                        IClearingHouse(chAddress).getInsuranceFund(),
+                        IInsuranceFund(IClearingHouse(chAddress).getInsuranceFund()).getToken()
+                    )
+                    .toInt256();
                 if (remainDistributedFund >= vars.costDeltaQuote) {
-                    if (owedRealizedPnl >= vars.costDeltaQuote) {
+                    if (freeCollateral >= vars.costDeltaQuote) {
                         vars.isEnoughFund = true;
                     }
                 }
@@ -503,7 +506,7 @@ library GenericLogic {
                         vars.costDeltaQuote,
                         PerpMath.min(
                             remainDistributedFund > 0 ? remainDistributedFund : 0,
-                            owedRealizedPnl > 0 ? owedRealizedPnl : 0
+                            freeCollateral > 0 ? freeCollateral : 0
                         )
                     );
                 }
@@ -554,10 +557,14 @@ library GenericLogic {
                 vars.costDeltaQuote.neg256()
             );
             // check RealizedPnl for InsuranceFund after repeg
-            (int256 owedRealizedPnl, , ) = IAccountBalance(IClearingHouse(chAddress).getAccountBalance())
-                .getPnlAndPendingFee(IClearingHouse(chAddress).getInsuranceFund());
-            // GL_INE: InsuranceFund not enough fund
-            require(owedRealizedPnl >= 0, "GL_INE");
+            int256 freeCollateral = IVault(IClearingHouse(chAddress).getVault())
+                .getFreeCollateralByToken(
+                    IClearingHouse(chAddress).getInsuranceFund(),
+                    IInsuranceFund(IClearingHouse(chAddress).getInsuranceFund()).getToken()
+                )
+                .toInt256();
+            // GL_INE: InsuranceFund not fee fund
+            require(freeCollateral >= 0, "GL_INFF");
             // emit event
             emit MultiplierCostSpend(baseToken, vars.costDeltaQuote);
         }

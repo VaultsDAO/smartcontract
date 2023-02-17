@@ -336,16 +336,16 @@ async function deploy() {
     //     (await exchange.getInsuranceFundFeeRatio(deployData.vBAYC.address, false)).toString()
     // )
 
-    // console.log(
-    //     'insuranceFund.getPnlAndPendingFee',
-    //     formatEther((await accountBalance.getPnlAndPendingFee(insuranceFund.address))[0]),
-    //     formatEther(await insuranceFund.getRepegAccumulatedFund()),
-    //     formatEther(await insuranceFund.getRepegDistributedFund()),
-    //     'platformFund.getPnlAndPendingFee',
-    //     formatEther((await accountBalance.getPnlAndPendingFee(platformFund.address))[0].add(
-    //         (await vault.getBalanceByToken(platformFund.address, wETH.address))
-    //     )),
-    // )
+    console.log(
+        'insuranceFund.getPnlAndPendingFee',
+        formatEther((await accountBalance.getPnlAndPendingFee(insuranceFund.address))[0]),
+        formatEther(await insuranceFund.getRepegAccumulatedFund()),
+        formatEther(await insuranceFund.getRepegDistributedFund()),
+        'platformFund.getPnlAndPendingFee',
+        formatEther((await accountBalance.getPnlAndPendingFee(platformFund.address))[0].add(
+            (await vault.getBalanceByToken(platformFund.address, wETH.address))
+        )),
+    )
 
     // if ((await insuranceFund.getClearingHouse()).toLowerCase() != clearingHouse.address.toLowerCase()) {
     //     await waitForTx(
