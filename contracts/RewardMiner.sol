@@ -119,6 +119,18 @@ contract RewardMiner is IRewardMiner, BlockContext, OwnerPausable, RewardMinerSt
         returns (uint256 periodNumber, uint256 start, uint256 end, uint256 total, uint256 amount, int256 pnlAmount)
     {
         periodNumber = _getPeriodNumber();
+        (start, end, total, amount, pnlAmount) = _getCurrentPeriodInfoByNumner(periodNumber);
+    }
+
+    function getCurrentPeriodInfoByNumner(
+        uint256 periodNumber
+    ) external view returns (uint256 start, uint256 end, uint256 total, uint256 amount, int256 pnlAmount) {
+        (start, end, total, amount, pnlAmount) = _getCurrentPeriodInfoByNumner(periodNumber);
+    }
+
+    function _getCurrentPeriodInfoByNumner(
+        uint256 periodNumber
+    ) internal view returns (uint256 start, uint256 end, uint256 total, uint256 amount, int256 pnlAmount) {
         (start, end, total, amount, pnlAmount) = _getPeriodInfo(periodNumber);
     }
 
@@ -139,6 +151,28 @@ contract RewardMiner is IRewardMiner, BlockContext, OwnerPausable, RewardMinerSt
         )
     {
         periodNumber = _getPeriodNumber();
+        (start, end, total, amount, pnlAmount, traderAmount, traderPnl) = _getCurrentPeriodInfoTrader(
+            trader,
+            periodNumber
+        );
+    }
+
+    function _getCurrentPeriodInfoTrader(
+        address trader,
+        uint256 periodNumber
+    )
+        internal
+        view
+        returns (
+            uint256 start,
+            uint256 end,
+            uint256 total,
+            uint256 amount,
+            int256 pnlAmount,
+            uint256 traderAmount,
+            int256 traderPnl
+        )
+    {
         (start, end, total, amount, pnlAmount) = _getPeriodInfo(periodNumber);
         traderAmount = _periodDataMap[periodNumber].users[trader];
         traderPnl = _periodDataMap[periodNumber].pnlUsers[trader];
