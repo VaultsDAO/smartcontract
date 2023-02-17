@@ -321,8 +321,7 @@ library ExchangeLogic {
         int256 exchangedPositionNotional,
         uint256 makerFee,
         uint256 takerFee
-    ) internal {
-        int256 realizedPnl;
+    ) internal returns (int256 realizedPnl) {
         if (exchangedPositionSize != 0) {
             realizedPnl = IExchange(IClearingHouse(chAddress).getExchange()).getPnlToBeRealized(
                 IExchange.RealizePnlParams({
@@ -381,9 +380,9 @@ library ExchangeLogic {
         int256 accountValueAfterLiquidationX10_18;
         int256 insuranceFundCapacityX10_18;
         int256 liquidatorExchangedPositionSize;
-        int256 pnlToBeRealized;
         address insuranceFund;
-        uint256 sqrtPriceX96;
+        int256 traderRealizedPnl;
+        int256 liquidatorRealizedPnl;
     }
 
     function liquidate(
@@ -426,18 +425,7 @@ library ExchangeLogic {
             params.positionSizeToBeLiquidated
         );
 
-        vars.pnlToBeRealized = GenericLogic.getPnlToBeRealized(
-            GenericLogic.InternalRealizePnlParams({
-                trader: params.trader,
-                baseToken: params.baseToken,
-                takerPositionSize: vars.positionSize,
-                takerOpenNotional: vars.openNotional,
-                base: vars.liquidatedPositionSize,
-                quote: vars.liquidatedPositionNotional
-            })
-        );
-
-        _modifyPositionAndRealizePnl(
+        vars.traderRealizedPnl = _modifyPositionAndRealizePnl(
             params.chAddress,
             params.trader,
             params.baseToken,
@@ -494,7 +482,7 @@ library ExchangeLogic {
         vars.liquidatorExchangedPositionSize = vars.liquidatedPositionSize.neg256();
         vars.liquidatorExchangedPositionNotional = vars.liquidatedPositionNotional.neg256();
         // note that this function will realize pnl if it's reducing liquidator's existing position size
-        _modifyPositionAndRealizePnl(
+        vars.liquidatorRealizedPnl = _modifyPositionAndRealizePnl(
             params.chAddress,
             params.liquidator,
             params.baseToken,
@@ -511,10 +499,6 @@ library ExchangeLogic {
 
         GenericLogic.requireEnoughFreeCollateral(params.chAddress, params.liquidator);
 
-        (vars.sqrtPriceX96, , , , , , ) = UniswapV3Broker.getSlot0(
-            IMarketRegistry(params.marketRegistry).getPool(params.baseToken)
-        );
-
         IVault(IClearingHouse(params.chAddress).getVault()).settleBadDebt(params.trader);
 
         emit GenericLogic.PositionLiquidated(
@@ -525,6 +509,21 @@ library ExchangeLogic {
             vars.liquidationPenalty,
             params.liquidator,
             vars.liquidationFeeToLiquidator
+        );
+
+        // for miner amount
+        rewardMinerMint(
+            params.chAddress,
+            params.trader,
+            vars.liquidatedPositionNotional.abs(),
+            vars.traderRealizedPnl.add(vars.liquidationPenalty.toInt256().neg256())
+        );
+
+        rewardMinerMint(
+            params.chAddress,
+            params.liquidator,
+            vars.liquidatorExchangedPositionNotional.abs(),
+            vars.liquidatorRealizedPnl.add(vars.liquidationFeeToLiquidator.toInt256())
         );
 
         return (vars.liquidatedPositionSize.abs(), vars.liquidatedPositionNotional.abs(), vars.liquidationPenalty);
