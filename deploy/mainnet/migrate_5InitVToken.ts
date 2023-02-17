@@ -99,9 +99,11 @@ async function deploy() {
                     await priceFeed.setPriceFeedAdmin(priceAdmin.address), 'priceFeed.setPriceFeedAdmin(priceAdmin.address)'
                 )
             }
-            await waitForTx(
-                await priceFeed.connect(priceAdmin).setPrice(parseEther(initPrice)), 'priceFeed.connect(priceAdmin).setPrice(parseEther(price))'
-            )
+            if (!(await priceFeed.getPrice(0)).eq(parseEther(initPrice))) {
+                await waitForTx(
+                    await priceFeed.connect(priceAdmin).setPrice(parseEther(initPrice)), 'priceFeed.connect(priceAdmin).setPrice(parseEther(price))'
+                )
+            }
         }
         // deploy clearingHouse
         {

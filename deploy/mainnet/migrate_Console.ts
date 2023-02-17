@@ -13,11 +13,9 @@ const { waitForTx, tryWaitForTx } = helpers;
 
 import migrateAdmin from "./1_migrate_Admin";
 import migratePriceFeedAll from "./2_migrate_PriceFeed_All";
-import migrateTokens from "./3_migrate_Tokens";
 import migrateQuoteToken from "./4_migrate_QuoteToken";
 import migrateBaseTokenAll from "./5_migrate_BaseToken_All";
 import migrateLibrary from "./6_migrate_Library";
-import migrateUniswapV3 from "./6_migrate_UniswapV3";
 import migrateClearingHouseConfig from "./7_migrate_ClearingHouseConfig";
 import migrateMarketRegistry from "./8_migrate_MarketRegistry";
 import migrateOrderBook from "./9_migrate_OrderBook";

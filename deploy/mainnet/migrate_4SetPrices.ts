@@ -59,9 +59,11 @@ async function deploy() {
         console.log(initPrice);
         console.log(parseEther(initPrice).toString())
         var priceFeed = (await hre.ethers.getContractAt('NftPriceFeed', nftPriceFeedAddress)) as NftPriceFeed;
-        await waitForTx(
-            await priceFeed.connect(priceAdmin).setPrice(parseEther(initPrice)), 'priceFeed.connect(priceAdmin).setPrice(parseEther(price))'
-        )
+        if (!(await priceFeed.getPrice(0)).eq(parseEther(initPrice))) {
+            await waitForTx(
+                await priceFeed.connect(priceAdmin).setPrice(parseEther(initPrice)), 'priceFeed.connect(priceAdmin).setPrice(parseEther(price))'
+            )
+        }
     }
 }
 

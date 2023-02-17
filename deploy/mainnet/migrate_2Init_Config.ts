@@ -42,22 +42,6 @@ async function deploy() {
     var clearingHouse = (await hre.ethers.getContractAt('ClearingHouse', deployData.clearingHouse.address)) as ClearingHouse;
     var rewardMiner = (await hre.ethers.getContractAt('RewardMiner', deployData.rewardMiner.address)) as RewardMiner;
 
-    var uniFeeTier = '3000' // 0.3%
-
-    // deploy vault
-    // await collateralManager.addCollateral(deployData.wETH.address, {
-    //     priceFeed: deployData.priceFeedETH.address,
-    //     collateralRatio: (0.8e6).toString(),
-    //     discountRatio: (0.5e6).toString(),
-    //     depositCap: parseUnits("1000", deployData.wETH.decimals),
-    // })
-    // await collateralManager.addCollateral(deployData.wBTC.address, {
-    //     priceFeed: deployData.priceFeedBTC.address,
-    //     collateralRatio: (0.8e6).toString(),
-    //     discountRatio: (0.5e6).toString(),
-    //     depositCap: parseUnits("1000", deployData.wBTC.decimals),
-    // })
-
     const vETH = (await ethers.getContractAt('QuoteToken', deployData.vETH.address)) as QuoteToken;
 
     if ((await exchange.getAccountBalance()).toLowerCase() != accountBalance.address.toLowerCase()) {
