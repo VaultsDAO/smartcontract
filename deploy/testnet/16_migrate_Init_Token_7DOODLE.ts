@@ -5,7 +5,7 @@ import hre, { ethers } from "hardhat";
 import { encodePriceSqrt } from "../../test/shared/utilities";
 import { AccountBalance, BaseToken, Exchange, MarketRegistry, NftPriceFeed, OrderBook, QuoteToken, UniswapV3Pool } from "../../typechain";
 import { getMaxTickRange } from "../../test/helper/number";
-import helpers from "./helpers";
+import helpers from "../helpers";
 import { parseEther } from "ethers/lib/utils";
 const { waitForTx, tryWaitForTx } = helpers;
 
@@ -18,13 +18,7 @@ export default deploy;
 
 async function deploy() {
     const network = hre.network.name;
-    let fileName = process.cwd() + '/deploy/testnet/address/deployed_' + network + '.json';
-    let deployData: DeployData;
-    if (!(await fs.existsSync(fileName))) {
-        throw 'deployed file is not existsed'
-    }
-    let dataText = await fs.readFileSync(fileName)
-    deployData = JSON.parse(dataText.toString())
+    let deployData = (await loadDB(network))
     // 
 
     const [admin, maker, priceAdmin, platformFund, trader, liquidator] = await ethers.getSigners()

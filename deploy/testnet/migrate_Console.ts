@@ -7,9 +7,9 @@ import hre, { ethers } from "hardhat";
 import { encodePriceSqrt, formatSqrtPriceX96ToPrice } from "../../test/shared/utilities";
 import { AccountBalance, BaseToken, ClearingHouse, ClearingHouseConfig, CollateralManager, Exchange, GenericLogic, InsuranceFund, MarketRegistry, MockPNFTToken, NftPriceFeed, OrderBook, QuoteToken, RewardMiner, TestERC20, TestFaucet, UniswapV3Pool, Vault } from "../../typechain";
 import { getMaxTickRange, priceToTick } from "../../test/helper/number";
-import helpers from "./helpers";
+import helpers from "../helpers";
 import { formatEther, parseEther } from "ethers/lib/utils";
-const { waitForTx, tryWaitForTx } = helpers;
+const { waitForTx, tryWaitForTx, loadDB, saveDB } = helpers;
 
 import migrateAdmin from "./1_migrate_Admin";
 import migratePriceFeedAll from "./2_migrate_PriceFeed_All";
@@ -171,15 +171,7 @@ async function deploy() {
 
 
     const network = hre.network.name;
-    let fileName = process.cwd() + '/deploy/testnet/address/deployed_' + network + '.json';
-    let deployData: DeployData;
-    {
-        if (!(await fs.existsSync(fileName))) {
-            throw 'deployed file is not existsed'
-        }
-        let dataText = await fs.readFileSync(fileName)
-        deployData = JSON.parse(dataText.toString())
-    }
+    let deployData = (await loadDB(network))
     let priceData: PriceData;
     {
         let dataText = await fs.readFileSync(process.cwd() + '/deploy/testnet/address/prices.json')
@@ -233,10 +225,10 @@ async function deploy() {
 
     // console.log(
     //     'getClaimable',
-    //     formatEther(await rewardMiner.getClaimable(trader1.address))
+    //     formatEther(await rewardMiner.getClaimable(trader2.address))
     // )
 
-    // let minerResp = await rewardMiner.getCurrentPeriodInfoTrader(trader1.address)
+    // let minerResp = await rewardMiner.getCurrentPeriodInfoTrader(trader2.address)
     // console.log(
     //     'getCurrentPeriodInfoTrader',
     //     formatEther(minerResp.total),
@@ -347,16 +339,14 @@ async function deploy() {
     //     (await exchange.getInsuranceFundFeeRatio(deployData.vBAYC.address, false)).toString()
     // )
 
-    // console.log(
-    //     'insuranceFund.getPnlAndPendingFee',
-    //     formatEther((await accountBalance.getPnlAndPendingFee(insuranceFund.address))[0]),
-    //     formatEther(await insuranceFund.getRepegAccumulatedFund()),
-    //     formatEther(await insuranceFund.getRepegDistributedFund()),
-    //     'platformFund.getPnlAndPendingFee',
-    //     formatEther((await accountBalance.getPnlAndPendingFee(platformFund.address))[0].add(
-    //         (await vault.getBalanceByToken(platformFund.address, wETH.address))
-    //     )),
-    // )
+    console.log(
+        'insuranceFund.getPnlAndPendingFee',
+        formatEther((await vault.getFreeCollateral(insuranceFund.address))),
+        formatEther(await insuranceFund.getRepegAccumulatedFund()),
+        formatEther(await insuranceFund.getRepegDistributedFund()),
+        'platformFund.getPnlAndPendingFee',
+        formatEther((await vault.getFreeCollateral(platformFund.address))),
+    )
 
     // if ((await insuranceFund.getClearingHouse()).toLowerCase() != clearingHouse.address.toLowerCase()) {
     //     await waitForTx(

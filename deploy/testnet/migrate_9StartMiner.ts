@@ -5,9 +5,9 @@ import hre, { ethers } from "hardhat";
 import { encodePriceSqrt } from "../../test/shared/utilities";
 import { AccountBalance, BaseToken, ClearingHouse, ClearingHouseConfig, CollateralManager, Exchange, InsuranceFund, MarketRegistry, NftPriceFeed, OrderBook, QuoteToken, RewardMiner, UniswapV3Pool, Vault } from "../../typechain";
 import { getMaxTickRange } from "../../test/helper/number";
-import helpers from "./helpers";
+import helpers from "../helpers";
 import { parseEther } from "ethers/lib/utils";
-const { waitForTx, tryWaitForTx } = helpers;
+const { waitForTx, tryWaitForTx, loadDB, saveDB } = helpers;
 
 
 async function main() {
@@ -18,13 +18,7 @@ export default deploy;
 
 async function deploy() {
     const network = hre.network.name;
-    let fileName = process.cwd() + '/deploy/testnet/address/deployed_' + network + '.json';
-    let deployData: DeployData;
-    if (!(await fs.existsSync(fileName))) {
-        throw 'deployed file is not existsed'
-    }
-    let dataText = await fs.readFileSync(fileName)
-    deployData = JSON.parse(dataText.toString())
+    let deployData = (await loadDB(network))
 
     // deploy UniV3 factory
     var rewardMiner = (await hre.ethers.getContractAt('RewardMiner', deployData.rewardMiner.address)) as RewardMiner;

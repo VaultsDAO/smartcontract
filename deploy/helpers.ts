@@ -2,7 +2,7 @@ import fs from "fs";
 
 import hre, { ethers } from "hardhat";
 import { BaseContract, ContractTransaction, Signer } from "ethers";
-import { ProxyAdmin } from "../../typechain/openzeppelin/ProxyAdmin";
+import { ProxyAdmin } from "../typechain/openzeppelin/ProxyAdmin";
 
 const res = {
     getDeploySigner: async (): Promise<Signer> => {
@@ -68,6 +68,26 @@ const res = {
             console.log('proxyAdmin.upgrade at', address, implAddress, tx.hash, 'confirmed')
         }
     },
+
+    loadDB: async (network: string) => {
+        let fileName = process.cwd() + '/deploy/testnet/address/deployed_' + network + '.json';
+        let deployData: DeployData;
+        if (!(await fs.existsSync(fileName))) {
+            throw 'deployed file is not existsed'
+        }
+        let dataText = await fs.readFileSync(fileName)
+        deployData = JSON.parse(dataText.toString())
+        return deployData;
+    },
+
+    saveDB: async (network: string, deployData: DeployData) => {
+        let fileName = process.cwd() + '/deploy/testnet/address/deployed_' + network + '.json';
+        if (!(await fs.existsSync(fileName))) {
+            throw 'deployed file is not existsed'
+        }
+        await fs.writeFileSync(fileName, JSON.stringify(deployData, null, 4))
+        return deployData;
+    }
 };
 
 export default res;

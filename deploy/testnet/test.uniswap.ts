@@ -29,9 +29,9 @@ import { IGNORABLE_DUST } from "../../test/helper/number"
 import { deposit } from "../../test/helper/token"
 import { ClearingHouseFixture, createClearingHouseFixture } from "../../test/clearingHouse/fixtures"
 
-import helpers from "./helpers";
+import helpers from "../helpers";
 import { encodePriceSqrt, isAscendingTokenOrder } from "../../test/shared/utilities"
-const { waitForDeploy, verifyContract } = helpers;
+const {  waitForDeploy, verifyContract, loadDB, saveDB } = helpers;
 
 describe("Deployment check", () => {
     const [admin, maker, trader, liquidator, priceAdmin, platformFund] = waffle.provider.getWallets()

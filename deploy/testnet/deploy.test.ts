@@ -29,7 +29,7 @@ import { ClearingHouseFixture, createClearingHouseFixture } from "../../test/cle
 
 import { encodePriceSqrt, isAscendingTokenOrder } from "../../test/shared/utilities"
 
-import helpers from "./helpers";
+import helpers from "../helpers";
 const { waitForDeploy, waitForTx, verifyContract } = helpers;
 
 describe("Deployment check", () => {

@@ -1,14 +1,14 @@
 import fs from "fs";
 
 import hre from "hardhat";
-import helpers from "./helpers";
+import helpers from "../helpers";
 
 import { ProxyAdmin } from "../../typechain/openzeppelin/ProxyAdmin";
 import { BaseContract } from "ethers";
 import { isAscendingTokenOrder } from "../../test/shared/utilities";
 import { BaseToken } from "../../typechain";
 
-const { waitForDeploy, waitForTx, verifyContract, upgradeContract } = helpers;
+const { waitForDeploy, waitForTx, verifyContract, upgradeContract, loadDB, saveDB } = helpers;
 
 async function main() {
     await deploy();
@@ -18,13 +18,7 @@ export default deploy;
 
 async function deploy() {
     const network = hre.network.name;
-    let fileName = process.cwd() + '/deploy/testnet/address/deployed_' + network + '.json';
-    let deployData: DeployData;
-    if (!(await fs.existsSync(fileName))) {
-        throw 'deployed file is not existsed'
-    }
-    let dataText = await fs.readFileSync(fileName)
-    deployData = JSON.parse(dataText.toString())
+    let deployData = (await loadDB(network))
     // 
     const TransparentUpgradeableProxy = await hre.ethers.getContractFactory('TransparentUpgradeableProxy');
     // 
@@ -37,7 +31,7 @@ async function deploy() {
         let baseToken = await waitForDeploy(await BaseToken.deploy());
         {
             deployData.baseToken.implAddress = baseToken.address;
-            await fs.writeFileSync(fileName, JSON.stringify(deployData, null, 4))
+            deployData = (await saveDB(network, deployData))
             console.log('baseToken is deployed', baseToken.address)
         }
     }
@@ -87,7 +81,7 @@ async function deploy() {
             } while (!isAscendingTokenOrder(transparentUpgradeableProxy.address.toString(), vETH.address))
             {
                 baseVToken.address = transparentUpgradeableProxy.address;
-                await fs.writeFileSync(fileName, JSON.stringify(deployData, null, 4))
+                deployData = (await saveDB(network, deployData))
                 console.log('vBaseToken TransparentUpgradeableProxy is deployed', transparentUpgradeableProxy.address)
             }
         }

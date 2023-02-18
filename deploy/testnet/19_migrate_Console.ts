@@ -7,7 +7,7 @@ import bn from "bignumber.js"
 import { encodePriceSqrt, formatSqrtPriceX96ToPrice } from "../../test/shared/utilities";
 import { AccountBalance, BaseToken, ClearingHouse, Exchange, MarketRegistry, NftPriceFeed, OrderBook, QuoteToken, TestERC20, UniswapV3Pool, Vault } from "../../typechain";
 import { getMaxTickRange } from "../../test/helper/number";
-import helpers from "./helpers";
+import helpers from "../helpers";
 import { formatEther, formatUnits, parseEther } from "ethers/lib/utils";
 import BigNumber from "bignumber.js";
 const { waitForTx, tryWaitForTx } = helpers;
@@ -21,13 +21,7 @@ export default deploy;
 
 async function deploy() {
     const network = hre.network.name;
-    let fileName = process.cwd() + '/deploy/testnet/address/deployed_' + network + '.json';
-    let deployData: DeployData;
-    if (!(await fs.existsSync(fileName))) {
-        throw 'deployed file is not existsed'
-    }
-    let dataText = await fs.readFileSync(fileName)
-    deployData = JSON.parse(dataText.toString())
+    let deployData = (await loadDB(network))
     // 
 
     const [admin, maker, priceAdmin, platformFund, trader1, trader2, trader3, trader4, hieuq] = await ethers.getSigners()

@@ -1,11 +1,11 @@
 import fs from "fs";
 
 import hre from "hardhat";
-import helpers from "./helpers";
+import helpers from "../helpers";
 
 import { ProxyAdmin } from "../../typechain/openzeppelin/ProxyAdmin";
 
-const { waitForDeploy, verifyContract, upgradeContract } = helpers;
+const {  waitForDeploy, verifyContract, loadDB, saveDB, upgradeContract } = helpers;
 
 async function main() {
     await deploy();
@@ -15,13 +15,7 @@ export default deploy;
 
 async function deploy() {
     const network = hre.network.name;
-    let fileName = process.cwd() + '/deploy/mainnet/address/deployed_' + network + '.json';
-    let deployData: DeployData;
-    if (!(await fs.existsSync(fileName))) {
-        throw 'deployed file is not existsed'
-    }
-    let dataText = await fs.readFileSync(fileName)
-    deployData = JSON.parse(dataText.toString())
+    let deployData = (await loadDB(network))
     // 
     const TransparentUpgradeableProxy = await hre.ethers.getContractFactory('TransparentUpgradeableProxy');
     // 
@@ -41,7 +35,7 @@ async function deploy() {
         const exchange = await waitForDeploy(await Exchange.deploy())
         {
             deployData.exchange.implAddress = exchange.address;
-            await fs.writeFileSync(fileName, JSON.stringify(deployData, null, 4))
+            deployData = (await saveDB(network, deployData))
             console.log('exchange is deployed', exchange.address)
         }
     }
@@ -57,7 +51,7 @@ async function deploy() {
         );
         {
             deployData.exchange.address = transparentUpgradeableProxy.address;
-            await fs.writeFileSync(fileName, JSON.stringify(deployData, null, 4))
+            deployData = (await saveDB(network, deployData))
             console.log('exchange TransparentUpgradeableProxy is deployed', transparentUpgradeableProxy.address)
         }
     }

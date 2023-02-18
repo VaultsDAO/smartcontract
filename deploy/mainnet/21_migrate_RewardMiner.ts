@@ -1,13 +1,13 @@
 import fs from "fs";
 
 import hre from "hardhat";
-import helpers from "./helpers";
+import helpers from "../helpers";
 
 import { ProxyAdmin } from "../../typechain/openzeppelin/ProxyAdmin";
 import { parseEther } from "ethers/lib/utils";
 import { RewardMiner } from "../../typechain";
 
-const { waitForDeploy, verifyContract, upgradeContract } = helpers;
+const {  waitForDeploy, verifyContract, loadDB, saveDB, upgradeContract } = helpers;
 
 async function main() {
     await deploy();
@@ -17,13 +17,7 @@ export default deploy;
 
 async function deploy() {
     const network = hre.network.name;
-    let fileName = process.cwd() + '/deploy/mainnet/address/deployed_' + network + '.json';
-    let deployData: DeployData;
-    if (!(await fs.existsSync(fileName))) {
-        throw 'deployed file is not existsed'
-    }
-    let dataText = await fs.readFileSync(fileName)
-    deployData = JSON.parse(dataText.toString())
+    let deployData = (await loadDB(network))
     // 
     const TransparentUpgradeableProxy = await hre.ethers.getContractFactory('TransparentUpgradeableProxy');
     const RewardMiner = await hre.ethers.getContractFactory("RewardMiner");
@@ -84,7 +78,7 @@ async function deploy() {
         const rewardMiner = await waitForDeploy(await RewardMiner.deploy())
         {
             deployData.rewardMiner.implAddress = rewardMiner.address;
-            await fs.writeFileSync(fileName, JSON.stringify(deployData, null, 4))
+            deployData = (await saveDB(network, deployData))
             console.log('rewardMiner is deployed', rewardMiner.address)
         }
     }
@@ -100,7 +94,7 @@ async function deploy() {
         );
         {
             deployData.rewardMiner.address = transparentUpgradeableProxy.address;
-            await fs.writeFileSync(fileName, JSON.stringify(deployData, null, 4))
+            deployData = (await saveDB(network, deployData))
             console.log('rewardMiner TransparentUpgradeableProxy is deployed', transparentUpgradeableProxy.address)
         }
     }

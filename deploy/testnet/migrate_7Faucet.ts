@@ -1,13 +1,13 @@
 import fs from "fs";
 
 import hre from "hardhat";
-import helpers from "./helpers";
+import helpers from "../helpers";
 
 import { ProxyAdmin } from "../../typechain/openzeppelin/ProxyAdmin";
 import { parseEther } from "ethers/lib/utils";
 import { TestERC20 } from "../../typechain";
 
-const { waitForDeploy, waitForTx, verifyContract, upgradeContract } = helpers;
+const { waitForDeploy, waitForTx, verifyContract, upgradeContract, loadDB, saveDB } = helpers;
 
 async function main() {
     await deploy();
@@ -17,13 +17,7 @@ export default deploy;
 
 async function deploy() {
     const network = hre.network.name;
-    let fileName = process.cwd() + '/deploy/testnet/address/deployed_' + network + '.json';
-    let deployData: DeployData;
-    if (!(await fs.existsSync(fileName))) {
-        throw 'deployed file is not existsed'
-    }
-    let dataText = await fs.readFileSync(fileName)
-    deployData = JSON.parse(dataText.toString())
+    let deployData = (await loadDB(network))
     // 
     const TransparentUpgradeableProxy = await hre.ethers.getContractFactory('TransparentUpgradeableProxy');
     const TestFaucet = await hre.ethers.getContractFactory("TestFaucet");
@@ -34,7 +28,7 @@ async function deploy() {
         const testFaucet = await waitForDeploy(await TestFaucet.deploy())
         {
             deployData.testFaucet.implAddress = testFaucet.address;
-            await fs.writeFileSync(fileName, JSON.stringify(deployData, null, 4))
+            deployData = (await saveDB(network, deployData))
             console.log('testFaucet is deployed', testFaucet.address)
         }
     }
@@ -54,7 +48,7 @@ async function deploy() {
         );
         {
             deployData.testFaucet.address = transparentUpgradeableProxy.address;
-            await fs.writeFileSync(fileName, JSON.stringify(deployData, null, 4))
+            deployData = (await saveDB(network, deployData))
             console.log('testFaucet TransparentUpgradeableProxy is deployed', transparentUpgradeableProxy.address)
         }
         var wETH = (await hre.ethers.getContractAt('TestERC20', deployData.wETH.address)) as TestERC20;

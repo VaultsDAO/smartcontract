@@ -1,13 +1,13 @@
 import fs from "fs";
 
 import hre from "hardhat";
-import helpers from "./helpers";
+import helpers from "../helpers";
 
 import { ProxyAdmin } from "../../typechain/openzeppelin/ProxyAdmin";
 import { parseEther } from "ethers/lib/utils";
 import { PNFTToken } from "../../typechain/PNFTToken";
 
-const { waitForDeploy, verifyContract, upgradeContract } = helpers;
+const {  waitForDeploy, verifyContract, loadDB, saveDB, upgradeContract } = helpers;
 
 async function main() {
     await deploy();
@@ -17,13 +17,7 @@ export default deploy;
 
 async function deploy() {
     const network = hre.network.name;
-    let fileName = process.cwd() + '/deploy/testnet/address/deployed_' + network + '.json';
-    let deployData: DeployData;
-    if (!(await fs.existsSync(fileName))) {
-        throw 'deployed file is not existsed'
-    }
-    let dataText = await fs.readFileSync(fileName)
-    deployData = JSON.parse(dataText.toString())
+    let deployData = (await loadDB(network))
     // 
     const TransparentUpgradeableProxy = await hre.ethers.getContractFactory('TransparentUpgradeableProxy');
     const PNFTToken = await hre.ethers.getContractFactory("PNFTToken");
@@ -35,7 +29,7 @@ async function deploy() {
         const pNFTToken = await waitForDeploy(await PNFTToken.deploy())
         {
             deployData.pNFTToken.implAddress = pNFTToken.address;
-            await fs.writeFileSync(fileName, JSON.stringify(deployData, null, 4))
+            deployData = (await saveDB(network, deployData))
             console.log('pNFTToken is deployed', pNFTToken.address)
         }
     }
@@ -55,7 +49,7 @@ async function deploy() {
         );
         {
             deployData.pNFTToken.address = transparentUpgradeableProxy.address;
-            await fs.writeFileSync(fileName, JSON.stringify(deployData, null, 4))
+            deployData = (await saveDB(network, deployData))
             console.log('pNFTToken TransparentUpgradeableProxy is deployed', transparentUpgradeableProxy.address)
         }
     }

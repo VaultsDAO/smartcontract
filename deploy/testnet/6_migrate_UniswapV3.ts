@@ -1,9 +1,9 @@
 import fs from "fs";
 
 import hre from "hardhat";
-import helpers from "./helpers";
+import helpers from "../helpers";
 
-const { waitForDeploy } = helpers;
+const { waitForDeploy, loadDB, saveDB } = helpers;
 
 async function main() {
     await deploy();
@@ -13,13 +13,7 @@ export default deploy;
 
 async function deploy() {
     const network = hre.network.name;
-    let fileName = process.cwd() + '/deploy/testnet/address/deployed_' + network + '.json';
-    let deployData: DeployData;
-    if (!(await fs.existsSync(fileName))) {
-        throw 'deployed file is not existsed'
-    }
-    let dataText = await fs.readFileSync(fileName)
-    deployData = JSON.parse(dataText.toString())
+    let deployData = (await loadDB(network))
     // 
     const UniswapV3Factory = await hre.ethers.getContractFactory("UniswapV3Factory")
     // 
@@ -28,7 +22,7 @@ async function deploy() {
             const uniV3Factory = await waitForDeploy(await UniswapV3Factory.deploy())
             {
                 deployData.uniswapV3Factory.address = uniV3Factory.address;
-                await fs.writeFileSync(fileName, JSON.stringify(deployData, null, 4))
+                deployData = (await saveDB(network, deployData))
                 console.log('uniV3Factory is deployed', uniV3Factory.address)
             }
         }

@@ -3,9 +3,9 @@ import fs from "fs";
 
 import hre from "hardhat";
 import { NftPriceFeed } from "../../typechain";
-import helpers from "./helpers";
+import helpers from "../helpers";
 
-const { waitForDeploy, verifyContract, upgradeContract } = helpers;
+const {  waitForDeploy, verifyContract, loadDB, saveDB, upgradeContract } = helpers;
 
 async function main() {
     await deploy();
@@ -15,19 +15,13 @@ export default deploy;
 
 async function deploy() {
     const network = hre.network.name;
-    let fileName = process.cwd() + '/deploy/testnet/address/deployed_' + network + '.json';
-    let deployData: DeployData;
-    if (!(await fs.existsSync(fileName))) {
-        throw 'deployed file is not existsed'
-    }
-    let dataText = await fs.readFileSync(fileName)
-    deployData = JSON.parse(dataText.toString())
+    let deployData = (await loadDB(network))
     if (deployData.nftPriceFeedMAYC.address == undefined || deployData.nftPriceFeedMAYC.address == '') {
         const NftPriceFeed = await hre.ethers.getContractFactory("NftPriceFeed")
         const priceFeed = (await waitForDeploy(await NftPriceFeed.deploy(deployData.nftPriceFeedMAYC.symbol))) as NftPriceFeed
         {
             deployData.nftPriceFeedMAYC.address = priceFeed.address
-            await fs.writeFileSync(fileName, JSON.stringify(deployData, null, 4))
+            deployData = (await saveDB(network, deployData))
             console.log('nftPriceFeed is deployed', priceFeed.address)
         }
     }

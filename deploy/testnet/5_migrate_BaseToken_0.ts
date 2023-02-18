@@ -1,7 +1,7 @@
 import fs from "fs";
 
 import hre from "hardhat";
-import helpers from "./helpers";
+import helpers from "../helpers";
 
 import { ProxyAdmin } from "../../typechain/openzeppelin/ProxyAdmin";
 import { BaseContract } from "ethers";
@@ -18,13 +18,7 @@ export default deploy;
 
 async function deploy() {
     const network = hre.network.name;
-    let fileName = process.cwd() + '/deploy/testnet/address/deployed_' + network + '.json';
-    let deployData: DeployData;
-    if (!(await fs.existsSync(fileName))) {
-        throw 'deployed file is not existsed'
-    }
-    let dataText = await fs.readFileSync(fileName)
-    deployData = JSON.parse(dataText.toString())
+    let deployData = (await loadDB(network))
     // 
     const BaseToken = await hre.ethers.getContractFactory("BaseToken");
     // 
@@ -32,7 +26,7 @@ async function deploy() {
         let baseToken = await waitForDeploy(await BaseToken.deploy());
         {
             deployData.baseToken.implAddress = baseToken.address;
-            await fs.writeFileSync(fileName, JSON.stringify(deployData, null, 4))
+            deployData = (await saveDB(network, deployData))
             console.log('baseToken is deployed', baseToken.address)
         }
     }

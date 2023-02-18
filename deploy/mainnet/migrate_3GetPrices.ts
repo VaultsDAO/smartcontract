@@ -5,7 +5,7 @@ import hre, { ethers } from "hardhat";
 import { encodePriceSqrt } from "../../test/shared/utilities";
 import { AccountBalance, BaseToken, INFTOracleGetter, MarketRegistry, NftPriceFeed, OrderBook, QuoteToken, UniswapV3Pool } from "../../typechain";
 import { getMaxTickRange } from "../../test/helper/number";
-import helpers from "./helpers";
+import helpers from "../helpers";
 import { parseEther } from "ethers/lib/utils";
 const { waitForTx, tryWaitForTx } = helpers;
 

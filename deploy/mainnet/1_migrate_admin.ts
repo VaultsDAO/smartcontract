@@ -1,9 +1,9 @@
 import fs from "fs";
 
 import hre from "hardhat";
-import helpers from "./helpers";
+import helpers from "../helpers";
 
-const { waitForDeploy, verifyContract } = helpers;
+const { waitForDeploy, verifyContract, loadDB, saveDB } = helpers;
 
 async function main() {
     await deploy();
@@ -13,20 +13,14 @@ export default deploy;
 
 async function deploy() {
     const network = hre.network.name;
-    let fileName = process.cwd() + '/deploy/mainnet/address/deployed_' + network + '.json';
-    let deployData: DeployData;
-    if (!(await fs.existsSync(fileName))) {
-        throw 'deployed file is not existsed'
-    }
-    let dataText = await fs.readFileSync(fileName)
-    deployData = JSON.parse(dataText.toString())
+    let deployData = (await loadDB(network))
     // 
     if (deployData.proxyAdminAddress == undefined || deployData.proxyAdminAddress == '') {
         let ProxyAdmin = await hre.ethers.getContractFactory('ProxyAdmin');
         let proxyAdmin = await waitForDeploy(await ProxyAdmin.deploy());
         {
             deployData.proxyAdminAddress = proxyAdmin.address;
-            await fs.writeFileSync(fileName, JSON.stringify(deployData, null, 4))
+            deployData = (await saveDB(network, deployData))
         }
         console.log('proxyAdmin is deployed', proxyAdmin.address)
     }

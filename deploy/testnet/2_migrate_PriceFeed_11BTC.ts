@@ -3,9 +3,9 @@ import fs from "fs";
 
 import hre from "hardhat";
 import { NftPriceFeed } from "../../typechain";
-import helpers from "./helpers";
+import helpers from "../helpers";
 
-const { waitForDeploy, verifyContract, upgradeContract } = helpers;
+const {  waitForDeploy, verifyContract, loadDB, saveDB, upgradeContract } = helpers;
 
 async function main() {
     await deploy();
@@ -15,13 +15,7 @@ export default deploy;
 
 async function deploy() {
     const network = hre.network.name;
-    let fileName = process.cwd() + '/deploy/testnet/address/deployed_' + network + '.json';
-    let deployData: DeployData;
-    if (!(await fs.existsSync(fileName))) {
-        throw 'deployed file is not existsed'
-    }
-    let dataText = await fs.readFileSync(fileName)
-    deployData = JSON.parse(dataText.toString())
+    let deployData = (await loadDB(network))
     // 
     // if (deployData.priceFeedETH.address == undefined || deployData.priceFeedETH.address == '') {
     //     if (network == 'local') {
@@ -30,7 +24,7 @@ async function deploy() {
     //             const aggregator = await waitForDeploy(await aggregatorFactory.deploy())
     //             {
     //                 deployData.priceFeedETH.aggregatorAddress = aggregator.address
-    //                 await fs.writeFileSync(fileName, JSON.stringify(deployData, null, 4))
+    //                 deployData = (await saveDB(network, deployData))
     //                 console.log('TestAggregatorV3 is deployed', aggregator.address)
     //             }
     //         }
@@ -39,7 +33,7 @@ async function deploy() {
     //     const priceFeed = await waitForDeploy(await chainlinkPriceFeedFactory.deploy(deployData.priceFeedETH.aggregatorAddress, cacheTwapInterval))
     //     {
     //         deployData.priceFeedETH.address = priceFeed.address
-    //         await fs.writeFileSync(fileName, JSON.stringify(deployData, null, 4))
+    //         deployData = (await saveDB(network, deployData))
     //         console.log('ChainlinkPriceFeedV2 is deployed', priceFeed.address)
     //     }
     // }
@@ -50,7 +44,7 @@ async function deploy() {
     //             const aggregator = await waitForDeploy(await aggregatorFactory.deploy())
     //             {
     //                 deployData.priceFeedBTC.aggregatorAddress = aggregator.address
-    //                 await fs.writeFileSync(fileName, JSON.stringify(deployData, null, 4))
+    //                 deployData = (await saveDB(network, deployData))
     //                 console.log('TestAggregatorV3 is deployed', aggregator.address)
     //             }
     //         }
@@ -59,7 +53,7 @@ async function deploy() {
     //     const priceFeed = await waitForDeploy(await chainlinkPriceFeedFactory.deploy(deployData.priceFeedBTC.aggregatorAddress, cacheTwapInterval))
     //     {
     //         deployData.priceFeedBTC.address = priceFeed.address
-    //         await fs.writeFileSync(fileName, JSON.stringify(deployData, null, 4))
+    //         deployData = (await saveDB(network, deployData))
     //         console.log('ChainlinkPriceFeedV2 is deployed', priceFeed.address)
     //     }
     // }

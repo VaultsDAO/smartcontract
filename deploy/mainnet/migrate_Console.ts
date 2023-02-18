@@ -7,9 +7,9 @@ import hre, { ethers } from "hardhat";
 import { encodePriceSqrt, formatSqrtPriceX96ToPrice } from "../../test/shared/utilities";
 import { AccountBalance, BaseToken, ClearingHouse, ClearingHouseConfig, CollateralManager, Exchange, GenericLogic, InsuranceFund, MarketRegistry, MockPNFTToken, NftPriceFeed, OrderBook, QuoteToken, RewardMiner, TestERC20, TestFaucet, UniswapV3Pool, Vault } from "../../typechain";
 import { getMaxTickRange, priceToTick } from "../../test/helper/number";
-import helpers from "./helpers";
+import helpers from "../helpers";
 import { formatEther, parseEther } from "ethers/lib/utils";
-const { waitForTx, tryWaitForTx } = helpers;
+const { waitForTx, tryWaitForTx, loadDB } = helpers;
 
 import migrateAdmin from "./1_migrate_Admin";
 import migratePriceFeedAll from "./2_migrate_PriceFeed_All";
@@ -40,15 +40,7 @@ export default deploy;
 async function deploy() {
 
     const network = hre.network.name;
-    let fileName = process.cwd() + '/deploy/mainnet/address/deployed_' + network + '.json';
-    let deployData: DeployData;
-    {
-        if (!(await fs.existsSync(fileName))) {
-            throw 'deployed file is not existsed'
-        }
-        let dataText = await fs.readFileSync(fileName)
-        deployData = JSON.parse(dataText.toString())
-    }
+    let deployData = (await loadDB(network))
     let priceData: PriceData;
     {
         let dataText = await fs.readFileSync(process.cwd() + '/deploy/mainnet/address/prices.json')
