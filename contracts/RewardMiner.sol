@@ -105,6 +105,10 @@ contract RewardMiner is IRewardMiner, BlockContext, OwnerPausable, RewardMinerSt
         start = _start;
     }
 
+    function getStartPnlNumber() external view returns (uint256 startPnlNumber) {
+        startPnlNumber = _startPnlNumber;
+    }
+
     function getAllocation() external view returns (uint256 allocation) {
         allocation = _allocation;
     }

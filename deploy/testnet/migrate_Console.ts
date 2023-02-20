@@ -339,14 +339,14 @@ async function deploy() {
     //     (await exchange.getInsuranceFundFeeRatio(deployData.vBAYC.address, false)).toString()
     // )
 
-    console.log(
-        'insuranceFund.getPnlAndPendingFee',
-        formatEther((await vault.getFreeCollateral(insuranceFund.address))),
-        formatEther(await insuranceFund.getRepegAccumulatedFund()),
-        formatEther(await insuranceFund.getRepegDistributedFund()),
-        'platformFund.getPnlAndPendingFee',
-        formatEther((await vault.getFreeCollateral(platformFund.address))),
-    )
+    // console.log(
+    //     'insuranceFund.getPnlAndPendingFee',
+    //     formatEther((await vault.getFreeCollateral(insuranceFund.address))),
+    //     formatEther(await insuranceFund.getRepegAccumulatedFund()),
+    //     formatEther(await insuranceFund.getRepegDistributedFund()),
+    //     'platformFund.getPnlAndPendingFee',
+    //     formatEther((await vault.getFreeCollateral(platformFund.address))),
+    // )
 
     // if ((await insuranceFund.getClearingHouse()).toLowerCase() != clearingHouse.address.toLowerCase()) {
     //     await waitForTx(
