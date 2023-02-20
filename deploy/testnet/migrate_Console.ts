@@ -212,7 +212,23 @@ async function deploy() {
     // }
 
     // let periodNumber = await rewardMiner.getPeriodNumber()
-    // await rewardMiner.startPnlMiner(periodNumber, '666666')
+    // await rewardMiner.startPnlMiner(15, '666666')
+
+    // console.log(
+    //     'getStartPnlNumber',
+    //     (await rewardMiner.getStartPnlNumber()).toString()
+    // )
+
+    let minerData = await rewardMiner.getCurrentPeriodInfoTrader('0x80d03173a5371523f94fbba9d1fcbb0777e8dfc9')
+    console.log(
+        'getCurrentPeriodInfoTrader',
+        formatEther(minerData.total),
+        formatEther(minerData.amount),
+        formatEther(minerData.pnlAmount),
+        formatEther(minerData.traderAmount),
+        formatEther(minerData.traderPnl),
+    )
+
 
     // await clearingHouse.setRewardMiner(deployData.rewardMiner.address)
     // await rewardMiner.setClearingHouse(deployData.clearingHouse.address)

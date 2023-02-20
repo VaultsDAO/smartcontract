@@ -94,7 +94,7 @@
         "address": "0x4893376342d5D7b3e31d4184c08b265e5aB2A3f6"
     },
     "genericLogic": {
-        "address": ""
+        "address": "0x1b8883435B83d627B6edA4FB744762F31A8ea81b"
     },
     "vaultLogic": {
         "address": "0xd902c27230ae075c6861143292783291e1362E20"
@@ -103,10 +103,10 @@
         "address": "0xCa88965c966293e289E0C0817b49CC5188B83744"
     },
     "liquidityLogic": {
-        "address": ""
+        "address": "0xB069C0Fda75950E30F3d7C4ccdE158513Fd6f668"
     },
     "exchangeLogic": {
-        "address": ""
+        "address": "0xbDad5afA8Ab1d4598C43c10DfDeb448DAaDC5A3b"
     },
     "clearingHouseConfig": {
         "address": "0xf09dA90C5BE6Aa124C8AC54444CbFb2E36f6d162",
@@ -126,7 +126,7 @@
     },
     "exchange": {
         "address": "0x11810deA012E77521cf994C82B8Cf05Eb786DB1A",
-        "implAddress": ""
+        "implAddress": "0xc56b615B902253aD3030BceaB2D1Ea1Aea42dbA6"
     },
     "insuranceFund": {
         "address": "0xFbCdd83BF266a49e35b860d29C9B92Aca155a441",
@@ -142,7 +142,7 @@
     },
     "clearingHouse": {
         "address": "0x98081433437D574C3E399EfBD028fBDF3A174E89",
-        "implAddress": ""
+        "implAddress": "0x842d6294E0587566fa93DE2a617A396FaAdE3Cc1"
     },
     "pNFTToken": {
         "address": "0x674001749A44B9D6d931D1826233795e7Cf4eb2b",
@@ -156,7 +156,7 @@
     },
     "rewardMiner": {
         "address": "0x4681b4443bB8Dd10E2F8c96dD4377b7cB6a58B7f",
-        "implAddress": "0x9156ADEA316D2B0ec49f98eaca64DcA42c51E7F9"
+        "implAddress": "0xDF41A78E71D50303A79990e35a3eDb28acF7D994"
     },
     "testFaucet": {
         "address": "",
